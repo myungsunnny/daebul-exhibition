@@ -102,28 +102,31 @@
                         <input type="text" id="artworkTitle" required placeholder="작품의 제목을 입력해주세요">
                     </div>
                     
-                    <div class="form-group">
-                        <label for="artistName">작가 이름 *</label>
-                        <input type="text" id="artistName" required placeholder="학생 이름을 입력해주세요">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="studentGrade">학년반 *</label>
-                        <select id="studentGrade" required>
-                            <option value="">학년반을 선택해주세요</option>
-                            <option value="1학년 1반">1학년 1반</option>
-                            <option value="1학년 2반">1학년 2반</option>
-                            <option value="2학년 1반">2학년 1반</option>
-                            <option value="2학년 2반">2학년 2반</option>
-                            <option value="3학년 1반">3학년 1반</option>
-                            <option value="3학년 2반">3학년 2반</option>
-                            <option value="4학년 1반">4학년 1반</option>
-                            <option value="4학년 2반">4학년 2반</option>
-                            <option value="5학년 1반">5학년 1반</option>
-                            <option value="5학년 2반">5학년 2반</option>
-                            <option value="6학년 1반">6학년 1반</option>
-                            <option value="6학년 2반">6학년 2반</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label for="studentGrade">학년 *</label>
+                            <select id="studentGrade" required>
+                                <option value="">학년 선택</option>
+                                <option value="1">1학년</option>
+                                <option value="2">2학년</option>
+                                <option value="3">3학년</option>
+                                <option value="4">4학년</option>
+                                <option value="5">5학년</option>
+                                <option value="6">6학년</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group half">
+                            <label for="studentClass">반 *</label>
+                            <select id="studentClass" required>
+                                <option value="">반 선택</option>
+                                <option value="1">1반</option>
+                                <option value="2">2반</option>
+                                <option value="3">3반</option>
+                                <option value="4">4반</option>
+                                <option value="5">5반</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -143,15 +146,21 @@
                     </div>
                     
                     <div class="form-group">
+                        <label for="artworkLink">관련 링크 (선택사항)</label>
+                        <input type="url" id="artworkLink" placeholder="https://example.com (작품 관련 링크나 동영상 링크 등)">
+                        <small class="form-help">작품 제작 과정 영상, 관련 자료 등의 링크를 입력할 수 있습니다.</small>
+                    </div>
+                    
+                    <div class="form-group">
                         <label>작품 이미지 *</label>
                         <div id="imageUploadArea" class="image-upload-area">
                             <div class="upload-placeholder">
                                 <p>📸 이미지를 업로드하려면 클릭하세요</p>
-                                <p class="upload-info">JPG, PNG 파일 / 최대 10MB</p>
+                                <p class="upload-info">JPG, PNG 파일 / 최대 10MB / 여러 개 선택 가능</p>
                             </div>
-                            <img id="previewImage" style="display: none;" alt="미리보기">
+                            <div id="imagePreviewContainer" class="image-preview-container"></div>
                         </div>
-                        <input type="hidden" id="uploadedImageUrl">
+                        <input type="hidden" id="uploadedImageUrls">
                     </div>
                     
                     <div class="form-actions">
@@ -179,12 +188,13 @@
             <div class="modal-body">
                 <div class="artwork-detail">
                     <div class="detail-image-container">
-                        <img id="detailImage" alt="작품 이미지">
+                        <div id="detailImageGallery" class="detail-image-gallery">
+                            <!-- 여러 이미지가 여기에 표시됩니다 -->
+                        </div>
                     </div>
                     <div class="detail-info">
                         <h3 id="detailArtworkTitle">작품 제목</h3>
                         <div class="detail-meta">
-                            <p><strong>작가:</strong> <span id="detailArtist">작가명</span></p>
                             <p><strong>학년반:</strong> <span id="detailGrade">학년반</span></p>
                             <p><strong>분류:</strong> <span id="detailCategory">분류</span></p>
                             <p><strong>업로드:</strong> <span id="detailUploadDate">업로드 날짜</span></p>
@@ -192,6 +202,10 @@
                         <div class="detail-description">
                             <h4>작품 설명</h4>
                             <p id="detailDescriptionText">작품 설명이 여기에 표시됩니다.</p>
+                        </div>
+                        <div id="detailLinkSection" class="detail-link" style="display: none;">
+                            <h4>관련 링크</h4>
+                            <a id="detailLink" href="#" target="_blank" rel="noopener noreferrer">🔗 링크 보기</a>
                         </div>
                         <div class="detail-actions">
                             <button class="detail-btn" onclick="openImageInNewTab()">🔍 원본 크기로 보기</button>
