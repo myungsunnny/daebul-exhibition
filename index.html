@@ -48,102 +48,19 @@
                 <p>작품을 불러오는 중...</p>
             </div>
 
+            <!-- 빈 갤러리 메시지 -->
+            <div class="empty-gallery" id="emptyGallery">
+                <div class="empty-content">
+                    <h3>🎨 아직 등록된 작품이 없습니다</h3>
+                    <p>첫 번째 작품을 업로드해서 갤러리를 시작해보세요!</p>
+                    <button class="upload-btn" onclick="openUploadModal()">
+                        📸 첫 작품 올리기
+                    </button>
+                </div>
+            </div>
+
             <div class="gallery-grid" id="galleryGrid">
-                <!-- 샘플 작품 1 -->
-                <div class="gallery-item" data-category="drawing">
-                    <div class="image-container">
-                        <img src="https://via.placeholder.com/400x300/667eea/ffffff?text=그림+작품" alt="그림 작품">
-                        <div class="image-overlay">
-                            <button class="view-btn">자세히 보기</button>
-                        </div>
-                    </div>
-                    <div class="item-info">
-                        <h3 class="item-title">아름다운 우리 동네</h3>
-                        <p class="item-author">김민수</p>
-                        <span class="item-grade">3학년 2반</span>
-                        <p class="item-description">색연필로 그린 우리 동네의 봄 풍경입니다.</p>
-                    </div>
-                </div>
-
-                <!-- 샘플 작품 2 -->
-                <div class="gallery-item" data-category="craft">
-                    <div class="image-container">
-                        <img src="https://via.placeholder.com/400x300/764ba2/ffffff?text=공예+작품" alt="공예 작품">
-                        <div class="image-overlay">
-                            <button class="view-btn">자세히 보기</button>
-                        </div>
-                    </div>
-                    <div class="item-info">
-                        <h3 class="item-title">재활용 로봇</h3>
-                        <p class="item-author">박지은</p>
-                        <span class="item-grade">4학년 1반</span>
-                        <p class="item-description">페트병과 골판지로 만든 환경보호 로봇입니다.</p>
-                    </div>
-                </div>
-
-                <!-- 샘플 작품 3 -->
-                <div class="gallery-item" data-category="digital">
-                    <div class="image-container">
-                        <img src="https://via.placeholder.com/400x300/36c9aa/ffffff?text=디지털+작품" alt="디지털 작품">
-                        <div class="image-overlay">
-                            <button class="view-btn">자세히 보기</button>
-                        </div>
-                    </div>
-                    <div class="item-info">
-                        <h3 class="item-title">미래의 교실</h3>
-                        <p class="item-author">이준호</p>
-                        <span class="item-grade">5학년 3반</span>
-                        <p class="item-description">태블릿으로 그린 미래 교실의 상상도입니다.</p>
-                    </div>
-                </div>
-
-                <!-- 샘플 작품 4 -->
-                <div class="gallery-item" data-category="sculpture">
-                    <div class="image-container">
-                        <img src="https://via.placeholder.com/400x300/f093fb/ffffff?text=조소+작품" alt="조소 작품">
-                        <div class="image-overlay">
-                            <button class="view-btn">자세히 보기</button>
-                        </div>
-                    </div>
-                    <div class="item-info">
-                        <h3 class="item-title">내 친구 강아지</h3>
-                        <p class="item-author">최유진</p>
-                        <span class="item-grade">6학년 1반</span>
-                        <p class="item-description">찰흙으로 만든 우리 집 강아지 모습입니다.</p>
-                    </div>
-                </div>
-
-                <!-- 샘플 작품 5 -->
-                <div class="gallery-item" data-category="drawing">
-                    <div class="image-container">
-                        <img src="https://via.placeholder.com/400x300/ff6b9d/ffffff?text=그림+작품" alt="그림 작품">
-                        <div class="image-overlay">
-                            <button class="view-btn">자세히 보기</button>
-                        </div>
-                    </div>
-                    <div class="item-info">
-                        <h3 class="item-title">가족 초상화</h3>
-                        <p class="item-author">정서현</p>
-                        <span class="item-grade">2학년 3반</span>
-                        <p class="item-description">크레파스로 그린 우리 가족의 모습입니다.</p>
-                    </div>
-                </div>
-
-                <!-- 샘플 작품 6 -->
-                <div class="gallery-item" data-category="craft">
-                    <div class="image-container">
-                        <img src="https://via.placeholder.com/400x300/4ecdc4/ffffff?text=공예+작품" alt="공예 작품">
-                        <div class="image-overlay">
-                            <button class="view-btn">자세히 보기</button>
-                        </div>
-                    </div>
-                    <div class="item-info">
-                        <h3 class="item-title">꿈의 집</h3>
-                        <p class="item-author">한지민</p>
-                        <span class="item-grade">3학년 1반</span>
-                        <p class="item-description">종이상자로 만든 내가 살고 싶은 집입니다.</p>
-                    </div>
-                </div>
+                <!-- 업로드된 작품들이 여기에 동적으로 추가됩니다 -->
             </div>
         </div>
     </section>
@@ -166,16 +83,16 @@
                 <p>그림, 공예, 조소, 디지털 아트 등 다양한 분야의 작품들을 감상하실 수 있습니다.</p>
                 <div class="stats">
                     <div class="stat-item">
-                        <h3>50+</h3>
+                        <h3 id="artworkCount">0</h3>
                         <p>전시 작품 수</p>
                     </div>
                     <div class="stat-item">
-                        <h3>200+</h3>
+                        <h3 id="artistCount">0</h3>
                         <p>참여 학생 수</p>
                     </div>
                     <div class="stat-item">
-                        <h3>6</h3>
-                        <p>학년별 참여</p>
+                        <h3 id="categoryCount">0</h3>
+                        <p>작품 분류</p>
                     </div>
                 </div>
             </div>
@@ -260,6 +177,39 @@
                         <button type="submit" class="submit-btn" disabled>작품 등록하기</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 작품 상세보기 모달 -->
+    <div id="artworkDetailModal" class="upload-modal" style="display: none;">
+        <div class="modal-content detail-modal">
+            <div class="modal-header">
+                <h2 id="detailTitle">🎨 작품 상세보기</h2>
+                <span class="close-btn" onclick="closeDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="artwork-detail">
+                    <div class="detail-image-container">
+                        <img id="detailImage" alt="작품 이미지">
+                    </div>
+                    <div class="detail-info">
+                        <h3 id="detailArtworkTitle">작품 제목</h3>
+                        <div class="detail-meta">
+                            <p><strong>작가:</strong> <span id="detailArtist">작가명</span></p>
+                            <p><strong>학년반:</strong> <span id="detailGrade">학년반</span></p>
+                            <p><strong>분류:</strong> <span id="detailCategory">분류</span></p>
+                        </div>
+                        <div class="detail-description">
+                            <h4>작품 설명</h4>
+                            <p id="detailDescriptionText">작품 설명이 여기에 표시됩니다.</p>
+                        </div>
+                        <div class="detail-actions">
+                            <button class="detail-btn" onclick="openImageInNewTab()">🔍 원본 크기로 보기</button>
+                            <button class="detail-btn secondary" onclick="closeDetailModal()">닫기</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
