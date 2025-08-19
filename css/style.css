@@ -1074,3 +1074,38 @@ footer p {
 html {
     scroll-behavior: smooth;
 }
+
+/* ================================== */
+/* 추가된 스타일: 상세보기 이미지 슬라이더 화살표 */
+/* ================================== */
+.main-image-container {
+    position: relative; /* 화살표 버튼 위치 기준 */
+}
+
+.nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    font-size: 2rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    z-index: 10;
+    border-radius: 5px;
+    line-height: 1;
+}
+
+.nav-arrow:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.nav-arrow.prev {
+    left: 10px;
+}
+
+.nav-arrow.next {
+    right: 10px;
+}
