@@ -81,6 +81,7 @@
         <div class="container">
             <p>&copy; 2025 우리학교 학생 작품 전시관. 모든 작품의 저작권은 학생에게 있습니다.</p>
             <p>문의: gallery@ourschool.ac.kr | 전화: 02-1234-5678</p>
+            <p style="margin-top: 1rem;"><a href="#" id="adminLoginLink" style="color: #999; text-decoration: none;">Admin Mode</a></p>
         </div>
     </footer>
 
@@ -210,6 +211,8 @@
                         <div class="detail-actions">
                             <button class="detail-btn" onclick="openImageInNewTab()">🔍 원본 크기로 보기</button>
                             <button class="detail-btn secondary" onclick="closeDetailModal()">닫기</button>
+                            <button id="detailEditBtn" class="detail-btn admin-only" style="background-color: #ffc107;">수정</button>
+                            <button id="detailDeleteBtn" class="detail-btn admin-only" style="background-color: #dc3545;">삭제</button>
                         </div>
                     </div>
                 </div>
