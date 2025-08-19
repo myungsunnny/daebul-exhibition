@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>우리학교 학생 작품 전시관</title>
-    <!-- CSS 파일 연결 -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -58,7 +57,6 @@
                 <p>작품을 불러오는 중...</p>
             </div>
 
-            <!-- 빈 갤러리 메시지 -->
             <div class="empty-gallery" id="emptyGallery">
                 <div class="empty-content">
                     <h3>🎨 아직 등록된 작품이 없습니다</h3>
@@ -69,15 +67,13 @@
                 </div>
             </div>
 
-            <!-- 연결 상태 표시 -->
             <div class="connection-status" id="connectionStatus">
                 <span class="status-indicator" id="statusIndicator">●</span>
                 <span class="status-text" id="statusText">연결 중...</span>
             </div>
 
             <div class="gallery-grid" id="galleryGrid">
-                <!-- Upstash에서 불러온 작품들이 여기에 동적으로 추가됩니다 -->
-            </div>
+                </div>
         </div>
     </section>
 
@@ -88,7 +84,6 @@
         </div>
     </footer>
 
-    <!-- 업로드 모달 -->
     <div id="uploadModal" class="upload-modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
@@ -178,7 +173,6 @@
         </div>
     </div>
 
-    <!-- 작품 상세보기 모달 -->
     <div id="artworkDetailModal" class="upload-modal" style="display: none;">
         <div class="modal-content detail-modal">
             <div class="modal-header">
@@ -189,7 +183,13 @@
                 <div class="artwork-detail">
                     <div class="detail-image-container">
                         <div id="detailImageGallery" class="detail-image-gallery">
-                            <!-- 여러 이미지가 여기에 표시됩니다 -->
+                            <div class="main-image-container">
+                                <button id="prev-image-btn" class="nav-arrow prev" style="display: none;">&lt;</button>
+                                <img id="currentMainImage" src="" alt="작품 이미지">
+                                <button id="next-image-btn" class="nav-arrow next" style="display: none;">&gt;</button>
+                            </div>
+                            <div class="thumbnail-container">
+                                </div>
                         </div>
                     </div>
                     <div class="detail-info">
@@ -217,10 +217,8 @@
         </div>
     </div>
 
-    <!-- Cloudinary Upload Widget 스크립트 -->
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
     
-    <!-- JavaScript 파일 연결 -->
     <script src="js/app.js"></script>
 </body>
 </html>
