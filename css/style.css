@@ -895,6 +895,20 @@ footer p {
     border-radius: 4px;
 }
 
+/* 이미지 개수 뱃지 */
+.image-count-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    z-index: 10;
+}
+
 /* 폼 행 레이아웃 */
 .form-row {
     display: flex;
