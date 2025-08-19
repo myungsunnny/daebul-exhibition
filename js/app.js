@@ -298,8 +298,20 @@ function createArtworkElement(artworkData) {
     }
     
     // 필수 데이터 확인
-    if (!artworkData.title || !artworkData.artist || !artworkData.imageUrl) {
+    if (!artworkData.title || (!artworkData.imageUrls && !artworkData.imageUrl)) {
         console.warn('작품 데이터가 불완전합니다:', artworkData);
+        return;
+    }
+    
+    // 이미지 URL 처리 (기존 단일 이미지와 새로운 다중 이미지 모두 지원)
+    let imageUrls = artworkData.imageUrls || [artworkData.imageUrl];
+    if (!Array.isArray(imageUrls)) {
+        imageUrls = [imageUrls];
+    }
+    imageUrls = imageUrls.filter(url => url); // 빈 URL 제거
+    
+    if (imageUrls.length === 0) {
+        console.warn('유효한 이미지 URL이 없습니다:', artworkData);
         return;
     }
     
@@ -319,16 +331,20 @@ function createArtworkElement(artworkData) {
         }
     }
     
+    // 다중 이미지 표시 (첫 번째 이미지를 대표로 사용)
+    const mainImageUrl = imageUrls[0];
+    const imageCountBadge = imageUrls.length > 1 ? `<span class="image-count-badge">${imageUrls.length}</span>` : '';
+    
     newItem.innerHTML = `
         <div class="image-container">
-            <img src="${artworkData.imageUrl}" alt="${artworkData.title}" loading="lazy">
+            <img src="${mainImageUrl}" alt="${artworkData.title}" loading="lazy">
+            ${imageCountBadge}
             <div class="image-overlay">
                 <button class="view-btn">자세히 보기</button>
             </div>
         </div>
         <div class="item-info">
             <h3 class="item-title">${artworkData.title}</h3>
-            <p class="item-author">${artworkData.artist}</p>
             <span class="item-grade">${artworkData.grade || '학년 정보 없음'}</span>
             <p class="item-description">${artworkData.description || '작가의 창의적인 작품입니다.'}</p>
             <small class="upload-date">📅 ${uploadDate}</small>
@@ -490,12 +506,25 @@ function initGalleryItems() {
 // 작품 상세보기 모달 표시
 function showArtworkDetailModal(item) {
     const title = item.querySelector('.item-title').textContent;
-    const author = item.querySelector('.item-author').textContent;
     const grade = item.querySelector('.item-grade').textContent;
     const description = item.querySelector('.item-description').textContent;
-    const imageUrl = item.querySelector('img').src;
     const category = item.getAttribute('data-category');
     const uploadDate = item.querySelector('.upload-date')?.textContent.replace('📅 ', '') || '날짜 정보 없음';
+    
+    // 작품 데이터에서 이미지 URL들과 링크 가져오기
+    const artworkId = item.getAttribute('data-artwork-id');
+    let imageUrls = [];
+    let artworkLink = '';
+    
+    // 저장된 작품 데이터에서 찾기 (임시 구현 - 나중에 개선 가능)
+    try {
+        const mainImg = item.querySelector('img');
+        if (mainImg) {
+            imageUrls = [mainImg.src];
+        }
+    } catch (e) {
+        console.warn('이미지 URL 처리 오류:', e);
+    }
     
     // 카테고리 한글 변환
     const categoryMap = {
@@ -507,20 +536,84 @@ function showArtworkDetailModal(item) {
     
     // 모달 요소들 업데이트
     document.getElementById('detailArtworkTitle').textContent = title;
-    document.getElementById('detailArtist').textContent = author;
     document.getElementById('detailGrade').textContent = grade;
     document.getElementById('detailCategory').textContent = categoryMap[category] || category;
     document.getElementById('detailUploadDate').textContent = uploadDate;
     document.getElementById('detailDescriptionText').textContent = description || '작품에 대한 설명이 없습니다.';
-    document.getElementById('detailImage').src = imageUrl;
+    
+    // 이미지 갤러리 업데이트
+    updateDetailImageGallery(imageUrls);
+    
+    // 링크 섹션 업데이트
+    const linkSection = document.getElementById('detailLinkSection');
+    const linkElement = document.getElementById('detailLink');
+    if (artworkLink && artworkLink.trim()) {
+        linkElement.href = artworkLink;
+        linkElement.textContent = '🔗 링크 보기';
+        linkSection.style.display = 'block';
+    } else {
+        linkSection.style.display = 'none';
+    }
     
     // 현재 이미지 URL 저장 (새 탭에서 열기용)
-    currentDetailImageUrl = imageUrl;
+    currentDetailImageUrl = imageUrls[0] || '';
     
     // 모달 표시
     const modal = document.getElementById('artworkDetailModal');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+}
+
+// 상세보기 이미지 갤러리 업데이트
+function updateDetailImageGallery(imageUrls) {
+    const gallery = document.getElementById('detailImageGallery');
+    if (!gallery || !imageUrls || imageUrls.length === 0) return;
+    
+    gallery.innerHTML = '';
+    
+    // 메인 이미지 컨테이너
+    const mainContainer = document.createElement('div');
+    mainContainer.className = 'main-image-container';
+    
+    const mainImage = document.createElement('img');
+    mainImage.src = imageUrls[0];
+    mainImage.alt = '작품 이미지';
+    mainImage.id = 'currentMainImage';
+    
+    mainContainer.appendChild(mainImage);
+    gallery.appendChild(mainContainer);
+    
+    // 썸네일 컨테이너 (이미지가 2개 이상일 때만)
+    if (imageUrls.length > 1) {
+        const thumbnailContainer = document.createElement('div');
+        thumbnailContainer.className = 'thumbnail-container';
+        
+        imageUrls.forEach((url, index) => {
+            const thumbnail = document.createElement('img');
+            thumbnail.src = url;
+            thumbnail.alt = `이미지 ${index + 1}`;
+            thumbnail.className = `thumbnail ${index === 0 ? 'active' : ''}`;
+            thumbnail.addEventListener('click', () => switchMainImage(url, thumbnail));
+            
+            thumbnailContainer.appendChild(thumbnail);
+        });
+        
+        gallery.appendChild(thumbnailContainer);
+    }
+}
+
+// 메인 이미지 전환
+function switchMainImage(newUrl, clickedThumbnail) {
+    const mainImage = document.getElementById('currentMainImage');
+    if (mainImage) {
+        mainImage.src = newUrl;
+        currentDetailImageUrl = newUrl;
+    }
+    
+    // 썸네일 활성 상태 업데이트
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    thumbnails.forEach(thumb => thumb.classList.remove('active'));
+    clickedThumbnail.classList.add('active');
 }
 
 // 상세보기 모달 닫기
@@ -886,16 +979,21 @@ function addNewArtwork(artworkData) {
         
         const uploadDate = new Date(artworkData.uploadDate).toLocaleDateString('ko-KR');
         
+        // 이미지 URL 처리
+        const imageUrls = artworkData.imageUrls || [artworkData.imageUrl];
+        const mainImageUrl = imageUrls[0];
+        const imageCountBadge = imageUrls.length > 1 ? `<span class="image-count-badge">${imageUrls.length}</span>` : '';
+        
         newItem.innerHTML = `
             <div class="image-container">
-                <img src="${artworkData.imageUrl}" alt="${artworkData.title}" loading="lazy">
+                <img src="${mainImageUrl}" alt="${artworkData.title}" loading="lazy">
+                ${imageCountBadge}
                 <div class="image-overlay">
                     <button class="view-btn">자세히 보기</button>
                 </div>
             </div>
             <div class="item-info">
                 <h3 class="item-title">${artworkData.title}</h3>
-                <p class="item-author">${artworkData.artist}</p>
                 <span class="item-grade">${artworkData.grade}</span>
                 <p class="item-description">${artworkData.description || '작가의 창의적인 작품입니다.'}</p>
                 <small class="upload-date">📅 ${uploadDate}</small>
