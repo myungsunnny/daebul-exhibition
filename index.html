@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리학교 학생 작품 전시관</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            color: #667eea;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .filter-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: white;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .gallery {
+            background: white;
+            padding: 4rem 0;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .gallery-item {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .item-info {
+            padding: 1.5rem;
+        }
+
+        .item-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .item-author {
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-grade {
+            background: #f0f2ff;
+            color: #667eea;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .upload-section {
+            background: #f8f9ff;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .upload-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .filter-buttons {
+                gap: 0.5rem;
+            }
+
+            .filter-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* 로딩 애니메이션 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">🎨 학생 작품 전시관</div>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a href="#home">홈</a></li>
+                        <li><a href="#gallery">갤러리</a></li>
+                        <li><a href="#upload">작품 업로드</a></li>
+                        <li><a href="#about">소개</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero" id="home">
+        <div class="container">
+            <h1>우리들의 멋진 작품들</h1>
+            <p>창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</p>
+        </div>
+    </section>
+
+    <section class="gallery" id="gallery">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: #333;">작품 갤러리</h2>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">전체</button>
+                <button class="filter-btn" data-filter="drawing">그림</button>
+                <button class="filter-btn" data-filter="craft">공예</button>
+                <button class="filter-btn" data-filter="sculpture">조소</button>
+                <button class="filter-btn" data-filter="digital">디지털아트</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>작품을 불러오는 중...</p>
+            </div>
+
+            <div class="gallery-grid" id="galleryGrid">
+                <!-- 샘플 작품들 -->
+                <div class="gallery-item" data-category="drawing">
+                    <img src="https://via.placeholder.com/300x250/667eea/ffffff?text=그림+작품" alt="그림 작품">
+                    <div class="item-info">
+                        <h3 class="item-title">아름다운 풍경</h3>
+                        <p class="item-author">김민수</p>
+                        <span class="item-grade">3학년 2반</span>
+                        <p class="item-description">우리 마을의 아름다운 풍경을 색연필로 그린 작품입니다.</p>
+                    </div>
+                </div>
+
+                <div class="gallery-item" data-category="craft">
+                    <img src="https://via.placeholder.com/300x250/764ba2/ffffff?text=공예+작품" alt="공예 작품">
+                    <div class="item-info">
+                        <h3 class="item-title">나만의 필통</h3>
+                        <p class="item-author">박지은</p>
+                        <span class="item-grade">4학년 1반</span>
+                        <p class="item-description">재활용품을 이용해 만든 친환경 필통입니다.</p>
+                    </div>
+                </div>
+
+                <div class="gallery-item" data-category="digital">
+                    <img src="https://via.placeholder.com/300x250/36c9aa/ffffff?text=디지털+작품" alt="디지털 작품">
+                    <div class="item-info">
+                        <h3 class="item-title">미래의 학교</h3>
+                        <p class="item-author">이준호</p>
+                        <span class="item-grade">5학년 3반</span>
+                        <p class="item-description">태블릿으로 그린 미래 학교의 모습입니다.</p>
+                    </div>
+                </div>
+
+                <div class="gallery-item" data-category="sculpture">
+                    <img src="https://via.placeholder.com/300x250/f093fb/ffffff?text=조소+작품" alt="조소 작품">
+                    <div class="item-info">
+                        <h3 class="item-title">귀여운 동물 친구들</h3>
+                        <p class="item-author">최유진</p>
+                        <span class="item-grade">6학년 1반</span>
+                        <p class="item-description">찰흙으로 만든 동물 친구들입니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="upload-section" id="upload">
+        <div class="container">
+            <h2 style="margin-bottom: 1rem; color: #333;">작품 업로드</h2>
+            <p style="margin-bottom: 2rem; color: #666;">여러분의 멋진 작품을 공유해주세요!</p>
+            <button class="upload-btn" onclick="openUploadModal()">
+                📸 작품 올리기
+            </button>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 우리학교 학생 작품 전시관. 모든 작품의 저작권은 학생에게 있습니다.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 필터 기능
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const galleryItems = document.querySelectorAll('.gallery-item');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // 활성 버튼 변경
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    const filter = button.getAttribute('data-filter');
+                    
+                    // 갤러리 아이템 필터링
+                    galleryItems.forEach(item => {
+                        if (filter === 'all' || item.getAttribute('data-category') === filter) {
+                            item.style.display = 'block';
+                            item.style.opacity = '0';
+                            setTimeout(() => {
+                                item.style.opacity = '1';
+                            }, 100);
+                        } else {
+                            item.style.opacity = '0';
+                            setTimeout(() => {
+                                item.style.display = 'none';
+                            }, 300);
+                        }
+                    });
+                });
+            });
+
+            // 갤러리 아이템 클릭 이벤트
+            galleryItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // 여기에 상세보기 모달 또는 페이지 이동 로직 추가
+                    alert('작품 상세보기 기능은 추후 구현예정입니다.');
+                });
+            });
+        });
+
+        // 업로드 모달 함수 (추후 구현)
+        function openUploadModal() {
+            alert('작품 업로드 기능은 추후 Cloudinary와 연동하여 구현예정입니다.');
+        }
+
+        // 부드러운 스크롤
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
