@@ -1,15 +1,15 @@
 // 학생 작품 갤러리 JavaScript - Upstash Redis 연동
 
-// Cloudinary 설정 (여기에 본인의 정보를 입력하세요!)
+// Cloudinary 설정
 const CLOUDINARY_CONFIG = {
-    cloudName: 'dc0hyzldx',        // ← 여기에 본인의 Cloud Name 입력
-    uploadPreset: 'student_gallery'      // ← Upload Preset 이름
+    cloudName: 'dc0hyzldx',
+    uploadPreset: 'student_gallery'
 };
 
-// Upstash Redis 설정 (여기에 본인의 정보를 입력하세요!)
+// Upstash Redis 설정
 const UPSTASH_CONFIG = {
-    url: 'https://sharp-hookworm-54944.upstash.io',      // ← Upstash Redis REST URL
-    token: 'AdagAAIncDFhNjc5YWZmYzQ5NDA0ZTEyODQ5ZGNmNDU5YTEwOGM4MHAxNTQ5NDQ'   // ← Upstash Redis REST Token
+    url: 'https://sharp-hookworm-54944.upstash.io',
+    token: 'AdagAAIncDFhNjc5YWZmYzQ5NDA0ZTEyODQ5ZGNmNDU5YTEwOGM4MHAxNTQ5NDQ'
 };
 
 // Redis 키
@@ -66,32 +66,53 @@ function updateConnectionStatus(status, message) {
     }
 }
 
-// Upstash Redis API 호출
+// Upstash Redis API 호출 (수정된 방식)
 async function callUpstashAPI(command, key, value = null) {
     try {
-        if (UPSTASH_CONFIG.url === 'YOUR_UPSTASH_REDIS_REST_URL') {
-            throw new Error('Upstash 설정을 먼저 완료해주세요!');
-        }
-
-        const body = value !== null ? [command, key, JSON.stringify(value)] : [command, key];
+        let url = UPSTASH_CONFIG.url;
+        let body;
         
-        const response = await fetch(UPSTASH_CONFIG.url, {
+        // 명령어에 따라 URL과 body 구성
+        if (command === 'GET') {
+            url += `/get/${encodeURIComponent(key)}`;
+            body = null;
+        } else if (command === 'SET') {
+            url += `/set/${encodeURIComponent(key)}`;
+            body = JSON.stringify(value);
+        } else if (command === 'DEL') {
+            url += `/del/${encodeURIComponent(key)}`;
+            body = null;
+        } else if (command === 'PING') {
+            url += `/ping`;
+            body = null;
+        }
+        
+        const options = {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${UPSTASH_CONFIG.token}`,
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            }
+        };
+        
+        if (body !== null) {
+            options.body = body;
         }
-
+        
+        console.log('🔗 Upstash API 호출:', { command, key, url });
+        
+        const response = await fetch(url, options);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        console.log('✅ Upstash API 응답:', data);
+        
         return data.result;
     } catch (error) {
-        console.error('Upstash API 호출 오류:', error);
+        console.error('❌ Upstash API 호출 오류:', error);
         throw error;
     }
 }
@@ -102,18 +123,25 @@ async function checkConnectionAndLoadArtworks() {
     
     try {
         // 연결 테스트
+        console.log('🔄 Upstash 연결 테스트 중...');
         await callUpstashAPI('PING');
+        console.log('✅ Upstash 연결 성공!');
         updateConnectionStatus('connected', '온라인 - 실시간 동기화');
         
         // 작품 불러오기
         await loadArtworksFromUpstash();
         
     } catch (error) {
-        console.error('연결 오류:', error);
-        updateConnectionStatus('disconnected', '오프라인 - 연결 실패');
+        console.error('❌ 연결 오류:', error);
+        updateConnectionStatus('disconnected', `오프라인 - ${error.message}`);
         
-        if (error.message.includes('Upstash 설정')) {
-            alert('⚠️ Upstash 설정을 먼저 완료해주세요!\n\njs/app.js 파일에서 UPSTASH_CONFIG의 url과 token을 본인의 값으로 변경해주세요.');
+        // 상세 에러 정보 표시
+        if (error.message.includes('401')) {
+            alert('⚠️ Upstash 인증 오류!\nToken이 올바르지 않습니다.');
+        } else if (error.message.includes('404')) {
+            alert('⚠️ Upstash URL 오류!\nURL이 올바르지 않습니다.');
+        } else {
+            console.log('🔍 네트워크 연결을 확인해주세요.');
         }
     }
 }
@@ -124,11 +152,22 @@ async function loadArtworksFromUpstash() {
         showLoading();
         updateConnectionStatus('connecting', '작품 불러오는 중...');
         
+        console.log('📥 Upstash에서 작품 데이터 조회 중...');
         const artworksData = await callUpstashAPI('GET', REDIS_KEY);
         
-        if (artworksData) {
-            const artworks = JSON.parse(artworksData);
+        if (artworksData && artworksData !== null) {
+            console.log('📦 원시 데이터:', artworksData);
+            
+            let artworks;
+            // 데이터가 문자열인 경우 파싱
+            if (typeof artworksData === 'string') {
+                artworks = JSON.parse(artworksData);
+            } else {
+                artworks = artworksData;
+            }
+            
             console.log(`☁️ Upstash에서 ${artworks.length}개 작품을 불러왔습니다.`);
+            console.log('🎨 작품 목록:', artworks);
             
             // 작품들을 화면에 표시
             artworks.forEach((artwork, index) => {
@@ -153,7 +192,7 @@ async function loadArtworksFromUpstash() {
         }
         
     } catch (error) {
-        console.error('작품 불러오기 오류:', error);
+        console.error('❌ 작품 불러오기 오류:', error);
         hideLoading();
         checkEmptyGallery();
         updateConnectionStatus('disconnected', '작품 로드 실패');
@@ -165,26 +204,37 @@ async function saveArtworkToUpstash(newArtwork) {
     try {
         updateConnectionStatus('connecting', '작품 저장 중...');
         
+        console.log('💾 새 작품 저장 중:', newArtwork);
+        
         // 기존 작품들 가져오기
         let artworks = [];
         const existingData = await callUpstashAPI('GET', REDIS_KEY);
         
-        if (existingData) {
-            artworks = JSON.parse(existingData);
+        if (existingData && existingData !== null) {
+            // 데이터가 문자열인 경우 파싱
+            if (typeof existingData === 'string') {
+                artworks = JSON.parse(existingData);
+            } else {
+                artworks = existingData;
+            }
         }
+        
+        console.log('📋 기존 작품 수:', artworks.length);
         
         // 새 작품을 맨 앞에 추가 (최신 작품이 먼저 보이도록)
         artworks.unshift(newArtwork);
+        
+        console.log('💾 총 작품 수 (저장 예정):', artworks.length);
         
         // Upstash에 저장
         await callUpstashAPI('SET', REDIS_KEY, artworks);
         
         updateConnectionStatus('connected', `온라인 - ${artworks.length}개 작품 동기화됨`);
-        console.log('☁️ 작품이 Upstash에 성공적으로 저장되었습니다:', newArtwork.title);
+        console.log('✅ 작품이 Upstash에 성공적으로 저장되었습니다:', newArtwork.title);
         
         return true;
     } catch (error) {
-        console.error('작품 저장 오류:', error);
+        console.error('❌ 작품 저장 오류:', error);
         updateConnectionStatus('disconnected', '저장 실패');
         throw error;
     }
@@ -193,6 +243,11 @@ async function saveArtworkToUpstash(newArtwork) {
 // 작품 요소 생성 (DOM에 추가)
 function createArtworkElement(artworkData) {
     const galleryGrid = document.getElementById('galleryGrid');
+    
+    if (!galleryGrid) {
+        console.error('galleryGrid 요소를 찾을 수 없습니다.');
+        return;
+    }
     
     // 새 갤러리 아이템 생성
     const newItem = document.createElement('div');
@@ -474,9 +529,7 @@ function openUploadModal() {
     const modal = document.getElementById('uploadModal');
     if (modal) {
         modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
-        
-        // 폼 초기화
+        document.body.style.overflow = 'hidden';
         resetUploadForm();
     }
 }
@@ -486,9 +539,7 @@ function closeUploadModal() {
     const modal = document.getElementById('uploadModal');
     if (modal) {
         modal.style.display = 'none';
-        document.body.style.overflow = 'auto'; // 배경 스크롤 복원
-        
-        // 폼 초기화
+        document.body.style.overflow = 'auto';
         resetUploadForm();
     }
 }
@@ -500,13 +551,11 @@ function resetUploadForm() {
         form.reset();
     }
     
-    // 이미지 미리보기 숨기기
     const previewImage = document.getElementById('previewImage');
     const uploadPlaceholder = document.querySelector('.upload-placeholder');
     if (previewImage) previewImage.style.display = 'none';
     if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
     
-    // 제출 버튼 초기화
     const submitBtn = document.querySelector('.submit-btn');
     if (submitBtn) {
         const btnText = submitBtn.querySelector('.btn-text');
@@ -517,7 +566,6 @@ function resetUploadForm() {
         if (btnLoading) btnLoading.style.display = 'none';
     }
     
-    // 숨겨진 이미지 URL 초기화
     const uploadedImageUrl = document.getElementById('uploadedImageUrl');
     if (uploadedImageUrl) uploadedImageUrl.value = '';
 }
@@ -546,13 +594,7 @@ function initCloudinaryUpload() {
     const uploadArea = document.getElementById('imageUploadArea');
     
     if (uploadArea) {
-        // 클릭 이벤트
         uploadArea.addEventListener('click', function() {
-            if (CLOUDINARY_CONFIG.cloudName === 'YOUR_CLOUD_NAME') {
-                alert('⚠️ Cloudinary 설정을 먼저 완료해주세요!\n\njs/app.js 파일에서 CLOUDINARY_CONFIG의 cloudName을 본인의 값으로 변경해주세요.');
-                return;
-            }
-            
             openCloudinaryWidget();
         });
     }
@@ -571,36 +613,9 @@ function openCloudinaryWidget() {
             uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
             sources: ['local', 'camera'],
             multiple: false,
-            maxFileSize: 10000000, // 10MB
+            maxFileSize: 10000000,
             clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-            theme: 'minimal',
-            text: {
-                ko: {
-                    or: '또는',
-                    back: '뒤로',
-                    close: '닫기',
-                    upload_from: '업로드',
-                    local: '내 컴퓨터',
-                    camera: '카메라'
-                }
-            },
-            styles: {
-                palette: {
-                    window: '#FFFFFF',
-                    windowBorder: '#90A0B3',
-                    tabIcon: '#667eea',
-                    menuIcons: '#5A616A',
-                    textDark: '#000000',
-                    textLight: '#FFFFFF',
-                    link: '#667eea',
-                    action: '#667eea',
-                    inactiveTabIcon: '#0E2F5A',
-                    error: '#F44235',
-                    inProgress: '#0078FF',
-                    complete: '#20B832',
-                    sourceBg: '#E4EBF1'
-                }
-            }
+            theme: 'minimal'
         },
         (error, result) => {
             if (error) {
@@ -626,7 +641,6 @@ function handleUploadSuccess(uploadInfo) {
     const uploadPlaceholder = document.querySelector('.upload-placeholder');
     const uploadedImageUrl = document.getElementById('uploadedImageUrl');
     
-    // 이미지 미리보기 표시
     if (previewImage) {
         previewImage.src = imageUrl;
         previewImage.style.display = 'block';
@@ -634,15 +648,11 @@ function handleUploadSuccess(uploadInfo) {
     if (uploadPlaceholder) {
         uploadPlaceholder.style.display = 'none';
     }
-    
-    // 업로드된 이미지 URL 저장
     if (uploadedImageUrl) {
         uploadedImageUrl.value = imageUrl;
     }
     
-    // 폼 유효성 검사
     validateForm();
-    
     console.log('이미지가 성공적으로 업로드되었습니다:', imageUrl);
 }
 
@@ -655,8 +665,6 @@ function validateForm() {
     const imageUrl = document.getElementById('uploadedImageUrl')?.value || '';
     
     const submitBtn = document.querySelector('.submit-btn');
-    
-    // 모든 필수 필드가 채워졌는지 확인
     const isValid = title && artist && grade && category && imageUrl;
     
     if (submitBtn) {
@@ -674,14 +682,12 @@ function initArtworkForm() {
     const form = document.getElementById('artworkForm');
     
     if (form) {
-        // 입력 필드 변경시 유효성 검사
         const inputs = form.querySelectorAll('input, select, textarea');
         inputs.forEach(input => {
             input.addEventListener('input', validateForm);
             input.addEventListener('change', validateForm);
         });
         
-        // 폼 제출 이벤트
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -690,13 +696,11 @@ function initArtworkForm() {
                 return;
             }
             
-            // 로딩 상태 시작
             setButtonLoading(true);
             
             try {
-                // 폼 데이터 수집
                 const formData = {
-                    id: Date.now().toString(), // 고유 ID 생성
+                    id: Date.now().toString(),
                     title: document.getElementById('artworkTitle').value.trim(),
                     artist: document.getElementById('artistName').value.trim(),
                     grade: document.getElementById('studentGrade').value,
@@ -706,27 +710,21 @@ function initArtworkForm() {
                     uploadDate: new Date().toISOString()
                 };
                 
-                // Upstash에 저장
+                console.log('📤 새 작품 업로드 시작:', formData);
+                
                 await saveArtworkToUpstash(formData);
-                
-                // 화면에 즉시 추가
                 addNewArtwork(formData);
-                
-                // 모달 닫기
                 closeUploadModal();
                 
-                // 성공 메시지
                 alert(`🎉 "${formData.title}" 작품이 성공적으로 등록되었습니다!\n\n이제 전 세계 어디서든 이 작품을 볼 수 있습니다! 🌍`);
                 
-                // 통계 및 빈 갤러리 상태 업데이트
                 updateStats();
                 checkEmptyGallery();
                 
             } catch (error) {
-                console.error('작품 등록 오류:', error);
+                console.error('❌ 작품 등록 오류:', error);
                 alert('작품 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
             } finally {
-                // 로딩 상태 종료
                 setButtonLoading(false);
             }
         });
@@ -738,13 +736,11 @@ function addNewArtwork(artworkData) {
     const galleryGrid = document.getElementById('galleryGrid');
     
     if (galleryGrid) {
-        // 새 갤러리 아이템 생성
         const newItem = document.createElement('div');
         newItem.className = 'gallery-item';
         newItem.setAttribute('data-category', artworkData.category);
         newItem.setAttribute('data-artwork-id', artworkData.id);
         
-        // 업로드 날짜 포맷팅
         const uploadDate = new Date(artworkData.uploadDate).toLocaleDateString('ko-KR');
         
         newItem.innerHTML = `
@@ -763,10 +759,8 @@ function addNewArtwork(artworkData) {
             </div>
         `;
         
-        // 갤러리 맨 앞에 추가 (최신 작품이 먼저 보이도록)
         galleryGrid.insertBefore(newItem, galleryGrid.firstChild);
         
-        // 새 아이템에 애니메이션 효과
         newItem.style.opacity = '0';
         newItem.style.transform = 'translateY(30px)';
         
@@ -776,7 +770,6 @@ function addNewArtwork(artworkData) {
             newItem.style.transform = 'translateY(0)';
         }, 100);
         
-        // 새 아이템에 이벤트 리스너 추가
         addEventListenersToArtwork(newItem);
         
         console.log('새 작품이 갤러리에 추가되었습니다:', artworkData);
@@ -805,7 +798,6 @@ setInterval(async () => {
         await callUpstashAPI('PING');
         if (!isConnected) {
             updateConnectionStatus('connected', '연결 복구됨');
-            // 작품 다시 불러오기
             const galleryGrid = document.getElementById('galleryGrid');
             if (galleryGrid && galleryGrid.children.length === 0) {
                 await loadArtworksFromUpstash();
@@ -814,7 +806,7 @@ setInterval(async () => {
     } catch (error) {
         updateConnectionStatus('disconnected', '연결 끊어짐');
     }
-}, 300000); // 5분마다 체크
+}, 300000);
 
 // 모달 외부 클릭시 닫기
 window.addEventListener('click', function(e) {
@@ -853,6 +845,44 @@ window.addEventListener('error', function(e) {
 
 // 개발자를 위한 유틸리티 함수들
 const GalleryUtils = {
+    // 연결 테스트
+    testConnection: async function() {
+        try {
+            console.log('🔄 연결 테스트 시작...');
+            const result = await callUpstashAPI('PING');
+            console.log('✅ 연결 테스트 성공:', result);
+            return true;
+        } catch (error) {
+            console.log('❌ 연결 테스트 실패:', error);
+            return false;
+        }
+    },
+    
+    // 저장된 데이터 확인
+    getSavedData: async function() {
+        try {
+            console.log('📥 저장된 데이터 조회 중...');
+            const data = await callUpstashAPI('GET', REDIS_KEY);
+            
+            if (data && data !== null) {
+                let artworks;
+                if (typeof data === 'string') {
+                    artworks = JSON.parse(data);
+                } else {
+                    artworks = data;
+                }
+                console.log('☁️ Upstash 저장된 작품 데이터:', artworks);
+                return artworks;
+            } else {
+                console.log('☁️ Upstash에 저장된 데이터가 없습니다.');
+                return [];
+            }
+        } catch (error) {
+            console.error('❌ 데이터 조회 실패:', error);
+            return null;
+        }
+    },
+    
     // 새 작품 추가 (테스트용)
     addArtwork: async function(title, author, grade, description, category, imageUrl) {
         const artworkData = {
@@ -862,13 +892,14 @@ const GalleryUtils = {
         };
         
         try {
+            console.log('📤 테스트 작품 추가:', artworkData);
             await saveArtworkToUpstash(artworkData);
             addNewArtwork(artworkData);
             updateStats();
             checkEmptyGallery();
-            console.log(`새 작품이 추가되었습니다: ${title}`);
+            console.log(`✅ 새 작품이 추가되었습니다: ${title}`);
         } catch (error) {
-            console.error('작품 추가 실패:', error);
+            console.error('❌ 작품 추가 실패:', error);
         }
     },
     
@@ -893,14 +924,32 @@ const GalleryUtils = {
         return categories;
     },
     
-    // 모든 작품 삭제 (테스트용 - 주의!)
+    // 갤러리 새로고침
+    refreshGallery: async function() {
+        try {
+            console.log('🔄 갤러리 새로고침 중...');
+            
+            // 기존 갤러리 비우기
+            const galleryGrid = document.getElementById('galleryGrid');
+            if (galleryGrid) {
+                galleryGrid.innerHTML = '';
+            }
+            
+            // 작품 다시 불러오기
+            await loadArtworksFromUpstash();
+            console.log('✅ 갤러리 새로고침 완료');
+        } catch (error) {
+            console.error('❌ 갤러리 새로고침 실패:', error);
+        }
+    },
+    
+    // 모든 작품 삭제 (주의!)
     clearGallery: async function() {
         if (confirm('⚠️ 정말로 모든 작품을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다!')) {
             try {
-                // Upstash에서 삭제
+                console.log('🗑️ 갤러리 초기화 중...');
                 await callUpstashAPI('DEL', REDIS_KEY);
                 
-                // 화면에서 삭제
                 const galleryGrid = document.getElementById('galleryGrid');
                 if (galleryGrid) {
                     galleryGrid.innerHTML = '';
@@ -909,49 +958,29 @@ const GalleryUtils = {
                 updateStats();
                 checkEmptyGallery();
                 updateConnectionStatus('connected', '온라인 - 갤러리 초기화됨');
-                console.log('갤러리가 초기화되었습니다.');
+                console.log('✅ 갤러리가 초기화되었습니다.');
             } catch (error) {
-                console.error('갤러리 초기화 실패:', error);
+                console.error('❌ 갤러리 초기화 실패:', error);
             }
-        }
-    },
-    
-    // Upstash 저장된 데이터 확인
-    getSavedData: async function() {
-        try {
-            const data = await callUpstashAPI('GET', REDIS_KEY);
-            if (data) {
-                const artworks = JSON.parse(data);
-                console.log('☁️ Upstash 저장된 작품 데이터:', artworks);
-                return artworks;
-            } else {
-                console.log('☁️ Upstash에 저장된 데이터가 없습니다.');
-                return [];
-            }
-        } catch (error) {
-            console.error('데이터 조회 실패:', error);
-            return null;
-        }
-    },
-    
-    // 연결 상태 확인
-    checkConnection: async function() {
-        try {
-            await callUpstashAPI('PING');
-            console.log('☁️ Upstash 연결 상태: 정상');
-            return true;
-        } catch (error) {
-            console.log('☁️ Upstash 연결 상태: 실패', error);
-            return false;
         }
     }
 };
 
 // 콘솔에 유틸리티 함수 정보 출력
 console.log('🛠️ 개발자 도구:');
-console.log('- GalleryUtils.addArtwork() : 새 작품 추가');
+console.log('- GalleryUtils.testConnection() : 연결 테스트');
+console.log('- GalleryUtils.getSavedData() : 저장된 데이터 확인');
+console.log('- GalleryUtils.refreshGallery() : 갤러리 새로고침');
+console.log('- GalleryUtils.addArtwork() : 새 작품 추가 (테스트용)');
 console.log('- GalleryUtils.getArtworkCount() : 작품 수 확인');
 console.log('- GalleryUtils.getCategoryCount() : 카테고리별 작품 수 확인');
 console.log('- GalleryUtils.clearGallery() : 갤러리 초기화 (주의!)');
-console.log('- GalleryUtils.getSavedData() : Upstash 저장된 데이터 확인');
-console.log('- GalleryUtils.checkConnection() : 연결 상태 확인');
+
+// 페이지 로드 완료 후 디버그 정보
+setTimeout(() => {
+    console.log('🔍 디버그 정보:');
+    console.log('- Upstash URL:', UPSTASH_CONFIG.url);
+    console.log('- Token 길이:', UPSTASH_CONFIG.token.length);
+    console.log('- 연결 상태:', isConnected ? '연결됨' : '연결 안됨');
+    console.log('- 현재 작품 수:', document.querySelectorAll('.gallery-item').length);
+}, 3000);
