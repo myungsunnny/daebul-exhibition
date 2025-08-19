@@ -414,7 +414,7 @@ footer p {
 
 /* 상세보기 모달 크기 조정 */
 .detail-modal {
-    max-width: 900px;
+    max-width: 1100px; /* 900px에서 1100px로 변경됨 */
     width: 95%;
 }
 
@@ -581,14 +581,13 @@ footer p {
 }
 
 .detail-image-container {
-    flex: 1;
+    flex: 1.5; /* 이미지 영역을 조금 더 넓게 */
     text-align: center;
 }
 
 .detail-image-container img {
     width: 100%;
-    max-width: 400px;
-    max-height: 400px;
+    max-height: 500px; /* 이미지 최대 높이 증가 */
     object-fit: contain;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -980,15 +979,6 @@ footer p {
 
 .main-image-container {
     position: relative;
-}
-
-.main-image-container img {
-    width: 100%;
-    max-width: 400px;
-    max-height: 400px;
-    object-fit: contain;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .thumbnail-container {
