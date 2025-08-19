@@ -6,6 +6,9 @@ const CLOUDINARY_CONFIG = {
     uploadPreset: 'student_gallery'      // ← Upload Preset 이름
 };
 
+// 현재 상세보기 중인 이미지 URL (새 탭에서 열기용)
+let currentDetailImageUrl = '';
+
 // 페이지 로드 완료 후 실행
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎨 학생 갤러리 시작!');
@@ -14,21 +17,62 @@ document.addEventListener('DOMContentLoaded', function() {
     initFilterButtons();
     initGalleryItems();
     initSmoothScroll();
-    initLoadingAnimation();
     initCloudinaryUpload();
     initArtworkForm();
+    updateStats();
+    checkEmptyGallery();
     
     console.log('✅ 모든 기능이 준비되었습니다!');
     console.log('📸 Cloudinary 업로드 기능이 준비되었습니다!');
 });
 
+// 빈 갤러리 체크
+function checkEmptyGallery() {
+    const galleryGrid = document.getElementById('galleryGrid');
+    const emptyGallery = document.getElementById('emptyGallery');
+    const filterButtons = document.querySelector('.filter-buttons');
+    
+    if (galleryGrid.children.length === 0) {
+        emptyGallery.style.display = 'block';
+        filterButtons.style.display = 'none';
+    } else {
+        emptyGallery.style.display = 'none';
+        filterButtons.style.display = 'flex';
+    }
+}
+
+// 통계 업데이트
+function updateStats() {
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    const artists = new Set();
+    const categories = new Set();
+    
+    galleryItems.forEach(item => {
+        const author = item.querySelector('.item-author')?.textContent;
+        const category = item.getAttribute('data-category');
+        
+        if (author) artists.add(author);
+        if (category) categories.add(category);
+    });
+    
+    // 통계 업데이트
+    const artworkCount = document.getElementById('artworkCount');
+    const artistCount = document.getElementById('artistCount');
+    const categoryCount = document.getElementById('categoryCount');
+    
+    if (artworkCount) artworkCount.textContent = galleryItems.length;
+    if (artistCount) artistCount.textContent = artists.size;
+    if (categoryCount) categoryCount.textContent = categories.size;
+}
+
 // 필터 버튼 기능
 function initFilterButtons() {
     const filterButtons = document.querySelectorAll('.filter-btn');
-    const galleryItems = document.querySelectorAll('.gallery-item');
 
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
+            const galleryItems = document.querySelectorAll('.gallery-item');
+            
             // 로딩 표시
             showLoading();
             
@@ -90,11 +134,7 @@ function initGalleryItems() {
                 return;
             }
             
-            const title = item.querySelector('.item-title').textContent;
-            const author = item.querySelector('.item-author').textContent;
-            const description = item.querySelector('.item-description').textContent;
-            
-            showArtworkDetail(title, author, description);
+            showArtworkDetailModal(item);
         });
     });
 
@@ -104,28 +144,58 @@ function initGalleryItems() {
             e.stopPropagation(); // 이벤트 버블링 방지
             
             const item = button.closest('.gallery-item');
-            const title = item.querySelector('.item-title').textContent;
-            const author = item.querySelector('.item-author').textContent;
-            const description = item.querySelector('.item-description').textContent;
-            
-            showArtworkDetail(title, author, description);
+            showArtworkDetailModal(item);
         });
     });
 }
 
-// 작품 상세보기 모달 (간단한 alert로 구현)
-function showArtworkDetail(title, author, description) {
-    const message = `
-🎨 작품 정보
-
-📝 제목: ${title}
-👤 작가: ${author}
-📖 설명: ${description}
-
-곧 더 자세한 작품 정보를 볼 수 있는 기능이 추가될 예정입니다!
-    `;
+// 작품 상세보기 모달 표시
+function showArtworkDetailModal(item) {
+    const title = item.querySelector('.item-title').textContent;
+    const author = item.querySelector('.item-author').textContent;
+    const grade = item.querySelector('.item-grade').textContent;
+    const description = item.querySelector('.item-description').textContent;
+    const imageUrl = item.querySelector('img').src;
+    const category = item.getAttribute('data-category');
     
-    alert(message);
+    // 카테고리 한글 변환
+    const categoryMap = {
+        'drawing': '그림',
+        'craft': '공예',
+        'sculpture': '조소',
+        'digital': '디지털아트'
+    };
+    
+    // 모달 요소들 업데이트
+    document.getElementById('detailArtworkTitle').textContent = title;
+    document.getElementById('detailArtist').textContent = author;
+    document.getElementById('detailGrade').textContent = grade;
+    document.getElementById('detailCategory').textContent = categoryMap[category] || category;
+    document.getElementById('detailDescriptionText').textContent = description || '작품에 대한 설명이 없습니다.';
+    document.getElementById('detailImage').src = imageUrl;
+    
+    // 현재 이미지 URL 저장 (새 탭에서 열기용)
+    currentDetailImageUrl = imageUrl;
+    
+    // 모달 표시
+    const modal = document.getElementById('artworkDetailModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+// 상세보기 모달 닫기
+function closeDetailModal() {
+    const modal = document.getElementById('artworkDetailModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    currentDetailImageUrl = '';
+}
+
+// 원본 이미지 새 탭에서 열기
+function openImageInNewTab() {
+    if (currentDetailImageUrl) {
+        window.open(currentDetailImageUrl, '_blank');
+    }
 }
 
 // 부드러운 스크롤 기능
@@ -148,7 +218,6 @@ function initSmoothScroll() {
                     behavior: 'smooth'
                 });
                 
-                // 모바일에서 메뉴 닫기 (추후 모바일 메뉴 구현시 사용)
                 console.log(`${targetId} 섹션으로 이동했습니다.`);
             }
         });
@@ -174,23 +243,6 @@ function hideLoading() {
         loading.style.display = 'none';
         galleryGrid.style.opacity = '1';
     }
-}
-
-// 로딩 애니메이션 초기화
-function initLoadingAnimation() {
-    // 페이지 로드시 갤러리 아이템들이 순차적으로 나타나는 효과
-    const galleryItems = document.querySelectorAll('.gallery-item');
-    
-    galleryItems.forEach((item, index) => {
-        item.style.opacity = '0';
-        item.style.transform = 'translateY(30px)';
-        
-        setTimeout(() => {
-            item.style.transition = 'all 0.6s ease';
-            item.style.opacity = '1';
-            item.style.transform = 'translateY(0)';
-        }, index * 150 + 300); // 300ms 후부터 시작
-    });
 }
 
 // 업로드 모달 열기
@@ -380,6 +432,10 @@ function initArtworkForm() {
         
         // 성공 메시지
         alert(`🎉 "${formData.title}" 작품이 성공적으로 등록되었습니다!`);
+        
+        // 통계 및 빈 갤러리 상태 업데이트
+        updateStats();
+        checkEmptyGallery();
     });
 }
 
@@ -440,35 +496,32 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// 갤러리 아이템 호버 효과 (추가)
-document.addEventListener('DOMContentLoaded', function() {
-    const galleryItems = document.querySelectorAll('.gallery-item');
-    
-    galleryItems.forEach(item => {
-        item.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-10px) scale(1.02)';
-        });
-        
-        item.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
-    });
-});
-
 // 모달 외부 클릭시 닫기
 window.addEventListener('click', function(e) {
-    const modal = document.getElementById('uploadModal');
-    if (e.target === modal) {
+    const uploadModal = document.getElementById('uploadModal');
+    const detailModal = document.getElementById('artworkDetailModal');
+    
+    if (e.target === uploadModal) {
         closeUploadModal();
+    }
+    
+    if (e.target === detailModal) {
+        closeDetailModal();
     }
 });
 
 // ESC 키로 모달 닫기
 window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        const modal = document.getElementById('uploadModal');
-        if (modal.style.display === 'flex') {
+        const uploadModal = document.getElementById('uploadModal');
+        const detailModal = document.getElementById('artworkDetailModal');
+        
+        if (uploadModal.style.display === 'flex') {
             closeUploadModal();
+        }
+        
+        if (detailModal.style.display === 'flex') {
+            closeDetailModal();
         }
     }
 });
@@ -482,31 +535,12 @@ window.addEventListener('error', function(e) {
 const GalleryUtils = {
     // 새 작품 추가 (테스트용)
     addArtwork: function(title, author, grade, description, category, imageUrl) {
-        const galleryGrid = document.getElementById('galleryGrid');
-        const newItem = document.createElement('div');
-        newItem.className = 'gallery-item';
-        newItem.setAttribute('data-category', category);
-        
-        newItem.innerHTML = `
-            <div class="image-container">
-                <img src="${imageUrl}" alt="${title}">
-                <div class="image-overlay">
-                    <button class="view-btn">자세히 보기</button>
-                </div>
-            </div>
-            <div class="item-info">
-                <h3 class="item-title">${title}</h3>
-                <p class="item-author">${author}</p>
-                <span class="item-grade">${grade}</span>
-                <p class="item-description">${description}</p>
-            </div>
-        `;
-        
-        galleryGrid.appendChild(newItem);
-        
-        // 새 아이템에 이벤트 리스너 추가
-        initGalleryItems();
-        
+        const artworkData = {
+            title, author, grade, description, category, imageUrl
+        };
+        addNewArtwork(artworkData);
+        updateStats();
+        checkEmptyGallery();
         console.log(`새 작품이 추가되었습니다: ${title}`);
     },
     
@@ -529,6 +563,15 @@ const GalleryUtils = {
         
         console.log('카테고리별 작품 수:', categories);
         return categories;
+    },
+    
+    // 모든 작품 삭제 (테스트용)
+    clearGallery: function() {
+        const galleryGrid = document.getElementById('galleryGrid');
+        galleryGrid.innerHTML = '';
+        updateStats();
+        checkEmptyGallery();
+        console.log('갤러리가 초기화되었습니다.');
     }
 };
 
@@ -537,3 +580,4 @@ console.log('🛠️ 개발자 도구:');
 console.log('- GalleryUtils.addArtwork() : 새 작품 추가');
 console.log('- GalleryUtils.getArtworkCount() : 작품 수 확인');
 console.log('- GalleryUtils.getCategoryCount() : 카테고리별 작품 수 확인');
+console.log('- GalleryUtils.clearGallery() : 갤러리 초기화');
