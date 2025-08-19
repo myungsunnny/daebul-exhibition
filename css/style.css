@@ -895,34 +895,6 @@ footer p {
     border-radius: 4px;
 }
 
-/* 헤더 업로드 버튼 스타일 */
-.header-upload-btn {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
-    border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-}
-
-.header-upload-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    background: linear-gradient(45deg, #5a6fd8, #6a42a0);
-}
-
-.header-upload-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
 /* 부드러운 스크롤 */
 html {
     scroll-behavior: smooth;
