@@ -85,6 +85,17 @@ header {
     animation: fadeInUp 1s ease-out 0.3s both;
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* 섹션 공통 스타일 */
 section {
     padding: 4rem 0;
@@ -106,13 +117,6 @@ section {
     background: #667eea;
     margin: 1rem auto;
     border-radius: 2px;
-}
-
-.section-description {
-    text-align: center;
-    font-size: 1.1rem;
-    color: #666;
-    margin-bottom: 2rem;
 }
 
 /* 갤러리 섹션 */
@@ -267,7 +271,7 @@ section {
 
 .item-info {
     padding: 1.5rem;
-    flex-grow: 1; /* 아이템 내용이 카드 전체를 채우도록 함 */
+    flex-grow: 1;
     cursor: pointer;
 }
 
@@ -308,7 +312,7 @@ footer p {
     opacity: 0.8;
 }
 
-/* 업로드 모달 스타일 */
+/* 모달 */
 .upload-modal {
     position: fixed;
     top: 0;
@@ -334,12 +338,6 @@ footer p {
     animation: modalSlideIn 0.3s ease-out;
 }
 
-/* 상세보기 모달 크기 조정 */
-.detail-modal {
-    max-width: 1100px;
-    width: 95%;
-}
-
 @keyframes modalSlideIn {
     from {
         opacity: 0;
@@ -349,6 +347,11 @@ footer p {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+
+.detail-modal {
+    max-width: 1100px;
+    width: 95%;
 }
 
 .modal-header {
@@ -381,6 +384,7 @@ footer p {
     padding: 2rem;
 }
 
+/* 폼 스타일 */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -431,11 +435,6 @@ footer p {
     background: rgba(102, 126, 234, 0.05);
 }
 
-.upload-placeholder p {
-    margin: 0.5rem 0;
-    color: #666;
-}
-
 .form-actions {
     display: flex;
     gap: 1rem;
@@ -460,30 +459,24 @@ footer p {
     background: #f8f9fa;
     color: #666;
 }
-
 .cancel-btn:hover {
     background: #e9ecef;
-    color: #333;
 }
 
 .submit-btn {
     background: linear-gradient(45deg, #667eea, #764ba2);
     color: white;
 }
-
 .submit-btn:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
-
 .submit-btn:disabled {
     background: #ccc;
     cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
 }
 
-/* 작품 상세보기 모달 스타일 */
+/* 작품 상세보기 */
 .artwork-detail {
     display: flex;
     gap: 2rem;
@@ -524,52 +517,18 @@ footer p {
     transition: all 0.3s ease;
     font-size: 1rem;
 }
-
-.detail-btn {
-    background: #667eea;
-    color: white;
-}
-
 .detail-btn:hover {
-    background: #5a6fd8;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
-
 .detail-btn.secondary {
     background: #f8f9fa;
     color: #666;
 }
-
 .detail-btn.secondary:hover {
     background: #e9ecef;
-    color: #333;
 }
 
-/* 애니메이션 */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-    .artwork-detail {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    .detail-info {
-        padding-left: 0;
-    }
-}
-
-/* 연결 상태 표시 */
+/* 연결 상태 */
 .connection-status {
     display: flex;
     align-items: center;
@@ -584,9 +543,7 @@ footer p {
     font-weight: 500;
 }
 
-/* ... (나머지 CSS 규칙들은 이전과 동일) ... */
-
-/* 버튼 로딩 상태 */
+/* 버튼 로딩 */
 .btn-loading {
     display: flex;
     align-items: center;
@@ -602,7 +559,7 @@ footer p {
     animation: spin 1s linear infinite;
 }
 
-/* 이미지 개수 뱃지 */
+/* 기타 UI 요소 */
 .image-count-badge {
     position: absolute;
     top: 8px;
@@ -616,7 +573,6 @@ footer p {
     z-index: 10;
 }
 
-/* 폼 행 레이아웃 */
 .form-row {
     display: flex;
     gap: 1rem;
@@ -628,7 +584,6 @@ footer p {
     margin-bottom: 0;
 }
 
-/* 다중 이미지 미리보기 */
 .image-preview-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -640,16 +595,12 @@ footer p {
     position: relative;
     border-radius: 8px;
     overflow: hidden;
-    background: #f5f5f5;
 }
-
 .preview-item img {
     width: 100%;
     height: 100px;
     object-fit: cover;
-    display: block;
 }
-
 .preview-remove {
     position: absolute;
     top: 5px;
@@ -660,14 +611,10 @@ footer p {
     border-radius: 50%;
     width: 20px;
     height: 20px;
-    font-size: 12px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
-/* 상세보기 이미지 갤러리 */
+/* 이미지 갤러리 */
 .main-image-container {
     position: relative;
 }
@@ -689,30 +636,11 @@ footer p {
     transition: all 0.3s ease;
     border: 2px solid transparent;
 }
-
-.thumbnail:hover {
+.thumbnail:hover, .thumbnail.active {
     border-color: #667eea;
-    transform: scale(1.05);
 }
 
-.thumbnail.active {
-    border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
-}
-
-/* 링크 스타일 */
-.detail-link a {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-/* 부드러운 스크롤 */
-html {
-    scroll-behavior: smooth;
-}
-
-/* 상세보기 이미지 슬라이더 화살표 */
+/* 슬라이더 화살표 */
 .nav-arrow {
     position: absolute;
     top: 50%;
@@ -726,27 +654,14 @@ html {
     transition: background 0.3s ease;
     z-index: 10;
     border-radius: 5px;
-    line-height: 1;
 }
-
-.nav-arrow:hover {
-    background: rgba(0, 0, 0, 0.8);
-}
-
+.nav-arrow:hover { background: rgba(0, 0, 0, 0.8); }
 .nav-arrow.prev { left: 10px; }
 .nav-arrow.next { right: 10px; }
 
 /* 관리자 모드 */
-.admin-only {
-    display: none !important;
-}
-
-body.admin-mode .admin-only {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
+.admin-only { display: none !important; }
+body.admin-mode .admin-only { display: inline-flex !important; }
 
 .item-admin-actions {
     padding: 0 1.5rem 1.5rem;
@@ -762,17 +677,15 @@ body.admin-mode .admin-only {
     color: white;
     cursor: pointer;
     font-weight: 600;
-    transition: opacity 0.3s ease;
 }
+.admin-btn.edit { background: #ffc107; }
+.admin-btn.delete { background: #dc3545; }
 
-.admin-btn:hover {
-    opacity: 0.8;
+#adminMenuLink.logout-link {
+    color: #dc3545;
+    font-weight: bold;
 }
-
-.admin-btn.edit {
-    background: #ffc107;
-}
-
-.admin-btn.delete {
-    background: #dc3545;
+#adminMenuLink.logout-link:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #a71d2a;
 }
