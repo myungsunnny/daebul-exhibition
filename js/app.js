@@ -519,16 +519,55 @@ function showArtworkDetailModal(item) {
     let imageUrls = [];
     let artworkLink = '';
     
-    // 저장된 작품 데이터에서 찾기 (임시 구현 - 나중에 개선 가능)
-    try {
+    // 저장된 작품 데이터에서 실제 이미지 URL들 찾기
+    getArtworkDetailData(artworkId).then(artworkData => {
+        if (artworkData) {
+            imageUrls = artworkData.imageUrls || [artworkData.imageUrl];
+            artworkLink = artworkData.link || '';
+        } else {
+            // 폴백: DOM에서 이미지 가져오기
+            const mainImg = item.querySelector('img');
+            if (mainImg) {
+                imageUrls = [mainImg.src];
+            }
+        }
+        
+        updateModalContent(title, grade, description, category, uploadDate, imageUrls, artworkLink);
+    }).catch(e => {
+        console.warn('작품 데이터 로드 오류, 폴백 사용:', e);
+        // 폴백: DOM에서 이미지 가져오기
         const mainImg = item.querySelector('img');
         if (mainImg) {
             imageUrls = [mainImg.src];
         }
-    } catch (e) {
-        console.warn('이미지 URL 처리 오류:', e);
+        updateModalContent(title, grade, description, category, uploadDate, imageUrls, artworkLink);
+    });
+}
+
+// 저장된 작품 데이터에서 특정 작품 찾기
+async function getArtworkDetailData(artworkId) {
+    try {
+        const artworksData = await callUpstashAPI('GET', REDIS_KEY);
+        if (artworksData && artworksData !== null) {
+            let artworks;
+            if (typeof artworksData === 'string') {
+                artworks = JSON.parse(artworksData);
+            } else if (Array.isArray(artworksData)) {
+                artworks = artworksData;
+            } else {
+                return null;
+            }
+            
+            return artworks.find(artwork => artwork.id === artworkId);
+        }
+    } catch (error) {
+        console.error('작품 데이터 조회 오류:', error);
     }
-    
+    return null;
+}
+
+// 모달 내용 업데이트
+function updateModalContent(title, grade, description, category, uploadDate, imageUrls, artworkLink) {
     // 카테고리 한글 변환
     const categoryMap = {
         'drawing': '그림',
@@ -567,7 +606,7 @@ function showArtworkDetailModal(item) {
     document.body.style.overflow = 'hidden';
 }
 
-// 상세보기 이미지 갤러리 업데이트
+// 상세보기 이미지 갤러리 업데이트 (개선된 버전)
 function updateDetailImageGallery(imageUrls) {
     const gallery = document.getElementById('detailImageGallery');
     if (!gallery || !imageUrls || imageUrls.length === 0) return;
@@ -583,6 +622,14 @@ function updateDetailImageGallery(imageUrls) {
     mainImage.alt = '작품 이미지';
     mainImage.id = 'currentMainImage';
     
+    // 이미지 인덱스 표시 (여러 이미지가 있을 때)
+    if (imageUrls.length > 1) {
+        const imageCounter = document.createElement('div');
+        imageCounter.className = 'image-counter';
+        imageCounter.innerHTML = `<span id="currentImageIndex">1</span> / ${imageUrls.length}`;
+        mainContainer.appendChild(imageCounter);
+    }
+    
     mainContainer.appendChild(mainImage);
     gallery.appendChild(mainContainer);
     
@@ -596,27 +643,116 @@ function updateDetailImageGallery(imageUrls) {
             thumbnail.src = url;
             thumbnail.alt = `이미지 ${index + 1}`;
             thumbnail.className = `thumbnail ${index === 0 ? 'active' : ''}`;
-            thumbnail.addEventListener('click', () => switchMainImage(url, thumbnail));
+            thumbnail.addEventListener('click', () => switchMainImage(url, thumbnail, index + 1));
             
             thumbnailContainer.appendChild(thumbnail);
         });
         
         gallery.appendChild(thumbnailContainer);
+        
+        // 이전/다음 버튼 추가
+        const navigationContainer = document.createElement('div');
+        navigationContainer.className = 'image-navigation';
+        
+        const prevButton = document.createElement('button');
+        prevButton.className = 'nav-btn prev-btn';
+        prevButton.innerHTML = '‹ 이전';
+        prevButton.addEventListener('click', () => navigateImage(-1, imageUrls));
+        
+        const nextButton = document.createElement('button');
+        nextButton.className = 'nav-btn next-btn';
+        nextButton.innerHTML = '다음 ›';
+        nextButton.addEventListener('click', () => navigateImage(1, imageUrls));
+        
+        navigationContainer.appendChild(prevButton);
+        navigationContainer.appendChild(nextButton);
+        mainContainer.appendChild(navigationContainer);
     }
 }
 
-// 메인 이미지 전환
-function switchMainImage(newUrl, clickedThumbnail) {
+// 현재 이미지 인덱스 추적
+let currentImageIndex = 0;
+
+// 메인 이미지 전환 (개선된 버전)
+function switchMainImage(newUrl, clickedThumbnail, imageIndex) {
     const mainImage = document.getElementById('currentMainImage');
     if (mainImage) {
-        mainImage.src = newUrl;
+        // 부드러운 전환 효과
+        mainImage.style.opacity = '0.7';
+        setTimeout(() => {
+            mainImage.src = newUrl;
+            mainImage.style.opacity = '1';
+        }, 150);
+        
         currentDetailImageUrl = newUrl;
+        currentImageIndex = imageIndex - 1;
+    }
+    
+    // 이미지 카운터 업데이트
+    const imageCounter = document.getElementById('currentImageIndex');
+    if (imageCounter) {
+        imageCounter.textContent = imageIndex;
     }
     
     // 썸네일 활성 상태 업데이트
     const thumbnails = document.querySelectorAll('.thumbnail');
     thumbnails.forEach(thumb => thumb.classList.remove('active'));
-    clickedThumbnail.classList.add('active');
+    if (clickedThumbnail) {
+        clickedThumbnail.classList.add('active');
+    }
+}
+
+// 이미지 네비게이션 (이전/다음)
+function navigateImage(direction, imageUrls) {
+    if (!imageUrls || imageUrls.length <= 1) return;
+    
+    currentImageIndex += direction;
+    
+    // 순환 처리
+    if (currentImageIndex >= imageUrls.length) {
+        currentImageIndex = 0;
+    } else if (currentImageIndex < 0) {
+        currentImageIndex = imageUrls.length - 1;
+    }
+    
+    const newUrl = imageUrls[currentImageIndex];
+    const thumbnail = document.querySelectorAll('.thumbnail')[currentImageIndex];
+    
+    switchMainImage(newUrl, thumbnail, currentImageIndex + 1);
+}
+
+// 키보드 네비게이션 추가 (좌우 화살표)
+window.addEventListener('keydown', function(e) {
+    const detailModal = document.getElementById('artworkDetailModal');
+    
+    if (detailModal && detailModal.style.display === 'flex') {
+        const thumbnails = document.querySelectorAll('.thumbnail');
+        
+        if (thumbnails.length > 1) {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const imageUrls = Array.from(thumbnails).map(thumb => thumb.src);
+                navigateImage(-1, imageUrls);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const imageUrls = Array.from(thumbnails).map(thumb => thumb.src);
+                navigateImage(1, imageUrls);
+            }
+        }
+        
+        if (e.key === 'Escape') {
+            closeDetailModal();
+        }
+    } else {
+        // 기존 ESC 키 처리
+        if (e.key === 'Escape') {
+            const uploadModal = document.getElementById('uploadModal');
+            
+            if (uploadModal && uploadModal.style.display === 'flex') {
+                closeUploadModal();
+            }
+        }
+    }
 }
 
 // 상세보기 모달 닫기
@@ -625,6 +761,7 @@ function closeDetailModal() {
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
     currentDetailImageUrl = '';
+    currentImageIndex = 0; // 이미지 인덱스 초기화
 }
 
 // 원본 이미지 새 탭에서 열기
