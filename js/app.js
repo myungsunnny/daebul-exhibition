@@ -617,10 +617,19 @@ function resetUploadForm() {
         form.reset();
     }
     
-    const previewImage = document.getElementById('previewImage');
+    // 업로드된 이미지 배열 초기화
+    uploadedImages = [];
+    
+    // 이미지 미리보기 초기화
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    if (imagePreviewContainer) {
+        imagePreviewContainer.innerHTML = '';
+    }
+    
     const uploadPlaceholder = document.querySelector('.upload-placeholder');
-    if (previewImage) previewImage.style.display = 'none';
-    if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
+    if (uploadPlaceholder) {
+        uploadPlaceholder.style.display = 'block';
+    }
     
     const submitBtn = document.querySelector('.submit-btn');
     if (submitBtn) {
@@ -632,8 +641,8 @@ function resetUploadForm() {
         if (btnLoading) btnLoading.style.display = 'none';
     }
     
-    const uploadedImageUrl = document.getElementById('uploadedImageUrl');
-    if (uploadedImageUrl) uploadedImageUrl.value = '';
+    const uploadedImageUrls = document.getElementById('uploadedImageUrls');
+    if (uploadedImageUrls) uploadedImageUrls.value = '';
     
     // 업로드 상태 초기화
     isUploading = false;
@@ -669,7 +678,10 @@ function initCloudinaryUpload() {
     }
 }
 
-// Cloudinary 업로드 위젯 열기
+// 여러 이미지 URL 저장 배열
+let uploadedImages = [];
+
+// Cloudinary 업로드 위젯 열기 (다중 이미지 지원)
 function openCloudinaryWidget() {
     if (typeof cloudinary === 'undefined') {
         alert('Cloudinary 라이브러리가 로드되지 않았습니다.');
@@ -681,7 +693,8 @@ function openCloudinaryWidget() {
             cloudName: CLOUDINARY_CONFIG.cloudName,
             uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
             sources: ['local', 'camera'],
-            multiple: false,
+            multiple: true,  // 다중 선택 허용
+            maxFiles: 10,    // 최대 10개 파일
             maxFileSize: 10000000,
             clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
             theme: 'minimal'
@@ -695,7 +708,7 @@ function openCloudinaryWidget() {
             
             if (result && result.event === 'success') {
                 console.log('업로드 성공:', result.info);
-                handleUploadSuccess(result.info);
+                handleMultipleUploadSuccess(result.info);
             }
         }
     );
@@ -703,38 +716,75 @@ function openCloudinaryWidget() {
     widget.open();
 }
 
-// 업로드 성공 처리
-function handleUploadSuccess(uploadInfo) {
+// 다중 업로드 성공 처리
+function handleMultipleUploadSuccess(uploadInfo) {
     const imageUrl = uploadInfo.secure_url;
-    const previewImage = document.getElementById('previewImage');
-    const uploadPlaceholder = document.querySelector('.upload-placeholder');
-    const uploadedImageUrl = document.getElementById('uploadedImageUrl');
+    uploadedImages.push(imageUrl);
     
-    if (previewImage) {
-        previewImage.src = imageUrl;
-        previewImage.style.display = 'block';
-    }
-    if (uploadPlaceholder) {
+    // 미리보기 업데이트
+    updateImagePreview();
+    
+    // 업로드된 이미지 URL들을 hidden field에 저장
+    document.getElementById('uploadedImageUrls').value = JSON.stringify(uploadedImages);
+    
+    // 업로드 placeholder 숨기기
+    const uploadPlaceholder = document.querySelector('.upload-placeholder');
+    if (uploadPlaceholder && uploadedImages.length > 0) {
         uploadPlaceholder.style.display = 'none';
-    }
-    if (uploadedImageUrl) {
-        uploadedImageUrl.value = imageUrl;
     }
     
     validateForm();
     console.log('이미지가 성공적으로 업로드되었습니다:', imageUrl);
+    console.log('전체 업로드된 이미지:', uploadedImages);
+}
+
+// 이미지 미리보기 업데이트
+function updateImagePreview() {
+    const container = document.getElementById('imagePreviewContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    uploadedImages.forEach((imageUrl, index) => {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'preview-item';
+        
+        previewItem.innerHTML = `
+            <img src="${imageUrl}" alt="미리보기 ${index + 1}">
+            <button type="button" class="preview-remove" onclick="removeImage(${index})">&times;</button>
+        `;
+        
+        container.appendChild(previewItem);
+    });
+}
+
+// 이미지 제거
+function removeImage(index) {
+    uploadedImages.splice(index, 1);
+    updateImagePreview();
+    
+    // hidden field 업데이트
+    document.getElementById('uploadedImageUrls').value = JSON.stringify(uploadedImages);
+    
+    // 이미지가 모두 제거되면 placeholder 다시 표시
+    const uploadPlaceholder = document.querySelector('.upload-placeholder');
+    if (uploadPlaceholder && uploadedImages.length === 0) {
+        uploadPlaceholder.style.display = 'block';
+    }
+    
+    validateForm();
 }
 
 // 폼 유효성 검사
 function validateForm() {
     const title = document.getElementById('artworkTitle')?.value.trim() || '';
-    const artist = document.getElementById('artistName')?.value.trim() || '';
     const grade = document.getElementById('studentGrade')?.value || '';
+    const studentClass = document.getElementById('studentClass')?.value || '';
     const category = document.getElementById('artworkCategory')?.value || '';
-    const imageUrl = document.getElementById('uploadedImageUrl')?.value || '';
+    const hasImages = uploadedImages.length > 0;
     
     const submitBtn = document.querySelector('.submit-btn');
-    const isValid = title && artist && grade && category && imageUrl && isConnected && !isUploading;
+    const isValid = title && grade && studentClass && category && hasImages && isConnected && !isUploading;
     
     if (submitBtn) {
         const btnLoading = submitBtn.querySelector('.btn-loading');
