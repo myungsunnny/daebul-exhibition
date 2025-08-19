@@ -59,8 +59,14 @@
                 </div>
             </div>
 
+            <!-- 연결 상태 표시 -->
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-indicator" id="statusIndicator">●</span>
+                <span class="status-text" id="statusText">연결 중...</span>
+            </div>
+
             <div class="gallery-grid" id="galleryGrid">
-                <!-- 업로드된 작품들이 여기에 동적으로 추가됩니다 -->
+                <!-- Upstash에서 불러온 작품들이 여기에 동적으로 추가됩니다 -->
             </div>
         </div>
     </section>
@@ -68,7 +74,7 @@
     <section class="upload-section" id="upload">
         <div class="container">
             <h2 class="section-title">작품 업로드</h2>
-            <p class="section-description">여러분의 멋진 작품을 공유해주세요!</p>
+            <p class="section-description">여러분의 멋진 작품을 전 세계와 공유해보세요!</p>
             <button class="upload-btn" onclick="openUploadModal()">
                 📸 작품 올리기
             </button>
@@ -174,7 +180,13 @@
                     
                     <div class="form-actions">
                         <button type="button" class="cancel-btn" onclick="closeUploadModal()">취소</button>
-                        <button type="submit" class="submit-btn" disabled>작품 등록하기</button>
+                        <button type="submit" class="submit-btn" disabled>
+                            <span class="btn-text">작품 등록하기</span>
+                            <span class="btn-loading" style="display: none;">
+                                <span class="loading-spinner"></span>
+                                등록 중...
+                            </span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -199,6 +211,7 @@
                             <p><strong>작가:</strong> <span id="detailArtist">작가명</span></p>
                             <p><strong>학년반:</strong> <span id="detailGrade">학년반</span></p>
                             <p><strong>분류:</strong> <span id="detailCategory">분류</span></p>
+                            <p><strong>업로드:</strong> <span id="detailUploadDate">업로드 날짜</span></p>
                         </div>
                         <div class="detail-description">
                             <h4>작품 설명</h4>
