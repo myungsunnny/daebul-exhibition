@@ -61,10 +61,6 @@
                     <input type="text" id="artworkTitle" required placeholder="작품의 제목을 입력해주세요">
                 </div>
                 <div class="form-group">
-                    <label for="studentName">학생 이름</label>
-                    <input type="text" id="studentName" required placeholder="학생의 이름을 입력해주세요">
-                </div>
-                <div class="form-group">
                     <label for="studentGrade">학년</label>
                     <select id="studentGrade" required>
                         <option value="">선택하세요</option>
@@ -147,7 +143,6 @@
                             <tr>
                                 <th>선택</th>
                                 <th>제목</th>
-                                <th>학생명</th>
                                 <th>학년</th>
                                 <th>분류</th>
                                 <th>등록일</th>
@@ -378,21 +373,28 @@
                     <div class="modal-thumbnails" id="modalThumbnails"></div>
                 </div>
                 <div class="artwork-detail">
-                    <h3 id="detailArtworkTitle">작품 제목</h3>
-                    <div class="artwork-info">
-                        <p><strong>학생:</strong> <span id="detailStudentName">학생명</span></p>
-                        <p><strong>학년:</strong> <span id="detailGrade">학년</span></p>
-                        <p><strong>분류:</strong> <span id="detailCategory">분류</span></p>
-                        <p><strong>등록일:</strong> <span id="detailUploadDate">등록일</span></p>
+                    <div class="artwork-header">
+                        <h2 id="detailArtworkTitle" class="artwork-main-title">작품 제목</h2>
+                        <div class="artwork-meta">
+                            <span class="meta-item grade-badge" id="detailGrade">학년</span>
+                            <span class="meta-item category-badge" id="detailCategory">분류</span>
+                        </div>
                     </div>
-                    <div class="artwork-description">
-                        <h4>작품 설명</h4>
-                        <p id="detailDescriptionText">작품 설명이 여기에 표시됩니다.</p>
+                    
+                    <div class="artwork-description-section">
+                        <h3 class="section-title">작품 소개</h3>
+                        <div class="description-content">
+                            <p id="detailDescriptionText">작품 설명이 여기에 표시됩니다.</p>
+                        </div>
                     </div>
-                    <div id="detailLinkSection" class="artwork-link" style="display: none;">
-                        <h4>관련 링크</h4>
-                        <a id="detailLink" href="#" target="_blank" rel="noopener noreferrer">🔗 링크 보기</a>
+                    
+                    <div id="detailLinkSection" class="artwork-link-section" style="display: none;">
+                        <h3 class="section-title">관련 링크</h3>
+                        <a id="detailLink" href="#" target="_blank" rel="noopener noreferrer" class="external-link">
+                            🔗 링크 바로가기
+                        </a>
                     </div>
+                    
                     <div class="artwork-actions">
                         <button class="btn btn-secondary" onclick="closeModal()">닫기</button>
                         <button id="detailEditBtn" class="btn btn-warning admin-only">수정</button>
