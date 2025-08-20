@@ -42,7 +42,7 @@
             <h2>📸 새로운 작품 등록</h2>
             <form id="artworkForm">
                 <div class="form-group">
-                    <label for="artworkCategory">작품 분류</label>
+                    <label for="artworkCategory">작품 분류 *</label>
                     <select id="artworkCategory" required>
                         <option value="">분류를 선택해주세요</option>
                         <option value="activity">📷 활동 모습</option>
@@ -51,15 +51,15 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="artworkTitle">작품 제목</label>
+                    <label for="artworkTitle">작품 제목 *</label>
                     <input type="text" id="artworkTitle" required placeholder="작품의 제목을 입력해주세요">
                 </div>
                 <div class="form-group">
-                    <label for="studentName">학생 이름</label>
+                    <label for="studentName">학생 이름 *</label>
                     <input type="text" id="studentName" required placeholder="학생의 이름을 입력해주세요">
                 </div>
                 <div class="form-group">
-                    <label for="studentGrade">학년</label>
+                    <label for="studentGrade">학년 *</label>
                     <select id="studentGrade" required>
                         <option value="">선택하세요</option>
                         <option value="1">1학년</option>
@@ -71,14 +71,14 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="artworkDescription">작품 설명</label>
+                    <label for="artworkDescription">작품 설명 *</label>
                     <textarea id="artworkDescription" placeholder="작품에 대해 설명해주세요..." required></textarea>
                 </div>
                 <div class="form-group">
                     <label>작품 이미지 (여러 장 선택 가능) *</label>
                     <div class="image-upload">
                         <input type="file" id="imageFile" accept="image/*" multiple style="display: none;">
-                        <div id="uploadText" onclick="document.getElementById('imageFile').click()" style="cursor: pointer;">
+                        <div id="uploadText" style="cursor: pointer; padding: 20px; text-align: center;">
                             📁 이미지를 선택하세요<br>
                             <small style="color: #666; font-size: 0.9rem;">JPG, PNG 파일 / 최대 10MB / 여러 개 선택 가능</small>
                         </div>
@@ -95,7 +95,13 @@
                     <label for="artworkLink">관련 링크 (선택 사항)</label>
                     <input type="url" id="artworkLink" placeholder="https://www.example.com">
                 </div>
-                <button type="submit" class="btn btn-primary" id="submitBtn">작품 등록하기</button>
+                
+                <!-- 폼 상태 표시 -->
+                <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; text-align: center;">
+                    <small id="formStatus" class="status-warning">필수 항목을 모두 입력해주세요</small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="submitBtn" disabled>작품 등록하기</button>
             </form>
         </div>
 
@@ -122,10 +128,10 @@
             </div>
 
             <div class="admin-tabs">
-                <button class="admin-tab active" onclick="switchAdminTab('artworks')">작품 관리</button>
-                <button class="admin-tab" onclick="switchAdminTab('comments')">댓글 관리</button>
-                <button class="admin-tab" onclick="switchAdminTab('users')">사용자 관리</button>
-                <button class="admin-tab" onclick="switchAdminTab('settings')">사이트 설정</button>
+                <button class="admin-tab active">작품 관리</button>
+                <button class="admin-tab">댓글 관리</button>
+                <button class="admin-tab">사용자 관리</button>
+                <button class="admin-tab">사이트 설정</button>
             </div>
 
             <!-- 작품 관리 탭 -->
@@ -341,10 +347,10 @@
 
         <!-- 작품 분류 탭 -->
         <div class="type-tabs">
-            <button class="type-tab active" data-type="all" onclick="switchTypeTab('all')">🎯 전체</button>
-            <button class="type-tab" data-type="activity" onclick="switchTypeTab('activity')">📷 활동 모습</button>
-            <button class="type-tab" data-type="worksheet" onclick="switchTypeTab('worksheet')">📝 활동지</button>
-            <button class="type-tab" data-type="result" onclick="switchTypeTab('result')">🎨 결과물</button>
+            <button class="type-tab active" data-type="all">🎯 전체</button>
+            <button class="type-tab" data-type="activity">📷 활동 모습</button>
+            <button class="type-tab" data-type="worksheet">📝 활동지</button>
+            <button class="type-tab" data-type="result">🎨 결과물</button>
         </div>
 
         <!-- 갤러리 컨테이너 -->
