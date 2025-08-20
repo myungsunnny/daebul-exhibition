@@ -5,17 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>우리학교 학생 작품 전시관</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="header-buttons">
-                <button class="header-btn" onclick="toggleUploadPanel()">작품 올리기</button>
-                <button class="header-btn" onclick="toggleAdminPanel()">관리자 모드</button>
+                <button class="header-btn" onclick="toggleUploadPanel()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14"/>
+                    </svg>
+                    작품 올리기
+                </button>
+                <button class="header-btn" onclick="toggleAdminPanel()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v6m0 6v6"/>
+                        <path d="m21 12-6-6-6 6-6-6"/>
+                    </svg>
+                    관리자
+                </button>
             </div>
             <h1>
                 <img src="" alt="헤더 로고" id="headerImage" class="header-logo" style="display: none;">
-                <span id="headerTitleText">우리학교 학생 작품 전시관</span>
+                우리학교 학생 작품 전시관
             </h1>
             <p class="subtitle">창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</p>
         </header>
