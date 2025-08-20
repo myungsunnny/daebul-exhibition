@@ -5,38 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>우리학교 학생 작품 전시관</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
     <div class="container">
         <header>
             <div class="header-buttons">
-                <button class="header-btn" onclick="toggleUploadPanel()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    작품 올리기
-                </button>
-                <button class="header-btn" onclick="toggleAdminPanel()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M12 1v6m0 6v6"/>
-                        <path d="m21 12-6-6-6 6-6-6"/>
-                    </svg>
-                    관리자
-                </button>
+                <button class="header-btn" onclick="toggleUploadPanel()">📸 작품 올리기</button>
+                <button class="header-btn" onclick="toggleAdminPanel()">⚙️ 관리자 모드</button>
             </div>
             <h1>
                 <img src="" alt="헤더 로고" id="headerImage" class="header-logo" style="display: none;">
-                우리학교 학생 작품 전시관
+                <span id="headerTitleText">우리학교 학생 작품 전시관</span>
             </h1>
             <p class="subtitle">창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</p>
         </header>
 
         <!-- 시스템 상태 패널 -->
         <div class="panel status-section" id="statusSection">
-            <h3>시스템 상태</h3>
+            <h3>🚀 시스템 상태</h3>
             <div id="upstashStatus">
                 <span class="status-indicator status-warning">데이터베이스 연결 확인 중...</span>
             </div>
@@ -53,40 +39,8 @@
 
         <!-- 작품 업로드 패널 -->
         <div class="panel upload-panel" id="uploadPanel">
-            <h2>새로운 작품 등록</h2>
+            <h2>📸 새로운 작품 등록</h2>
             <form id="artworkForm">
-                <div class="form-group">
-                    <label for="artworkTitle">작품 제목</label>
-                    <input type="text" id="artworkTitle" required placeholder="작품의 제목을 입력해주세요">
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group half">
-                        <label for="studentGrade">학년</label>
-                        <select id="studentGrade" required>
-                            <option value="">학년 선택</option>
-                            <option value="1">1학년</option>
-                            <option value="2">2학년</option>
-                            <option value="3">3학년</option>
-                            <option value="4">4학년</option>
-                            <option value="5">5학년</option>
-                            <option value="6">6학년</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group half">
-                        <label for="studentClass">반</label>
-                        <select id="studentClass" required>
-                            <option value="">반 선택</option>
-                            <option value="1">1반</option>
-                            <option value="2">2반</option>
-                            <option value="3">3반</option>
-                            <option value="4">4반</option>
-                            <option value="5">5반</option>
-                        </select>
-                    </div>
-                </div>
-                
                 <div class="form-group">
                     <label for="artworkCategory">작품 분류</label>
                     <select id="artworkCategory" required>
@@ -97,33 +51,49 @@
                         <option value="digital">디지털아트</option>
                     </select>
                 </div>
-                
+                <div class="form-group">
+                    <label for="artworkTitle">작품 제목</label>
+                    <input type="text" id="artworkTitle" required placeholder="작품의 제목을 입력해주세요">
+                </div>
+                <div class="form-group">
+                    <label for="studentName">학생 이름</label>
+                    <input type="text" id="studentName" required placeholder="학생의 이름을 입력해주세요">
+                </div>
+                <div class="form-group">
+                    <label for="studentGrade">학년</label>
+                    <select id="studentGrade" required>
+                        <option value="">선택하세요</option>
+                        <option value="1">1학년</option>
+                        <option value="2">2학년</option>
+                        <option value="3">3학년</option>
+                        <option value="4">4학년</option>
+                        <option value="5">5학년</option>
+                        <option value="6">6학년</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label for="artworkDescription">작품 설명</label>
-                    <textarea id="artworkDescription" rows="3" placeholder="작품에 대한 설명을 입력해주세요"></textarea>
+                    <textarea id="artworkDescription" placeholder="작품에 대해 설명해주세요..." required></textarea>
                 </div>
-                
-                <div class="form-group">
-                    <label for="artworkLink">관련 링크 (선택사항)</label>
-                    <input type="url" id="artworkLink" placeholder="https://example.com">
-                </div>
-                
                 <div class="form-group">
                     <label>작품 이미지 (여러 장 선택 가능)</label>
-                    <div class="image-upload-area" onclick="document.getElementById('imageFile').click()">
-                        <input type="file" id="imageFile" accept="image/*" onchange="previewImages()" multiple style="display: none;">
-                        <div id="uploadText">이미지를 선택하세요</div>
+                    <div class="image-upload" onclick="document.getElementById('imageFile').click()">
+                        <input type="file" id="imageFile" accept="image/*" onchange="previewImages()" multiple>
+                        <div id="uploadText">📁 이미지를 선택하세요</div>
                         <div class="image-preview-container" id="imagePreviewContainer"></div>
                     </div>
                 </div>
-                
-                <button type="submit" class="submit-btn" id="submitBtn">작품 등록하기</button>
+                <div class="form-group">
+                    <label for="artworkLink">관련 링크 (선택 사항)</label>
+                    <input type="url" id="artworkLink" placeholder="https://www.example.com">
+                </div>
+                <button type="submit" class="btn btn-primary" id="submitBtn">작품 등록하기</button>
             </form>
         </div>
 
         <!-- 관리자 패널 -->
         <div class="panel admin-panel" id="adminPanel">
-            <h2>관리자 모드</h2>
+            <h2>⚙️ 관리자 모드</h2>
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-number" id="statArtworks">0</div>
@@ -146,17 +116,25 @@
             <div class="admin-tabs">
                 <button class="admin-tab active" onclick="switchAdminTab('artworks')">작품 관리</button>
                 <button class="admin-tab" onclick="switchAdminTab('comments')">댓글 관리</button>
+                <button class="admin-tab" onclick="switchAdminTab('users')">사용자 관리</button>
                 <button class="admin-tab" onclick="switchAdminTab('settings')">사이트 설정</button>
             </div>
 
             <div class="admin-content active" id="artworksContent">
+                <p style="text-align:center; color: #777; margin-bottom: 15px;">💡 작품 순서를 변경하려면 행을 드래그하여 원하는 위치에 놓으세요.</p>
+                <div class="bulk-actions">
+                    <label><input type="checkbox" id="selectAll"> 전체 선택</label>
+                    <button class="btn btn-danger btn-small" onclick="bulkDeleteArtworks()">선택 삭제</button>
+                    <button class="btn btn-secondary btn-small" onclick="exportData()">데이터 내보내기</button>
+                </div>
                 <div class="table-container">
                     <table id="artworksTable">
                         <thead>
                             <tr>
                                 <th>선택</th>
                                 <th>제목</th>
-                                <th>학년반</th>
+                                <th>학생명</th>
+                                <th>학년</th>
                                 <th>분류</th>
                                 <th>등록일</th>
                                 <th>관리</th>
@@ -168,6 +146,10 @@
             </div>
 
             <div class="admin-content" id="commentsContent">
+                <div class="bulk-actions">
+                    <label><input type="checkbox" id="selectAllComments"> 전체 선택</label>
+                    <button class="btn btn-danger btn-small" onclick="bulkDeleteComments()">선택 삭제</button>
+                </div>
                 <div class="table-container">
                     <table id="commentsTable">
                         <thead>
@@ -185,6 +167,24 @@
                 </div>
             </div>
 
+            <div class="admin-content" id="usersContent">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>학생명</th>
+                                <th>학년</th>
+                                <th>작품 수</th>
+                                <th>댓글 수</th>
+                                <th>좋아요 받은 수</th>
+                                <th>최근 활동</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="admin-content" id="settingsContent">
                 <h3>기본 설정</h3>
                 <div class="form-group">
@@ -192,10 +192,95 @@
                     <input type="text" id="siteTitle" value="우리학교 학생 작품 전시관">
                 </div>
                 <div class="form-group">
+                    <label>헤더 이미지</label>
+                    <div class="image-upload" onclick="document.getElementById('headerImageFile').click()">
+                        <input type="file" id="headerImageFile" accept="image/*" onchange="previewHeaderImage()">
+                        <div id="headerUploadText">📁 이미지를 선택하세요</div>
+                        <img id="headerImagePreview" class="image-preview" alt="헤더 이미지 미리보기" style="display: none;">
+                    </div>
+                    <button class="btn btn-danger btn-small" onclick="removeHeaderImage()">이미지 제거</button>
+                </div>
+                <div class="form-group">
                     <label for="siteDescription">사이트 설명</label>
                     <textarea id="siteDescription">창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</textarea>
                 </div>
-                <button class="submit-btn" onclick="saveSettings()">설정 저장</button>
+                <div class="settings-options-grid">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="allowComments" checked>
+                        <label for="allowComments">댓글 허용</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="moderateComments">
+                        <label for="moderateComments">댓글 승인 필요</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">관리자 비밀번호 변경</label>
+                    <input type="password" id="adminPassword" placeholder="새 비밀번호 (비워두면 변경하지 않음)">
+                </div>
+                
+                <hr>
+                
+                <h3>📸 작품 등록 설정</h3>
+                <div class="settings-options-grid">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="requireUploadPassword">
+                        <label for="requireUploadPassword">작품 등록 시 비밀번호 요구</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="uploadPassword">등록용 비밀번호 변경</label>
+                    <input type="password" id="uploadPassword" placeholder="새 등록용 비밀번호 (기존 값: ****)">
+                </div>
+
+                <hr>
+
+                <h3>학년별 설명 관리</h3>
+                <div class="form-group">
+                    <label for="gradeTitleAll">전체 학년 제목</label>
+                    <input type="text" id="gradeTitleAll" placeholder="전체 학년 소개 제목">
+                    <label for="gradeDescAll" class="sub-label">전체 학년 설명</label>
+                    <textarea id="gradeDescAll" placeholder="전체 학년에 대한 설명을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="gradeTitle1">1학년 제목</label>
+                    <input type="text" id="gradeTitle1" placeholder="1학년 소개 제목">
+                    <label for="gradeDesc1" class="sub-label">1학년 설명</label>
+                    <textarea id="gradeDesc1" placeholder="1학년에 대한 설명을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="gradeTitle2">2학년 제목</label>
+                    <input type="text" id="gradeTitle2" placeholder="2학년 소개 제목">
+                    <label for="gradeDesc2" class="sub-label">2학년 설명</label>
+                    <textarea id="gradeDesc2" placeholder="2학년에 대한 설명을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="gradeTitle3">3학년 제목</label>
+                    <input type="text" id="gradeTitle3" placeholder="3학년 소개 제목">
+                    <label for="gradeDesc3" class="sub-label">3학년 설명</label>
+                    <textarea id="gradeDesc3" placeholder="3학년에 대한 설명을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="gradeTitle4">4학년 제목</label>
+                    <input type="text" id="gradeTitle4" placeholder="4학년 소개 제목">
+                    <label for="gradeDesc4" class="sub-label">4학년 설명</label>
+                    <textarea id="gradeDesc4" placeholder="4학년에 대한 설명을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="gradeTitle5">5학년 제목</label>
+                    <input type="text" id="gradeTitle5" placeholder="5학년 소개 제목">
+                    <label for="gradeDesc5" class="sub-label">5학년 설명</label>
+                    <textarea id="gradeDesc5" placeholder="5학년에 대한 설명을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="gradeTitle6">6학년 제목</label>
+                    <input type="text" id="gradeTitle6" placeholder="6학년 소개 제목">
+                    <label for="gradeDesc6" class="sub-label">6학년 설명</label>
+                    <textarea id="gradeDesc6" placeholder="6학년에 대한 설명을 입력하세요"></textarea>
+                </div>
+                <hr>
+                <button class="btn btn-primary" onclick="saveSettings()">설정 저장</button>
+                <button class="btn btn-danger" onclick="resetAllData()">모든 데이터 초기화</button>
             </div>
         </div>
 
@@ -217,39 +302,36 @@
             <input type="text" id="searchInput" placeholder="작품명 또는 학생 이름으로 검색...">
         </div>
 
+        <!-- 학년별 정보 섹션 -->
+        <div class="grade-info-section" id="gradeInfoSection">
+            <div class="grade-info-content">
+                <h3 id="gradeInfoTitle"></h3>
+                <p id="gradeInfoDescription"></p>
+            </div>
+        </div>
+
         <!-- 작품 분류 탭 -->
         <div class="type-tabs">
-            <button class="type-tab active" data-type="all" onclick="switchTypeTab('all')">전체</button>
-            <button class="type-tab" data-type="drawing" onclick="switchTypeTab('drawing')">그림</button>
-            <button class="type-tab" data-type="craft" onclick="switchTypeTab('craft')">공예</button>
-            <button class="type-tab" data-type="sculpture" onclick="switchTypeTab('sculpture')">조소</button>
-            <button class="type-tab" data-type="digital" onclick="switchTypeTab('digital')">디지털아트</button>
+            <button class="type-tab active" data-type="all" onclick="switchTypeTab('all')">🎯 전체</button>
+            <button class="type-tab" data-type="drawing" onclick="switchTypeTab('drawing')">🎨 그림</button>
+            <button class="type-tab" data-type="craft" onclick="switchTypeTab('craft')">🧩 공예</button>
+            <button class="type-tab" data-type="sculpture" onclick="switchTypeTab('sculpture')">🗿 조소</button>
+            <button class="type-tab" data-type="digital" onclick="switchTypeTab('digital')">💻 디지털아트</button>
         </div>
 
         <!-- 갤러리 컨테이너 -->
         <div id="galleryContainer">
             <div class="type-section active" id="allSection">
                 <div class="type-header">
-                    <div class="type-title">전체 작품</div>
+                    <div class="type-title">🎯 전체 작품</div>
                     <div class="type-count" id="allCount">0개 작품</div>
-                </div>
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <p>작품을 불러오는 중...</p>
-                </div>
-                <div class="empty-gallery" id="emptyGallery">
-                    <div class="empty-content">
-                        <h3>아직 등록된 작품이 없습니다</h3>
-                        <p>첫 번째 작품을 업로드해서 갤러리를 시작해보세요!</p>
-                        <button class="upload-btn" onclick="toggleUploadPanel()">첫 작품 올리기</button>
-                    </div>
                 </div>
                 <div class="type-gallery" id="galleryGrid"></div>
             </div>
 
             <div class="type-section" id="drawingSection">
                 <div class="type-header">
-                    <div class="type-title">그림 작품</div>
+                    <div class="type-title">🎨 그림 작품</div>
                     <div class="type-count" id="drawingCount">0개 작품</div>
                 </div>
                 <div class="type-gallery" id="drawingGallery"></div>
@@ -257,7 +339,7 @@
 
             <div class="type-section" id="craftSection">
                 <div class="type-header">
-                    <div class="type-title">공예 작품</div>
+                    <div class="type-title">🧩 공예 작품</div>
                     <div class="type-count" id="craftCount">0개 작품</div>
                 </div>
                 <div class="type-gallery" id="craftGallery"></div>
@@ -265,7 +347,7 @@
 
             <div class="type-section" id="sculptureSection">
                 <div class="type-header">
-                    <div class="type-title">조소 작품</div>
+                    <div class="type-title">🗿 조소 작품</div>
                     <div class="type-count" id="sculptureCount">0개 작품</div>
                 </div>
                 <div class="type-gallery" id="sculptureGallery"></div>
@@ -273,7 +355,7 @@
 
             <div class="type-section" id="digitalSection">
                 <div class="type-header">
-                    <div class="type-title">디지털아트 작품</div>
+                    <div class="type-title">💻 디지털아트 작품</div>
                     <div class="type-count" id="digitalCount">0개 작품</div>
                 </div>
                 <div class="type-gallery" id="digitalGallery"></div>
@@ -286,34 +368,31 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
             <div id="modalContent">
+                <div class="modal-image-gallery">
+                    <img id="currentMainImage" src="" alt="작품 이미지" class="modal-main-image">
+                    <div class="modal-thumbnails" id="modalThumbnails"></div>
+                </div>
                 <div class="artwork-detail">
-                    <div class="detail-image-container">
-                        <div class="modal-image-gallery">
-                            <img id="currentMainImage" src="" alt="작품 이미지" class="modal-main-image">
-                            <div class="modal-thumbnails" id="modalThumbnails"></div>
-                        </div>
+                    <h3 id="detailArtworkTitle">작품 제목</h3>
+                    <div class="artwork-info">
+                        <p><strong>학생:</strong> <span id="detailStudentName">학생명</span></p>
+                        <p><strong>학년:</strong> <span id="detailGrade">학년</span></p>
+                        <p><strong>분류:</strong> <span id="detailCategory">분류</span></p>
+                        <p><strong>등록일:</strong> <span id="detailUploadDate">등록일</span></p>
                     </div>
-                    <div class="detail-info">
-                        <h3 id="detailArtworkTitle">작품 제목</h3>
-                        <div class="detail-meta">
-                            <p><strong>학년반:</strong> <span id="detailGrade">학년반</span></p>
-                            <p><strong>분류:</strong> <span id="detailCategory">분류</span></p>
-                            <p><strong>업로드:</strong> <span id="detailUploadDate">업로드 날짜</span></p>
-                        </div>
-                        <div class="detail-description">
-                            <h4>작품 설명</h4>
-                            <p id="detailDescriptionText">작품 설명이 여기에 표시됩니다.</p>
-                        </div>
-                        <div id="detailLinkSection" class="detail-link" style="display: none;">
-                            <h4>관련 링크</h4>
-                            <a id="detailLink" href="#" target="_blank" rel="noopener noreferrer">링크 보기</a>
-                        </div>
-                        <div class="detail-actions">
-                            <button class="detail-btn" onclick="openImageInNewTab()">원본 크기로 보기</button>
-                            <button class="detail-btn secondary" onclick="closeModal()">닫기</button>
-                            <button id="detailEditBtn" class="detail-btn admin-only">수정</button>
-                            <button id="detailDeleteBtn" class="detail-btn admin-only">삭제</button>
-                        </div>
+                    <div class="artwork-description">
+                        <h4>작품 설명</h4>
+                        <p id="detailDescriptionText">작품 설명이 여기에 표시됩니다.</p>
+                    </div>
+                    <div id="detailLinkSection" class="artwork-link" style="display: none;">
+                        <h4>관련 링크</h4>
+                        <a id="detailLink" href="#" target="_blank" rel="noopener noreferrer">🔗 링크 보기</a>
+                    </div>
+                    <div class="artwork-actions">
+                        <button class="btn btn-primary" onclick="openImageInNewTab()">🔍 원본 크기로 보기</button>
+                        <button class="btn btn-secondary" onclick="closeModal()">닫기</button>
+                        <button id="detailEditBtn" class="btn btn-warning admin-only">수정</button>
+                        <button id="detailDeleteBtn" class="btn btn-danger admin-only">삭제</button>
                     </div>
                 </div>
             </div>
