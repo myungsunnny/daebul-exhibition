@@ -1,4 +1,4 @@
-/* 기본 설정 */
+/* 브릭모델 스타일 기반 학생 갤러리 CSS */
 * {
     margin: 0;
     padding: 0;
@@ -7,15 +7,16 @@
 
 body {
     font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
-    line-height: 1.6;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #333;
-    background: #f8f9fa;
+    min-height: 100vh;
+    line-height: 1.6;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 20px;
 }
 
 /* 헤더 스타일 */
@@ -29,38 +30,54 @@ header {
     left: 0;
     right: 0;
     z-index: 1000;
+    border-radius: 0 0 20px 20px;
 }
 
 .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
 }
 
 .logo {
     font-size: 1.5rem;
     font-weight: bold;
     color: #667eea;
+    display: flex;
+    align-items: center;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-logo {
+    max-height: 2.5rem; 
+    margin-right: 15px;
+    vertical-align: middle;
 }
 
 .nav-menu {
     display: flex;
     list-style: none;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .nav-menu a {
     text-decoration: none;
     color: #333;
     font-weight: 500;
-    transition: color 0.3s ease;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    transition: all 0.3s ease;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    background: rgba(102, 126, 234, 0.1);
+    backdrop-filter: blur(10px);
+    border: 2px solid transparent;
 }
 
 .nav-menu a:hover {
-    color: #667eea;
-    background: rgba(102, 126, 234, 0.1);
+    color: white;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
 
 /* 히어로 섹션 */
@@ -70,6 +87,7 @@ header {
     text-align: center;
     padding: 8rem 0 4rem;
     margin-top: 80px;
+    position: relative;
 }
 
 .hero h1 {
@@ -77,12 +95,17 @@ header {
     margin-bottom: 1rem;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     animation: fadeInUp 1s ease-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .hero p {
     font-size: 1.2rem;
     opacity: 0.9;
     animation: fadeInUp 1s ease-out 0.3s both;
+    margin-bottom: 20px;
 }
 
 @keyframes fadeInUp {
@@ -119,11 +142,33 @@ section {
     border-radius: 2px;
 }
 
-/* 갤러리 섹션 */
-.gallery {
+/* 패널 스타일 (브릭모델 스타일 적용) */
+.panel {
     background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: none;
 }
 
+.panel.active {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 갤러리 섹션 */
+.gallery {
+    background: transparent;
+    padding: 2rem 0;
+}
+
+/* 필터 버튼 스타일 개선 */
 .filter-buttons {
     display: flex;
     justify-content: center;
@@ -133,43 +178,74 @@ section {
 }
 
 .filter-btn {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-    border: 2px solid #667eea;
-    padding: 0.8rem 1.5rem;
+    padding: 15px 25px;
+    background: rgba(255,255,255,0.2);
+    border: none;
     border-radius: 25px;
+    color: white;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-weight: 500;
+    backdrop-filter: blur(10px);
     font-size: 1rem;
+    font-weight: 500;
+    border: 2px solid transparent;
 }
 
-.filter-btn:hover, .filter-btn.active {
-    background: #667eea;
-    color: white;
+.filter-btn:hover {
+    background: rgba(255,255,255,0.3);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+}
+
+.filter-btn.active {
+    background: rgba(255,255,255,0.9);
+    color: #667eea;
+    font-weight: bold;
+    border-color: rgba(255,255,255,0.5);
+    box-shadow: 0 5px 20px rgba(255,255,255,0.2);
 }
 
 /* 빈 갤러리 스타일 */
 .empty-gallery {
     text-align: center;
     padding: 4rem 2rem;
-    background: #f8f9fa;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
     border-radius: 20px;
     margin: 2rem 0;
+    color: white;
 }
 
 .empty-content h3 {
     font-size: 2rem;
-    color: #667eea;
+    color: white;
     margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .empty-content p {
     font-size: 1.1rem;
-    color: #666;
+    color: rgba(255,255,255,0.9);
     margin-bottom: 2rem;
+}
+
+.upload-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.upload-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,255,255,0.2);
 }
 
 /* 로딩 애니메이션 */
@@ -177,11 +253,16 @@ section {
     display: none;
     text-align: center;
     padding: 2rem;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    margin: 2rem 0;
+    color: white;
 }
 
 .spinner {
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #667eea;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top: 3px solid white;
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -197,8 +278,8 @@ section {
 /* 갤러리 그리드 */
 .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
     margin-top: 2rem;
 }
 
@@ -206,26 +287,36 @@ section {
     background: white;
     border-radius: 15px;
     overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.gallery-item.show {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .gallery-item:hover {
     transform: translateY(-10px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
 }
 
 .image-container {
     position: relative;
     overflow: hidden;
     cursor: pointer;
+    height: 250px;
 }
 
 .gallery-item img {
     width: 100%;
-    height: 250px;
+    height: 100%;
     object-fit: cover;
     transition: transform 0.3s ease;
 }
@@ -270,7 +361,7 @@ section {
 }
 
 .item-info {
-    padding: 1.5rem;
+    padding: 20px;
     flex-grow: 1;
     cursor: pointer;
 }
@@ -278,8 +369,8 @@ section {
 .item-title {
     font-size: 1.3rem;
     font-weight: bold;
-    margin-bottom: 0.5rem;
-    color: #333;
+    margin-bottom: 8px;
+    color: #2c3e50;
 }
 
 .item-grade {
@@ -294,17 +385,40 @@ section {
 }
 
 .item-description {
-    color: #666;
+    color: #555;
     font-size: 0.95rem;
     line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.upload-date {
+    color: #7f8c8d;
+    font-size: 0.8rem;
+}
+
+/* 이미지 개수 배지 */
+.image-count-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    z-index: 10;
 }
 
 /* 푸터 */
 footer {
-    background: #2c3e50;
+    background: rgba(44, 62, 80, 0.9);
+    backdrop-filter: blur(10px);
     color: white;
     text-align: center;
     padding: 2rem 0;
+    border-radius: 20px 20px 0 0;
+    margin-top: 2rem;
 }
 
 footer p {
@@ -360,24 +474,28 @@ footer p {
     align-items: center;
     padding: 1.5rem 2rem;
     border-bottom: 1px solid #eee;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 20px 20px 0 0;
 }
 
 .modal-header h2 {
     margin: 0;
-    color: #333;
+    color: white;
     font-size: 1.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .close-btn {
     font-size: 2rem;
     cursor: pointer;
-    color: #999;
+    color: rgba(255,255,255,0.8);
     transition: color 0.3s ease;
     line-height: 1;
 }
 
 .close-btn:hover {
-    color: #333;
+    color: white;
 }
 
 .modal-body {
@@ -400,11 +518,11 @@ footer p {
 .form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 0.8rem 1rem;
-    border: 2px solid #e1e5e9;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
     border-radius: 10px;
     font-size: 1rem;
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
     font-family: inherit;
 }
 
@@ -428,11 +546,14 @@ footer p {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: linear-gradient(45deg, #f8f9fa, #e9ecef);
 }
 
 .image-upload-area:hover {
     border-color: #667eea;
-    background: rgba(102, 126, 234, 0.05);
+    background: linear-gradient(45deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .form-actions {
@@ -446,7 +567,7 @@ footer p {
 
 .cancel-btn,
 .submit-btn {
-    padding: 0.8rem 1.5rem;
+    padding: 12px 30px;
     border: none;
     border-radius: 25px;
     font-weight: 600;
@@ -458,9 +579,11 @@ footer p {
 .cancel-btn {
     background: #f8f9fa;
     color: #666;
+    border: 1px solid #dee2e6;
 }
 .cancel-btn:hover {
     background: #e9ecef;
+    transform: translateY(-2px);
 }
 
 .submit-btn {
@@ -494,6 +617,7 @@ footer p {
     object-fit: contain;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    background: #f0f0f0;
 }
 
 .detail-info {
@@ -509,20 +633,24 @@ footer p {
 }
 
 .detail-btn {
-    padding: 0.8rem 1.5rem;
+    padding: 12px 24px;
     border: none;
     border-radius: 25px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 1rem;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
 }
 .detail-btn:hover {
     transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
 .detail-btn.secondary {
     background: #f8f9fa;
     color: #666;
+    border: 1px solid #dee2e6;
 }
 .detail-btn.secondary:hover {
     background: #e9ecef;
@@ -535,10 +663,12 @@ footer p {
     justify-content: center;
     gap: 0.5rem;
     margin-bottom: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 15px 20px;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     font-size: 0.9rem;
     font-weight: 500;
 }
@@ -559,20 +689,37 @@ footer p {
     animation: spin 1s linear infinite;
 }
 
-/* 기타 UI 요소 */
-.image-count-badge {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    z-index: 10;
+/* 상태 표시기 */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
 }
 
+.status-indicator.connected {
+    background: #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+}
+
+.status-indicator.connecting {
+    background: #ffc107;
+    animation: pulse 1.5s infinite;
+}
+
+.status-indicator.disconnected {
+    background: #dc3545;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* 폼 행 스타일 */
 .form-row {
     display: flex;
     gap: 1rem;
@@ -595,6 +742,7 @@ footer p {
     position: relative;
     border-radius: 8px;
     overflow: hidden;
+    background: #f0f0f0;
 }
 .preview-item img {
     width: 100%;
@@ -605,13 +753,22 @@ footer p {
     position: absolute;
     top: 5px;
     right: 5px;
-    background: rgba(255, 0, 0, 0.7);
+    background: rgba(220, 53, 69, 0.8);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.preview-remove:hover {
+    background: #dc3545;
+    transform: scale(1.1);
 }
 
 /* 이미지 갤러리 */
@@ -624,7 +781,7 @@ footer p {
     gap: 8px;
     justify-content: center;
     flex-wrap: wrap;
-    margin-top: 10px;
+    margin-top: 15px;
 }
 
 .thumbnail {
@@ -635,9 +792,12 @@ footer p {
     cursor: pointer;
     transition: all 0.3s ease;
     border: 2px solid transparent;
+    background: #f0f0f0;
 }
 .thumbnail:hover, .thumbnail.active {
     border-color: #667eea;
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
 }
 
 /* 슬라이더 화살표 */
@@ -649,43 +809,120 @@ footer p {
     color: white;
     border: none;
     font-size: 2rem;
-    padding: 0.5rem 1rem;
+    padding: 15px 20px;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
     z-index: 10;
-    border-radius: 5px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
 }
-.nav-arrow:hover { background: rgba(0, 0, 0, 0.8); }
-.nav-arrow.prev { left: 10px; }
-.nav-arrow.next { right: 10px; }
+.nav-arrow:hover { 
+    background: rgba(0, 0, 0, 0.8);
+    transform: translateY(-50%) scale(1.05);
+}
+.nav-arrow.prev { left: 15px; }
+.nav-arrow.next { right: 15px; }
 
 /* 관리자 모드 */
 .admin-only { display: none !important; }
 body.admin-mode .admin-only { display: inline-flex !important; }
 
 .item-admin-actions {
-    padding: 0 1.5rem 1.5rem;
+    padding: 0 20px 20px;
     display: flex;
     gap: 0.5rem;
 }
 
 .admin-btn {
     width: 100%;
-    padding: 0.6rem;
+    padding: 8px 12px;
     border: none;
     border-radius: 8px;
     color: white;
     cursor: pointer;
     font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
 }
-.admin-btn.edit { background: #ffc107; }
-.admin-btn.delete { background: #dc3545; }
+.admin-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.admin-btn.edit { 
+    background: linear-gradient(45deg, #ffc107, #e0a800);
+}
+.admin-btn.delete { 
+    background: linear-gradient(45deg, #dc3545, #c82333);
+}
 
 #adminMenuLink.logout-link {
-    color: #dc3545;
+    color: #dc3545 !important;
     font-weight: bold;
+    background: rgba(220, 53, 69, 0.1) !important;
 }
 #adminMenuLink.logout-link:hover {
-    background-color: rgba(220, 53, 69, 0.1);
-    color: #a71d2a;
+    background: rgba(220, 53, 69, 0.2) !important;
+    color: #a71d2a !important;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .hero h1 {
+        font-size: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .header-logo {
+        max-height: 2rem;
+    }
+    
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .nav-menu {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .nav-menu a {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .filter-btn {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .artwork-detail {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .detail-info {
+        padding-left: 0;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-group.half {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 20px auto;
+    }
 }
