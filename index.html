@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+<div class="empty-gallery" id="emptyGallery">
+                <div class="empty-content">
+                    <h3>아직 등록된 작품이 없습니다</h3>
+                    <p>첫 번째 작품을 업로드해서 갤러리를 시작해보세요!</p>
+                    <button class="upload-btn" onclick="openUploadModal()"><!DOCTYPE html>
 <html lang="ko">
 <head>
     <section class="gallery" id="gallery">
@@ -11,11 +15,11 @@
             </div>
             
             <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">🎯 전체</button>
-                <button class="filter-btn" data-filter="drawing">🎨 그림</button>
-                <button class="filter-btn" data-filter="craft">🧩 공예</button>
-                <button class="filter-btn" data-filter="sculpture">🗿 조소</button>
-                <button class="filter-btn" data-filter="digital">💻 디지털아트</button>
+                <button class="filter-btn active" data-filter="all">전체</button>
+                <button class="filter-btn" data-filter="drawing">그림</button>
+                <button class="filter-btn" data-filter="craft">공예</button>
+                <button class="filter-btn" data-filter="sculpture">조소</button>
+                <button class="filter-btn" data-filter="digital">디지털아트</button>
             </div>
 
             <div class="loading" id="loading">
@@ -25,10 +29,10 @@
 
             <div class="empty-gallery" id="emptyGallery">
                 <div class="empty-content">
-                    <h3>🎨 아직 등록된 작품이 없습니다</h3>
+                    <h3>아직 등록된 작품이 없습니다</h3>
                     <p>첫 번째 작품을 업로드해서 갤러리를 시작해보세요!</p>
                     <button class="upload-btn" onclick="openUploadModal()">
-                        📸 첫 작품 올리기
+                        첫 작품 올리기
                     </button>
                 </div>
             </div>
@@ -49,19 +53,19 @@
     <div id="uploadModal" class="upload-modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>🎨 작품 업로드</h2>
+                <h2>작품 업로드</h2>
                 <span class="close-btn" onclick="closeUploadModal()">&times;</span>
             </div>
             <div class="modal-body">
                 <form id="artworkForm">
                     <div class="form-group">
-                        <label for="artworkTitle">✨ 작품 제목 *</label>
+                        <label for="artworkTitle">작품 제목</label>
                         <input type="text" id="artworkTitle" required placeholder="작품의 제목을 입력해주세요">
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group half">
-                            <label for="studentGrade">🎓 학년 *</label>
+                            <label for="studentGrade">학년</label>
                             <select id="studentGrade" required>
                                 <option value="">학년 선택</option>
                                 <option value="1">1학년</option>
@@ -74,7 +78,7 @@
                         </div>
                         
                         <div class="form-group half">
-                            <label for="studentClass">🏫 반 *</label>
+                            <label for="studentClass">반</label>
                             <select id="studentClass" required>
                                 <option value="">반 선택</option>
                                 <option value="1">1반</option>
@@ -87,33 +91,33 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="artworkCategory">🎯 작품 분류 *</label>
+                        <label for="artworkCategory">작품 분류</label>
                         <select id="artworkCategory" required>
                             <option value="">분류를 선택해주세요</option>
-                            <option value="drawing">🎨 그림</option>
-                            <option value="craft">🧩 공예</option>
-                            <option value="sculpture">🗿 조소</option>
-                            <option value="digital">💻 디지털아트</option>
+                            <option value="drawing">그림</option>
+                            <option value="craft">공예</option>
+                            <option value="sculpture">조소</option>
+                            <option value="digital">디지털아트</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="artworkDescription">📝 작품 설명</label>
+                        <label for="artworkDescription">작품 설명</label>
                         <textarea id="artworkDescription" rows="3" placeholder="작품에 대한 설명을 입력해주세요 (선택사항)"></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label for="artworkLink">🔗 관련 링크 (선택사항)</label>
-                        <input type="url" id="artworkLink" placeholder="https://example.com (작품 관련 링크나 동영상 링크 등)">
-                        <small class="form-help">작품 제작 과정 영상, 관련 자료 등의 링크를 입력할 수 있습니다.</small>
+                        <label for="artworkLink">관련 링크 (선택사항)</label>
+                        <input type="url" id="artworkLink" placeholder="https://example.com">
+                        <small style="color: #86868b; font-size: 12px; margin-top: 4px; display: block;">작품 제작 과정 영상, 관련 자료 등의 링크를 입력할 수 있습니다.</small>
                     </div>
                     
                     <div class="form-group">
-                        <label>📸 작품 이미지 *</label>
+                        <label>작품 이미지</label>
                         <div id="imageUploadArea" class="image-upload-area">
                             <div class="upload-placeholder">
-                                <p>📸 이미지를 업로드하려면 클릭하세요</p>
-                                <p class="upload-info">JPG, PNG 파일 / 최대 10MB / 여러 개 선택 가능</p>
+                                <p>이미지를 업로드하려면 클릭하세요</p>
+                                <p style="color: #86868b; font-size: 14px; margin-top: 4px;">JPG, PNG 파일 / 최대 10MB / 여러 개 선택 가능</p>
                             </div>
                             <div id="imagePreviewContainer" class="image-preview-container"></div>
                         </div>
@@ -139,7 +143,7 @@
     <div id="artworkDetailModal" class="upload-modal" style="display: none;">
         <div class="modal-content detail-modal">
             <div class="modal-header">
-                <h2 id="detailTitle">🎨 작품 상세보기</h2>
+                <h2 id="detailTitle">작품 상세보기</h2>
                 <span class="close-btn" onclick="closeDetailModal()">&times;</span>
             </div>
             <div class="modal-body">
@@ -158,23 +162,23 @@
                     <div class="detail-info">
                         <h3 id="detailArtworkTitle">작품 제목</h3>
                         <div class="detail-meta">
-                            <p><strong>🎓 학년반:</strong> <span id="detailGrade">학년반</span></p>
-                            <p><strong>🎯 분류:</strong> <span id="detailCategory">분류</span></p>
-                            <p><strong>📅 업로드:</strong> <span id="detailUploadDate">업로드 날짜</span></p>
+                            <p><strong>학년반:</strong> <span id="detailGrade">학년반</span></p>
+                            <p><strong>분류:</strong> <span id="detailCategory">분류</span></p>
+                            <p><strong>업로드:</strong> <span id="detailUploadDate">업로드 날짜</span></p>
                         </div>
                         <div class="detail-description">
-                            <h4>📝 작품 설명</h4>
+                            <h4>작품 설명</h4>
                             <p id="detailDescriptionText">작품 설명이 여기에 표시됩니다.</p>
                         </div>
                         <div id="detailLinkSection" class="detail-link" style="display: none;">
-                            <h4>🔗 관련 링크</h4>
-                            <a id="detailLink" href="#" target="_blank" rel="noopener noreferrer">🔗 링크 보기</a>
+                            <h4>관련 링크</h4>
+                            <a id="detailLink" href="#" target="_blank" rel="noopener noreferrer">링크 보기</a>
                         </div>
                         <div class="detail-actions">
-                            <button class="detail-btn" onclick="openImageInNewTab()">🔍 원본 크기로 보기</button>
+                            <button class="detail-btn" onclick="openImageInNewTab()">원본 크기로 보기</button>
                             <button class="detail-btn secondary" onclick="closeDetailModal()">닫기</button>
-                            <button id="detailEditBtn" class="detail-btn admin-only" style="background: linear-gradient(45deg, #ffc107, #e0a800);">✏️ 수정</button>
-                            <button id="detailDeleteBtn" class="detail-btn admin-only" style="background: linear-gradient(45deg, #dc3545, #c82333);">🗑️ 삭제</button>
+                            <button id="detailEditBtn" class="detail-btn admin-only" style="background: #ff9f0a;">수정</button>
+                            <button id="detailDeleteBtn" class="detail-btn admin-only" style="background: #ff3b30;">삭제</button>
                         </div>
                     </div>
                 </div>
@@ -196,15 +200,15 @@
             <div class="header-content">
                 <div class="logo">
                     <img src="" alt="헤더 로고" id="headerImage" class="header-logo" style="display: none;">
-                    🎨 학생 작품 전시관
+                    학생 작품 전시관
                 </div>
                 <nav>
                     <ul class="nav-menu">
-                        <li><a href="#home">🏠 홈</a></li>
-                        <li><a href="#about">📖 소개</a></li>
-                        <li><a href="#gallery">🖼️ 갤러리</a></li>
-                        <li><a href="#" onclick="openUploadModal(); return false;">📸 작품 올리기</a></li>
-                        <li><a href="#" id="adminMenuLink">⚙️ 관리자</a></li>
+                        <li><a href="#home">홈</a></li>
+                        <li><a href="#about">소개</a></li>
+                        <li><a href="#gallery">갤러리</a></li>
+                        <li><a href="#" onclick="openUploadModal(); return false;">작품 올리기</a></li>
+                        <li><a href="#" id="adminMenuLink">관리자</a></li>
                     </ul>
                 </nav>
             </div>
@@ -213,9 +217,7 @@
 
     <section class="hero" id="home">
         <div class="container">
-            <h1>
-                <span>🎨 우리들의 멋진 작품들</span>
-            </h1>
+            <h1>우리들의 멋진 작품들</h1>
             <p>창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</p>
         </div>
     </section>
