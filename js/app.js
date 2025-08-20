@@ -1,4 +1,27 @@
-// 학생 작품 갤러리 JavaScript - 완전 수정 버전
+function validateForm() {
+    const title = document.getElementById('artworkTitle')?.value.trim();
+    const grade = document.getElementById('studentGrade')?.value;
+    const category = document.getElementById('artworkCategory')?.value;
+    const description = document.getElementById('artworkDescription')?.value.trim();
+    
+    // 업로드 비밀번호 체크 (수정 모드나 관리자는 제외)
+    let passwordValid = true;
+    if (siteSettings.requireUploadPassword && !isAdmin && !isEditMode) {
+        const inputPassword = document.getElementById('uploadPasswordInput')?.value;
+        passwordValid = inputPassword === siteSettings.uploadPassword;
+    }
+    
+    const isValid = title && grade && category && description && 
+                   uploadedImages.length > 0 && isConnected && !isUploading && passwordValid;
+    
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = !isValid;
+        submitBtn.style.opacity = isValid ? '1' : '0.5';
+    }
+    
+    return isValid;
+}// 학생 작품 갤러리 JavaScript - 완전 수정 버전
 
 // 설정
 const CLOUDINARY_CONFIG = {
@@ -21,6 +44,8 @@ let isAdmin = false;
 let allArtworks = [];
 let uploadedImages = [];
 let isUploading = false;
+let isEditMode = false;
+let editingArtworkId = null;
 let siteSettings = {
     title: '우리학교 학생 작품 전시관',
     description: '창의적이고 아름다운 학생들의 작품을 함께 감상해보세요',
@@ -74,13 +99,24 @@ function toggleUploadPanel() {
         panel.classList.remove('active');
         panel.style.display = 'none';
         button.classList.remove('active');
+        
+        // 수정 모드였다면 초기화
+        if (isEditMode) {
+            resetEditMode();
+        }
+        
         console.log('📤 업로드 패널 닫힘');
     } else {
         panel.classList.add('active');
         panel.style.display = 'block';
         button.classList.add('active');
-        resetForm();
-        updateUploadPasswordVisibility();
+        
+        // 새 등록 모드로 초기화
+        if (!isEditMode) {
+            resetForm();
+            updateUploadPasswordVisibility();
+        }
+        
         console.log('📥 업로드 패널 열림');
     }
 }
@@ -317,7 +353,104 @@ function deleteArtwork(artworkId) {
 
 function editArtwork(id) {
     console.log('🖱️ 작품 수정 클릭:', id);
-    alert('수정 기능은 현재 준비 중입니다.');
+    
+    if (!isAdmin) {
+        alert('관리자만 수정할 수 있습니다.');
+        return;
+    }
+    
+    const artwork = allArtworks.find(a => a.id === id);
+    if (!artwork) {
+        alert('작품을 찾을 수 없습니다.');
+        return;
+    }
+    
+    // 수정 모드로 전환
+    isEditMode = true;
+    editingArtworkId = id;
+    
+    // 모달 닫기
+    closeModal();
+    
+    // 업로드 패널 열기
+    const panel = document.getElementById('uploadPanel');
+    const button = document.querySelector('.header-btn');
+    
+    // 모든 패널 닫기
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.header-btn').forEach(b => b.classList.remove('active'));
+    
+    // 업로드 패널 열기
+    panel.classList.add('active');
+    panel.style.display = 'block';
+    button.classList.add('active');
+    
+    // 폼에 기존 데이터 입력
+    loadArtworkForEdit(artwork);
+    
+    console.log('✅ 수정 모드 활성화:', artwork.title);
+}
+
+function loadArtworkForEdit(artwork) {
+    // 패널 제목 변경
+    const panelTitle = document.getElementById('uploadPanelTitle');
+    if (panelTitle) panelTitle.textContent = '✏️ 작품 수정';
+    
+    // 폼 필드에 데이터 입력
+    document.getElementById('artworkCategory').value = artwork.category;
+    document.getElementById('artworkTitle').value = artwork.title;
+    document.getElementById('studentGrade').value = artwork.grade.replace('학년', '');
+    document.getElementById('artworkDescription').value = artwork.description;
+    document.getElementById('artworkLink').value = artwork.link || '';
+    
+    // 기존 이미지 로드
+    uploadedImages = [...artwork.imageUrls];
+    updateImagePreview();
+    
+    // 버튼 텍스트 변경
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    
+    if (submitBtn) submitBtn.textContent = '수정 완료';
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    
+    // 비밀번호 필드 숨기기 (관리자 수정시에는 불필요)
+    const passwordGroup = document.getElementById('uploadPasswordGroup');
+    if (passwordGroup) passwordGroup.style.display = 'none';
+    
+    validateForm();
+    
+    console.log('📝 수정 폼 로드 완료');
+}
+
+function cancelEdit() {
+    console.log('🖱️ 수정 취소 클릭');
+    
+    if (confirm('수정을 취소하시겠습니까? 변경사항이 모두 사라집니다.')) {
+        resetEditMode();
+        toggleUploadPanel(); // 패널 닫기
+    }
+}
+
+function resetEditMode() {
+    isEditMode = false;
+    editingArtworkId = null;
+    
+    // 패널 제목 원래대로
+    const panelTitle = document.getElementById('uploadPanelTitle');
+    if (panelTitle) panelTitle.textContent = '📸 새로운 작품 등록';
+    
+    // 버튼 텍스트 원래대로
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    
+    if (submitBtn) submitBtn.textContent = '작품 등록하기';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    
+    // 폼 초기화
+    resetForm();
+    
+    console.log('📝 수정 모드 해제');
 }
 
 function saveSettings() {
@@ -480,6 +613,12 @@ function resetForm() {
     uploadedImages = [];
     updateImagePreview();
     validateForm();
+    
+    // 수정 모드 해제
+    if (isEditMode) {
+        resetEditMode();
+    }
+    
     console.log('📝 폼 초기화 완료');
 }
 
@@ -558,10 +697,11 @@ function validateForm() {
 function updateUploadPasswordVisibility() {
     const passwordGroup = document.getElementById('uploadPasswordGroup');
     if (passwordGroup) {
-        if (siteSettings.requireUploadPassword && !isAdmin) {
-            passwordGroup.style.display = 'block';
-        } else {
+        // 수정 모드이거나 관리자인 경우에는 비밀번호 필드 숨기기
+        if (isEditMode || isAdmin || !siteSettings.requireUploadPassword) {
             passwordGroup.style.display = 'none';
+        } else if (siteSettings.requireUploadPassword) {
+            passwordGroup.style.display = 'block';
         }
     }
 }
@@ -571,7 +711,7 @@ async function handleFormSubmit(e) {
     console.log('📝 폼 제출 시도');
     
     if (!validateForm()) {
-        if (siteSettings.requireUploadPassword && !isAdmin) {
+        if (siteSettings.requireUploadPassword && !isAdmin && !isEditMode) {
             const inputPassword = document.getElementById('uploadPasswordInput')?.value;
             if (inputPassword !== siteSettings.uploadPassword) {
                 alert('등록 비밀번호가 올바르지 않습니다.');
@@ -587,47 +727,103 @@ async function handleFormSubmit(e) {
     
     isUploading = true;
     submitBtn.disabled = true;
-    submitBtn.textContent = '등록 중...';
+    submitBtn.textContent = isEditMode ? '수정 중...' : '등록 중...';
 
     try {
-        const formData = {
-            id: `artwork_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            title: document.getElementById('artworkTitle').value.trim(),
-            grade: document.getElementById('studentGrade').value + '학년',
-            category: document.getElementById('artworkCategory').value,
-            description: document.getElementById('artworkDescription').value.trim(),
-            link: document.getElementById('artworkLink')?.value.trim() || '',
-            imageUrls: [...uploadedImages],
-            uploadDate: new Date().toISOString()
-        };
-        
-        console.log('💾 저장할 작품 데이터:', formData);
-        
-        // 로컬 데이터에 추가
-        allArtworks.unshift(formData);
-        
-        // UI에 즉시 추가
-        addArtworkToGallery(formData);
-        
-        // 서버에 저장 (비동기)
-        callUpstashAPI('SET', REDIS_KEY, JSON.stringify(allArtworks));
+        if (isEditMode) {
+            // 수정 모드
+            const existingArtwork = allArtworks.find(a => a.id === editingArtworkId);
+            if (!existingArtwork) {
+                throw new Error('수정할 작품을 찾을 수 없습니다.');
+            }
+            
+            const updatedArtwork = {
+                ...existingArtwork,
+                title: document.getElementById('artworkTitle').value.trim(),
+                grade: document.getElementById('studentGrade').value + '학년',
+                category: document.getElementById('artworkCategory').value,
+                description: document.getElementById('artworkDescription').value.trim(),
+                link: document.getElementById('artworkLink')?.value.trim() || '',
+                imageUrls: [...uploadedImages],
+                lastModified: new Date().toISOString()
+            };
+            
+            console.log('💾 수정할 작품 데이터:', updatedArtwork);
+            
+            // 로컬 데이터에서 업데이트
+            const index = allArtworks.findIndex(a => a.id === editingArtworkId);
+            if (index !== -1) {
+                allArtworks[index] = updatedArtwork;
+            }
+            
+            // UI에서 업데이트
+            updateArtworkInGallery(updatedArtwork);
+            
+            // 서버에 저장 (비동기)
+            callUpstashAPI('SET', REDIS_KEY, JSON.stringify(allArtworks));
+            
+            alert(`✅ "${updatedArtwork.title}" 작품이 성공적으로 수정되었습니다!`);
+            console.log('✅ 작품 수정 완료');
+            
+        } else {
+            // 새 등록 모드
+            const formData = {
+                id: `artwork_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                title: document.getElementById('artworkTitle').value.trim(),
+                grade: document.getElementById('studentGrade').value + '학년',
+                category: document.getElementById('artworkCategory').value,
+                description: document.getElementById('artworkDescription').value.trim(),
+                link: document.getElementById('artworkLink')?.value.trim() || '',
+                imageUrls: [...uploadedImages],
+                uploadDate: new Date().toISOString()
+            };
+            
+            console.log('💾 저장할 작품 데이터:', formData);
+            
+            // 로컬 데이터에 추가
+            allArtworks.unshift(formData);
+            
+            // UI에 즉시 추가
+            addArtworkToGallery(formData);
+            
+            // 서버에 저장 (비동기)
+            callUpstashAPI('SET', REDIS_KEY, JSON.stringify(allArtworks));
+            
+            alert(`🎉 "${formData.title}" 작품이 성공적으로 등록되었습니다!`);
+            console.log('✅ 작품 등록 완료');
+        }
         
         // 성공 처리
         resetForm();
         toggleUploadPanel();
         updateCounts();
         
-        alert(`🎉 "${formData.title}" 작품이 성공적으로 등록되었습니다!`);
-        console.log('✅ 작품 등록 완료');
-        
     } catch (error) {
-        console.error('❌ 작품 등록 오류:', error);
-        alert('작품 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+        console.error('❌ 작품 처리 오류:', error);
+        alert('작품 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
     } finally {
         isUploading = false;
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
     }
+}
+
+function updateArtworkInGallery(updatedArtwork) {
+    // 기존 작품 요소들을 찾아서 업데이트
+    const artworkElements = document.querySelectorAll(`[data-artwork-id="${updatedArtwork.id}"]`);
+    
+    artworkElements.forEach(element => {
+        // 새로운 요소 생성
+        const newElement = createArtworkElement(updatedArtwork);
+        if (newElement) {
+            // 기존 요소와 교체
+            element.parentNode.replaceChild(newElement, element);
+            // 애니메이션 효과
+            setTimeout(() => newElement.classList.add('show'), 100);
+        }
+    });
+    
+    console.log('🔄 갤러리에서 작품 업데이트 완료:', updatedArtwork.title);
 }
 
 function addArtworkToGallery(artwork) {
