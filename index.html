@@ -76,11 +76,20 @@
                     <textarea id="artworkDescription" placeholder="작품에 대해 설명해주세요..." required></textarea>
                 </div>
                 <div class="form-group">
-                    <label>작품 이미지 (여러 장 선택 가능)</label>
+                    <label>작품 이미지 (여러 장 선택 가능) *</label>
                     <div class="image-upload" onclick="document.getElementById('imageFile').click()">
-                        <input type="file" id="imageFile" accept="image/*" onchange="previewImages()" multiple>
-                        <div id="uploadText">📁 이미지를 선택하세요</div>
+                        <input type="file" id="imageFile" accept="image/*" multiple style="display: none;">
+                        <div id="uploadText">
+                            📁 이미지를 선택하세요<br>
+                            <small style="color: #666; font-size: 0.9rem;">JPG, PNG 파일 / 최대 10MB / 여러 개 선택 가능</small>
+                        </div>
                         <div class="image-preview-container" id="imagePreviewContainer"></div>
+                    </div>
+                    <div style="margin-top: 10px; text-align: center;">
+                        <button type="button" onclick="uploadToCloudinary()" class="btn btn-secondary btn-small" style="margin-right: 10px;">
+                            ☁️ 클라우드 업로드
+                        </button>
+                        <small style="color: #666; font-size: 0.8rem;">또는 클라우드 업로드를 이용하세요</small>
                     </div>
                 </div>
                 <div class="form-group">
