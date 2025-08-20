@@ -139,11 +139,13 @@
                     <label><input type="checkbox" id="selectAll"> 전체 선택</label>
                     <button class="btn btn-danger btn-small" onclick="bulkDeleteArtworks()">선택 삭제</button>
                     <button class="btn btn-secondary btn-small" onclick="exportData()">데이터 내보내기</button>
+                    <button class="btn btn-primary btn-small" onclick="saveArtworkOrder()">순서 저장</button>
                 </div>
                 <div class="table-container">
                     <table id="artworksTable">
                         <thead>
                             <tr>
+                                <th style="width: 30px;">🔄</th>
                                 <th>선택</th>
                                 <th>제목</th>
                                 <th>학년</th>
