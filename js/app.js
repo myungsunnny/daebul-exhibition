@@ -1,4 +1,4 @@
-// 학생 작품 갤러리 JavaScript - 새로운 분류 시스템 적용
+// 학생 작품 갤러리 JavaScript - 관리자 설정 기능 완전 수정 버전
 
 // 설정
 const CLOUDINARY_CONFIG = {
@@ -34,7 +34,7 @@ const defaultSettings = {
     gradeInfo: {
         'all': {
             title: '전체 학년 작품 소개',
-            description: '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.\n\n각 학년별로 다양한 주제와 기법으로 만들어진 작품들이 전시되어 있으며, 학년이 올라갈수록 더욱 정교하고 깊이 있는 작품들을 감상하실 수 있습니다.\n\n활동 모습, 활동지, 결과물 등 다양한 형태의 작품들을 통해 우리 학생들의 무한한 상상력과 예술적 재능을 확인해보세요.'
+            description: '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.\n\n각 학년별로 다양한 주제와 기법으로 만들어진 작품들이 전시되어 있으며, 학년이 올라갈수록 더욱 정교하고 깊이 있는 작품들을 감상하실 수 있습니다.\n\n그림, 공예, 조소, 디지털아트 등 다양한 분야의 작품들을 통해 우리 학생들의 무한한 상상력과 예술적 재능을 확인해보세요.'
         },
         '1학년': {
             title: '1학년 작품 - 첫걸음의 순수함',
@@ -646,8 +646,7 @@ async function handleFormSubmit(e) {
 }
 
 function addArtworkToGallery(artwork) {
-    // 새로운 갤러리 ID들로 수정
-    const galleries = ['galleryGrid', 'activityGallery', 'worksheetGallery', 'resultGallery'];
+    const galleries = ['galleryGrid', 'drawingGallery', 'craftGallery', 'sculptureGallery', 'digitalGallery'];
     
     galleries.forEach(galleryId => {
         const gallery = document.getElementById(galleryId);
@@ -703,11 +702,9 @@ function showArtworkDetail(artworkId) {
     const artwork = allArtworks.find(a => a.id === artworkId);
     if (!artwork) return;
     
-    // 새로운 카테고리 매핑
     const categoryMap = { 
-        'activity': '📷 활동 모습', 
-        'worksheet': '📝 활동지', 
-        'result': '🎨 결과물' 
+        'drawing': '그림', 'craft': '공예', 
+        'sculpture': '조소', 'digital': '디지털아트' 
     };
     
     // 모달 내용 업데이트
@@ -815,12 +812,12 @@ async function loadArtworks() {
 }
 
 function renderAllArtworks() {
-    // 새로운 갤러리 ID들로 수정
     const galleries = {
         galleryGrid: document.getElementById('galleryGrid'),
-        activityGallery: document.getElementById('activityGallery'),
-        worksheetGallery: document.getElementById('worksheetGallery'),
-        resultGallery: document.getElementById('resultGallery')
+        drawingGallery: document.getElementById('drawingGallery'),
+        craftGallery: document.getElementById('craftGallery'),
+        sculptureGallery: document.getElementById('sculptureGallery'),
+        digitalGallery: document.getElementById('digitalGallery')
     };
     
     // 모든 갤러리 초기화
@@ -863,12 +860,12 @@ function updateConnectionStatus(status, message) {
 }
 
 function updateCounts() {
-    // 새로운 카테고리로 수정
     const counts = {
         all: allArtworks.length,
-        activity: allArtworks.filter(a => a.category === 'activity').length,
-        worksheet: allArtworks.filter(a => a.category === 'worksheet').length,
-        result: allArtworks.filter(a => a.category === 'result').length
+        drawing: allArtworks.filter(a => a.category === 'drawing').length,
+        craft: allArtworks.filter(a => a.category === 'craft').length,
+        sculpture: allArtworks.filter(a => a.category === 'sculpture').length,
+        digital: allArtworks.filter(a => a.category === 'digital').length
     };
     
     // 카운트 업데이트
@@ -898,20 +895,13 @@ function loadArtworksTable() {
     const tbody = document.getElementById('artworksTableBody');
     if (!tbody) return;
     
-    // 새로운 카테고리 표시명 매핑
-    const categoryDisplayNames = {
-        'activity': '📷 활동 모습',
-        'worksheet': '📝 활동지',
-        'result': '🎨 결과물'
-    };
-    
     tbody.innerHTML = allArtworks.map(artwork => `
         <tr>
             <td><input type="checkbox" value="${artwork.id}"></td>
             <td>${artwork.title}</td>
             <td>${artwork.studentName}</td>
             <td>${artwork.grade}</td>
-            <td>${categoryDisplayNames[artwork.category] || artwork.category}</td>
+            <td>${artwork.category}</td>
             <td>${new Date(artwork.uploadDate).toLocaleDateString()}</td>
             <td>
                 <button class="btn btn-warning btn-small" onclick="editArtwork('${artwork.id}')">수정</button>
@@ -1188,38 +1178,38 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('allArtworks:', allArtworks.length);
         console.log('uploadedImages:', uploadedImages.length);
         
-        // 새로운 카테고리로 테스트 작품 추가
+        // 테스트 작품 추가 (각 학년별로)
         const testArtworks = [
             {
-                id: 'test_activity_' + Date.now(),
-                title: '📷 활동 모습 테스트',
+                id: 'test_1_' + Date.now(),
+                title: '1학년 테스트 작품',
                 studentName: '김철수',
                 grade: '1학년',
-                category: 'activity',
-                description: '활동하는 모습을 담은 사진입니다.',
-                imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmNjk5NCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfk7cg7Zal64+ZIOuqqOyKtTwvdGV4dD48L3N2Zz4='],
+                category: 'drawing',
+                description: '1학년 학생의 그림 작품입니다.',
+                imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmNjk5NCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjHtlZnrhYQg7YWM7Iqk7Yq4PC90ZXh0Pjwvc3ZnPg=='],
                 uploadDate: new Date().toISOString(),
                 link: ''
             },
             {
-                id: 'test_worksheet_' + Date.now(),
-                title: '📝 활동지 테스트',
+                id: 'test_3_' + Date.now(),
+                title: '3학년 테스트 작품',
                 studentName: '이영희',
                 grade: '3학년',
-                category: 'worksheet',
-                description: '수업 시간에 작성한 활동지입니다.',
-                imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzY2N2VlYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfk50g7Zal64+Z7KeAPC90ZXh0Pjwvc3ZnPg=='],
+                category: 'craft',
+                description: '3학년 학생의 공예 작품입니다.',
+                imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzY2N2VlYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjPtlZnrhYQg7YWM7Iqk7Yq4PC90ZXh0Pjwvc3ZnPg=='],
                 uploadDate: new Date().toISOString(),
                 link: ''
             },
             {
-                id: 'test_result_' + Date.now(),
-                title: '🎨 결과물 테스트',
+                id: 'test_6_' + Date.now(),
+                title: '6학년 테스트 작품',
                 studentName: '박민수',
                 grade: '6학년',
-                category: 'result',
-                description: '완성된 작품 결과물입니다.',
-                imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzM0ZDM5OSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfjqgg6rKw6rO87Jq8PC90ZXh0Pjwvc3ZnPg=='],
+                category: 'digital',
+                description: '6학년 학생의 디지털아트 작품입니다.',
+                imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzM0ZDM5OSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjbthZnrhYQg7YWM7Iqk7Yq4PC90ZXh0Pjwvc3ZnPg=='],
                 uploadDate: new Date().toISOString(),
                 link: ''
             }
@@ -1232,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         updateCounts();
         
-        alert('새로운 분류 테스트 작품들이 추가되었습니다! (활동 모습, 활동지, 결과물)');
+        alert('테스트 작품들이 추가되었습니다! (1학년, 3학년, 6학년)');
         console.log('테스트 작품들 추가됨:', testArtworks.length, '개');
     };
     
@@ -1320,7 +1310,7 @@ window.addEventListener('beforeunload', function(e) {
 
 console.log('🚀 학생 갤러리 JavaScript 완전 로드 완료');
 console.log('🔧 디버깅 명령어:');
-console.log('  - window.testGallery() : 새로운 분류 테스트 작품 추가');
+console.log('  - window.testGallery() : 테스트 작품 추가');
 console.log('  - toggleUploadPanel() : 업로드 패널 토글');
 console.log('  - toggleAdminPanel() : 관리자 패널 토글');
 console.log('  - console.log(allArtworks) : 전체 작품 데이터 확인');
