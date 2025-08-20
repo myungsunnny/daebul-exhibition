@@ -20,8 +20,8 @@
             <p class="subtitle">창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</p>
         </header>
 
-        <!-- 시스템 상태 패널 (관리자 전용) -->
-        <div class="panel status-section admin-only" id="statusSection">
+        <!-- 시스템 상태 패널 -->
+        <div class="panel status-section" id="statusSection">
             <h3>🚀 시스템 상태</h3>
             <div id="upstashStatus">
                 <span class="status-indicator status-warning">데이터베이스 연결 확인 중...</span>
@@ -45,9 +45,10 @@
                     <label for="artworkCategory">작품 분류</label>
                     <select id="artworkCategory" required>
                         <option value="">분류를 선택해주세요</option>
-                        <option value="activity">📷 활동 모습</option>
-                        <option value="worksheet">📝 활동지</option>
-                        <option value="result">🎨 결과물</option>
+                        <option value="drawing">그림</option>
+                        <option value="craft">공예</option>
+                        <option value="sculpture">조소</option>
+                        <option value="digital">디지털아트</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -318,15 +319,16 @@
             </div>
         </div>
 
-        <!-- 작품 분류 탭 (수정됨) -->
+        <!-- 작품 분류 탭 -->
         <div class="type-tabs">
             <button class="type-tab active" data-type="all" onclick="switchTypeTab('all')">🎯 전체</button>
-            <button class="type-tab" data-type="activity" onclick="switchTypeTab('activity')">📷 활동 모습</button>
-            <button class="type-tab" data-type="worksheet" onclick="switchTypeTab('worksheet')">📝 활동지</button>
-            <button class="type-tab" data-type="result" onclick="switchTypeTab('result')">🎨 결과물</button>
+            <button class="type-tab" data-type="drawing" onclick="switchTypeTab('drawing')">🎨 그림</button>
+            <button class="type-tab" data-type="craft" onclick="switchTypeTab('craft')">🧩 공예</button>
+            <button class="type-tab" data-type="sculpture" onclick="switchTypeTab('sculpture')">🗿 조소</button>
+            <button class="type-tab" data-type="digital" onclick="switchTypeTab('digital')">💻 디지털아트</button>
         </div>
 
-        <!-- 갤러리 컨테이너 (수정됨) -->
+        <!-- 갤러리 컨테이너 -->
         <div id="galleryContainer">
             <div class="type-section active" id="allSection">
                 <div class="type-header">
@@ -336,28 +338,36 @@
                 <div class="type-gallery" id="galleryGrid"></div>
             </div>
 
-            <div class="type-section" id="activitySection">
+            <div class="type-section" id="drawingSection">
                 <div class="type-header">
-                    <div class="type-title">📷 활동 모습</div>
-                    <div class="type-count" id="activityCount">0개 작품</div>
+                    <div class="type-title">🎨 그림 작품</div>
+                    <div class="type-count" id="drawingCount">0개 작품</div>
                 </div>
-                <div class="type-gallery" id="activityGallery"></div>
+                <div class="type-gallery" id="drawingGallery"></div>
             </div>
 
-            <div class="type-section" id="worksheetSection">
+            <div class="type-section" id="craftSection">
                 <div class="type-header">
-                    <div class="type-title">📝 활동지</div>
-                    <div class="type-count" id="worksheetCount">0개 작품</div>
+                    <div class="type-title">🧩 공예 작품</div>
+                    <div class="type-count" id="craftCount">0개 작품</div>
                 </div>
-                <div class="type-gallery" id="worksheetGallery"></div>
+                <div class="type-gallery" id="craftGallery"></div>
             </div>
 
-            <div class="type-section" id="resultSection">
+            <div class="type-section" id="sculptureSection">
                 <div class="type-header">
-                    <div class="type-title">🎨 결과물</div>
-                    <div class="type-count" id="resultCount">0개 작품</div>
+                    <div class="type-title">🗿 조소 작품</div>
+                    <div class="type-count" id="sculptureCount">0개 작품</div>
                 </div>
-                <div class="type-gallery" id="resultGallery"></div>
+                <div class="type-gallery" id="sculptureGallery"></div>
+            </div>
+
+            <div class="type-section" id="digitalSection">
+                <div class="type-header">
+                    <div class="type-title">💻 디지털아트 작품</div>
+                    <div class="type-count" id="digitalCount">0개 작품</div>
+                </div>
+                <div class="type-gallery" id="digitalGallery"></div>
             </div>
         </div>
     </div>
