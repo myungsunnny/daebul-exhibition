@@ -223,24 +223,7 @@ function editArtwork(id) {
 
 function saveSettings() {
     console.log('🖱️ 설정 저장 클릭');
-    
-    // 학년별 설정 업데이트
-    updateGradeSettings();
-    
-    // 기본 설정들도 저장 (사이트 제목, 설명 등)
-    const siteTitle = document.getElementById('siteTitle')?.value;
-    const siteDescription = document.getElementById('siteDescription')?.value;
-    
-    if (siteTitle) {
-        document.getElementById('headerTitleText').textContent = siteTitle;
-    }
-    
-    if (siteDescription) {
-        document.querySelector('.subtitle').textContent = siteDescription;
-    }
-    
-    alert('✅ 설정이 저장되었습니다!');
-    console.log('✅ 모든 설정 저장 완료');
+    alert('설정이 저장되었습니다.');
 }
 
 function previewImages() {
@@ -712,153 +695,9 @@ function loadAdminData() {
     document.getElementById('statComments').textContent = '0';
     document.getElementById('statLikes').textContent = '0';
     document.getElementById('statToday').textContent = todayArtworks.length;
-    
-    // 학년별 설정도 로드
-    loadGradeSettings();
 }
 
-// === 학년별 정보 관리 ===
-const gradeInfoData = {
-    'all': {
-        title: '🎨 우리학교 전체 학년 작품 전시관',
-        description: `우리학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한 곳에서 만나보세요.
-
-각 학년별로 다양한 주제와 기법으로 표현된 작품들은 학생들의 성장과 발전을 보여주는 소중한 기록입니다.
-그림, 공예, 조소, 디지털아트 등 다채로운 분야의 작품들을 통해 우리 학생들의 무한한 상상력과 창의력을 느껴보시기 바랍니다.
-
-모든 작품은 학생들이 직접 제작한 것이며, 각자의 개성과 특색이 잘 드러나 있습니다.`
-    },
-    '1학년': {
-        title: '🌱 1학년 - 첫 걸음의 예술',
-        description: `학교생활을 시작하는 1학년 학생들의 순수하고 자유로운 상상력이 담긴 작품들입니다.
-
-색칠하기, 간단한 그리기, 찰흙 놀이 등을 통해 예술의 기초를 다지며 자신만의 표현 방법을 찾아가고 있습니다.
-어린이다운 순수함과 자유로운 표현이 돋보이는 작품들을 만나보세요.
-
-주요 활동: 크레파스 그림, 손가락 그림, 간단한 만들기, 자유 표현 활동`
-    },
-    '2학년': {
-        title: '🌈 2학년 - 색깔의 마법',
-        description: `학교생활에 익숙해진 2학년 학생들이 다양한 색깔과 도구를 사용해 만든 알록달록한 작품들입니다.
-
-기본적인 미술 도구 사용법을 익히고, 여러 가지 재료를 활용한 창작 활동을 통해 표현력을 키워나가고 있습니다.
-상상력이 풍부한 이 시기의 특성이 잘 드러나는 작품들을 감상해보세요.
-
-주요 활동: 물감 그림, 색종이 꾸미기, 자연물 활용 작품, 협동 작품 만들기`
-    },
-    '3학년': {
-        title: '🎭 3학년 - 상상력의 세계',
-        description: `중학년에 접어든 3학년 학생들의 풍부한 상상력과 창의성이 돋보이는 작품들입니다.
-
-다양한 주제를 탐구하고 자신만의 관점으로 표현하는 능력이 발달하면서, 더욱 개성 있는 작품들을 만들어내고 있습니다.
-기법의 숙련도도 높아져 완성도 있는 작품들을 만나볼 수 있습니다.
-
-주요 활동: 주제가 있는 그림, 입체 작품 만들기, 미술 도구 활용법 익히기, 개성 표현 활동`
-    },
-    '4학년': {
-        title: '✨ 4학년 - 기법의 발견',
-        description: `다양한 미술 기법을 익히고 활용하는 4학년 학생들의 체계적이고 정교한 작품들입니다.
-
-관찰력과 표현력이 크게 발달하여 사실적인 표현과 상상적인 표현을 적절히 조화시킨 작품들을 만들고 있습니다.
-협동 작품 활동을 통해 소통과 협력의 의미도 배워나가고 있습니다.
-
-주요 활동: 정밀 스케치, 다양한 채색 기법, 입체 조형물, 공동 작품 제작`
-    },
-    '5학년': {
-        title: '🎯 5학년 - 표현의 완성',
-        description: `고학년이 된 5학년 학생들의 완성도 높고 개성이 뚜렷한 작품들입니다.
-
-자신만의 표현 스타일을 찾아가며, 복잡하고 정교한 작품을 계획하고 완성하는 능력이 크게 향상되었습니다.
-사회적 주제나 환경 문제 등을 다룬 의미 있는 작품들도 많이 만나볼 수 있습니다.
-
-주요 활동: 주제 연구 작품, 정교한 기법 활용, 사회적 메시지 담기, 개별 프로젝트`
-    },
-    '6학년': {
-        title: '🏆 6학년 - 예술의 완성',
-        description: `초등학교 마지막 학년인 6학년 학생들의 가장 성숙하고 완성도 높은 작품들입니다.
-
-지금까지 배운 모든 기법과 경험을 바탕으로 자신만의 예술 세계를 구축해나가고 있습니다.
-졸업을 앞두고 만든 특별한 작품들은 초등학교 생활의 소중한 추억이 될 것입니다.
-
-주요 활동: 졸업 기념 작품, 종합적 표현 활동, 후배들을 위한 작품, 개인 포트폴리오 완성`
-    }
-};
-
-function updateGradeInfoSection(category) {
-    const gradeInfoSection = document.getElementById('gradeInfoSection');
-    const gradeInfoTitle = document.getElementById('gradeInfoTitle');
-    const gradeInfoDescription = document.getElementById('gradeInfoDescription');
-    
-    if (!gradeInfoSection || !gradeInfoTitle || !gradeInfoDescription) {
-        console.warn('학년 정보 섹션 요소를 찾을 수 없습니다.');
-        return;
-    }
-    
-    // 해당 카테고리의 정보 가져오기
-    const gradeInfo = gradeInfoData[category];
-    
-    if (gradeInfo) {
-        // 정보 업데이트
-        gradeInfoTitle.textContent = gradeInfo.title;
-        gradeInfoDescription.textContent = gradeInfo.description;
-        
-        // 섹션 표시
-        gradeInfoSection.classList.add('active');
-        gradeInfoSection.style.display = 'block';
-        
-        // 부드러운 스크롤 이동 (선택사항)
-        setTimeout(() => {
-            gradeInfoSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-        }, 300);
-        
-        console.log('✅ 학년 정보 섹션 업데이트:', category);
-    } else {
-        // 정보가 없으면 섹션 숨기기
-        gradeInfoSection.classList.remove('active');
-        gradeInfoSection.style.display = 'none';
-        console.log('❌ 해당 카테고리 정보 없음:', category);
-    }
-}
-
-// 학년별 통계 업데이트 함수
-function updateGradeStats(category) {
-    if (category === 'all') {
-        const gradeStats = {
-            '1학년': allArtworks.filter(a => a.grade === '1학년').length,
-            '2학년': allArtworks.filter(a => a.grade === '2학년').length,
-            '3학년': allArtworks.filter(a => a.grade === '3학년').length,
-            '4학년': allArtworks.filter(a => a.grade === '4학년').length,
-            '5학년': allArtworks.filter(a => a.grade === '5학년').length,
-            '6학년': allArtworks.filter(a => a.grade === '6학년').length
-        };
-        
-        // 전체 학년 통계를 학년 정보 섹션에 추가
-        let statsHTML = '<div class="grade-stats" style="margin-top: 20px;">';
-        Object.entries(gradeStats).forEach(([grade, count]) => {
-            statsHTML += `
-                <div class="grade-stat">
-                    <div class="grade-stat-number">${count}</div>
-                    <div class="grade-stat-label">${grade} 작품</div>
-                </div>
-            `;
-        });
-        statsHTML += '</div>';
-        
-        // 기존 통계가 있으면 제거하고 새로 추가
-        const existingStats = document.querySelector('.grade-stats');
-        if (existingStats) {
-            existingStats.remove();
-        }
-        
-        const gradeInfoSection = document.getElementById('gradeInfoSection');
-        if (gradeInfoSection) {
-            gradeInfoSection.insertAdjacentHTML('beforeend', statsHTML);
-        }
-    }
-}
+function loadArtworksTable() {
     const tbody = document.getElementById('artworksTableBody');
     if (!tbody) return;
     
@@ -934,18 +773,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const filterBtns = document.querySelectorAll('.filter-btn');
     filterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
-            const category = this.dataset.category;
-            console.log('🔍 필터 버튼 클릭:', category);
+            console.log('🔍 필터 버튼 클릭:', this.dataset.category);
             
             // 모든 필터 버튼 비활성화
             filterBtns.forEach(b => b.classList.remove('active'));
             // 클릭된 버튼 활성화
             this.classList.add('active');
             
-            // 학년별 정보 섹션 업데이트
-            updateGradeInfoSection(category);
-            
-            // 필터 적용 (현재는 단순 표시)
+            // 필터 적용
+            const category = this.dataset.category;
+            applyGradeFilter(category);
+            showGradeInfo(category);
             console.log('✅ 필터 적용:', category);
         });
     });
@@ -1015,12 +853,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 데이터 로드
     loadArtworks();
     
-    // 페이지 로드시 전체 학년 정보 표시
-    setTimeout(() => {
-        updateGradeInfoSection('all');
-        updateGradeStats('all');
-    }, 1000);
-    
     // 테스트용 함수 등록
     window.testGallery = function() {
         console.log('=== 갤러리 테스트 ===');
@@ -1052,6 +884,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ 갤러리 초기화 완료!');
     console.log('💡 테스트: window.testGallery() 실행해보세요');
+    
+    // 초기 전체 학년 정보 표시
+    showGradeInfo('all');
 });
 
 // === 5. 전역 함수 등록 (HTML onclick용) ===
@@ -1142,5 +977,147 @@ console.log('  - console.log(allArtworks) : 전체 작품 데이터 확인');
 
 // 초기화 완료 신호
 setTimeout(() => {
-    console.log('✨ 모든 시스템 준비 완료! 버튼들을 클릭해보세요.');
+    // === 7. 학년별 필터 및 정보 표시 ===
+function applyGradeFilter(grade) {
+    console.log('🎯 학년 필터 적용:', grade);
+    
+    const allCards = document.querySelectorAll('.artwork-card');
+    let visibleCount = 0;
+    
+    allCards.forEach(card => {
+        const artwork = allArtworks.find(a => a.id === card.dataset.artworkId);
+        if (!artwork) return;
+        
+        let shouldShow = false;
+        
+        if (grade === 'all') {
+            shouldShow = true;
+        } else {
+            // "1학년", "2학년" 등과 매칭
+            shouldShow = artwork.grade === grade;
+        }
+        
+        if (shouldShow) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    console.log(`✅ 필터 결과: ${visibleCount}개 작품 표시`);
+    updateFilteredCounts(grade, visibleCount);
+}
+
+function updateFilteredCounts(grade, visibleCount) {
+    // 현재 활성화된 타입 섹션의 카운트 업데이트
+    const activeSection = document.querySelector('.type-section.active');
+    if (activeSection) {
+        const countElement = activeSection.querySelector('.type-count');
+        if (countElement) {
+            if (grade === 'all') {
+                countElement.textContent = `${visibleCount}개 작품`;
+            } else {
+                countElement.textContent = `${grade} ${visibleCount}개 작품`;
+            }
+        }
+    }
+}
+
+function showGradeInfo(grade) {
+    console.log('📚 학년 정보 표시:', grade);
+    
+    const gradeInfoSection = document.getElementById('gradeInfoSection');
+    const gradeInfoTitle = document.getElementById('gradeInfoTitle');
+    const gradeInfoDescription = document.getElementById('gradeInfoDescription');
+    
+    if (!gradeInfoSection || !gradeInfoTitle || !gradeInfoDescription) {
+        console.error('학년 정보 요소를 찾을 수 없습니다');
+        return;
+    }
+    
+    // 학년별 정보 데이터
+    const gradeInfoData = {
+        'all': {
+            title: '전체 학년 작품 소개',
+            description: `우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.
+
+각 학년별로 다양한 주제와 기법으로 만들어진 작품들이 전시되어 있으며, 학년이 올라갈수록 더욱 정교하고 깊이 있는 작품들을 감상하실 수 있습니다.
+
+그림, 공예, 조소, 디지털아트 등 다양한 분야의 작품들을 통해 우리 학생들의 무한한 상상력과 예술적 재능을 확인해보세요.`
+        },
+        '1학년': {
+            title: '1학년 작품 - 첫걸음의 순수함',
+            description: `1학년 학생들의 첫 작품 활동입니다.
+
+순수하고 자유로운 상상력으로 만들어진 작품들은 보는 이의 마음을 따뜻하게 만듭니다. 아직 기법이 서툴지만, 그 안에 담긴 진정성과 열정이 느껴집니다.
+
+주로 크레파스, 색연필을 사용한 그림 작품과 간단한 만들기 활동 작품들을 만나보실 수 있습니다.`
+        },
+        '2학년': {
+            title: '2학년 작품 - 호기심 가득한 탐험',
+            description: `2학년 학생들의 호기심과 상상력이 가득 담긴 작품들입니다.
+
+1학년보다 더욱 다양한 재료와 기법에 도전하며, 자신만의 표현 방법을 찾아가는 과정이 작품에 잘 드러나 있습니다.
+
+물감을 사용한 그림, 간단한 조형 활동, 자연물을 활용한 만들기 등 다채로운 작품들을 감상하실 수 있습니다.`
+        },
+        '3학년': {
+            title: '3학년 작품 - 창의력의 발현',
+            description: `3학년 학생들의 창의력이 본격적으로 발현되기 시작하는 시기의 작품들입니다.
+
+기본적인 미술 기법들을 익히기 시작하면서, 자신만의 독특한 아이디어를 작품에 담아내려 노력합니다.
+
+수채화, 판화, 점토 작품 등 다양한 장르의 작품들을 통해 학생들의 성장하는 예술적 감성을 느껴보세요.`
+        },
+        '4학년': {
+            title: '4학년 작품 - 기법과 상상력의 조화',
+            description: `4학년 학생들의 안정된 기법과 풍부한 상상력이 조화를 이루는 작품들입니다.
+
+체계적인 미술 교육을 통해 다양한 표현 기법을 익히고, 이를 바탕으로 자신만의 작품 세계를 구축해 나갑니다.
+
+정교한 그림 작품부터 입체적인 조형 작품까지, 한층 성숙해진 예술적 표현을 만나보실 수 있습니다.`
+        },
+        '5학년': {
+            title: '5학년 작품 - 개성 있는 표현력',
+            description: `5학년 학생들의 뚜렷한 개성과 표현력이 돋보이는 작품들입니다.
+
+고학년으로서 보다 깊이 있는 주제 의식을 가지고 작품을 제작하며, 자신만의 예술적 스타일을 찾아가는 과정을 보여줍니다.
+
+사회적 이슈나 환경 문제 등을 다룬 작품들도 등장하며, 예술을 통한 소통과 메시지 전달의 중요성을 배워갑니다.`
+        },
+        '6학년': {
+            title: '6학년 작품 - 완성도 높은 예술 세계',
+            description: `6학년 학생들의 완성도 높은 작품들로, 초등 미술 교육의 집대성을 보여줍니다.
+
+6년간 쌓아온 미술 기법과 예술적 감성이 어우러져, 어른들도 감탄할 만한 수준 높은 작품들이 탄생합니다.
+
+졸업을 앞두고 있는 만큼, 추억과 미래에 대한 꿈이 담긴 의미 있는 작품들이 많으며, 후배들에게는 좋은 목표가 되고 있습니다.`
+        }
+    };
+    
+    const info = gradeInfoData[grade];
+    if (info) {
+        gradeInfoTitle.textContent = info.title;
+        gradeInfoDescription.textContent = info.description;
+        
+        // 섹션 표시
+        gradeInfoSection.classList.add('active');
+        gradeInfoSection.style.display = 'block';
+        
+        // 부드러운 스크롤 효과
+        setTimeout(() => {
+            gradeInfoSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }, 300);
+        
+        console.log('✅ 학년 정보 표시 완료:', grade);
+    } else {
+        // 정보가 없으면 섹션 숨기기
+        gradeInfoSection.classList.remove('active');
+        gradeInfoSection.style.display = 'none';
+    }
+}
 }, 500);
