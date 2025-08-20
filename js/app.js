@@ -556,6 +556,25 @@ function closeFullscreenImage() {
     }
 }
 
+function saveArtworkOrder() {
+    console.log('💾 작품 순서 저장 클릭');
+    
+    try {
+        // 서버에 저장
+        callUpstashAPI('SET', REDIS_KEY, JSON.stringify(allArtworks));
+        
+        // 갤러리 다시 렌더링
+        renderAllArtworks();
+        
+        alert('✅ 작품 순서가 저장되었습니다.');
+        console.log('✅ 작품 순서 저장 완료');
+        
+    } catch (error) {
+        console.error('❌ 순서 저장 오류:', error);
+        alert('순서 저장 중 오류가 발생했습니다.');
+    }
+}
+
 function bulkDeleteArtworks() {
     console.log('🖱️ 일괄 삭제 클릭');
     alert('일괄 삭제 기능은 현재 준비 중입니다.');
@@ -1144,8 +1163,9 @@ function loadArtworksTable() {
         'activity': '활동 모습', 'worksheet': '활동지', 'result': '결과물' 
     };
     
-    tbody.innerHTML = allArtworks.map(artwork => `
-        <tr>
+    tbody.innerHTML = allArtworks.map((artwork, index) => `
+        <tr draggable="true" data-artwork-id="${artwork.id}" data-index="${index}" class="draggable-row">
+            <td class="drag-handle" style="cursor: grab; text-align: center; user-select: none;">⋮⋮</td>
             <td><input type="checkbox" value="${artwork.id}"></td>
             <td>${artwork.title}</td>
             <td>${artwork.grade}</td>
@@ -1157,6 +1177,103 @@ function loadArtworksTable() {
             </td>
         </tr>
     `).join('');
+    
+    // 드래그 앤 드롭 이벤트 설정
+    setupDragAndDrop();
+    
+    console.log('📋 작품 테이블 로드 완료:', allArtworks.length, '개');
+}
+
+function setupDragAndDrop() {
+    const tbody = document.getElementById('artworksTableBody');
+    if (!tbody) return;
+    
+    let draggedElement = null;
+    let draggedIndex = null;
+    
+    // 모든 드래그 가능한 행에 이벤트 리스너 추가
+    const rows = tbody.querySelectorAll('.draggable-row');
+    
+    rows.forEach((row, index) => {
+        // 드래그 시작
+        row.addEventListener('dragstart', function(e) {
+            draggedElement = this;
+            draggedIndex = parseInt(this.dataset.index);
+            this.style.opacity = '0.5';
+            
+            // 드래그 핸들이 클릭된 경우에만 드래그 허용
+            const isHandle = e.target.classList.contains('drag-handle') || 
+                           e.target.closest('.drag-handle');
+            
+            if (!isHandle) {
+                e.preventDefault();
+                return false;
+            }
+            
+            console.log('🖱️ 드래그 시작:', draggedIndex);
+        });
+        
+        // 드래그 종료
+        row.addEventListener('dragend', function(e) {
+            this.style.opacity = '1';
+            
+            // 모든 행의 드래그 오버 스타일 제거
+            rows.forEach(r => r.classList.remove('drag-over'));
+            
+            console.log('🖱️ 드래그 종료');
+        });
+        
+        // 드래그 오버
+        row.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            
+            if (this !== draggedElement) {
+                this.classList.add('drag-over');
+            }
+        });
+        
+        // 드래그 리브
+        row.addEventListener('dragleave', function(e) {
+            this.classList.remove('drag-over');
+        });
+        
+        // 드롭
+        row.addEventListener('drop', function(e) {
+            e.preventDefault();
+            
+            if (this === draggedElement) return;
+            
+            const targetIndex = parseInt(this.dataset.index);
+            
+            console.log('📍 드롭:', draggedIndex, '→', targetIndex);
+            
+            // 배열에서 순서 변경
+            const movedItem = allArtworks.splice(draggedIndex, 1)[0];
+            allArtworks.splice(targetIndex, 0, movedItem);
+            
+            // 테이블 다시 로드
+            loadArtworksTable();
+            
+            // 변경 사항 표시
+            showOrderChangeIndicator();
+        });
+    });
+    
+    console.log('🔄 드래그 앤 드롭 설정 완료');
+}
+
+function showOrderChangeIndicator() {
+    const saveButton = document.querySelector('.btn-primary.btn-small');
+    if (saveButton && saveButton.textContent === '순서 저장') {
+        saveButton.style.animation = 'pulse 1s infinite';
+        saveButton.style.background = '#28a745';
+        
+        // 3초 후 애니메이션 제거
+        setTimeout(() => {
+            saveButton.style.animation = '';
+            saveButton.style.background = '';
+        }, 3000);
+    }
 }
 
 // === 4. 학년별 필터 및 정보 표시 ===
@@ -1401,6 +1518,7 @@ window.bulkDeleteComments = bulkDeleteComments;
 window.exportData = exportData;
 window.resetAllData = resetAllData;
 window.showArtworkDetail = showArtworkDetail;
+window.saveArtworkOrder = saveArtworkOrder;
 
 // Cloudinary 업로드
 window.uploadToCloudinary = function() {
