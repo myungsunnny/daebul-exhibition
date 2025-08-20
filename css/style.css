@@ -643,6 +643,45 @@ tr:hover {
     background: #f8f9fa;
 }
 
+/* 드래그 앤 드롭 스타일 */
+.draggable-row {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.draggable-row:hover {
+    background: #f0f8ff;
+}
+
+.draggable-row.drag-over {
+    background: #e3f2fd;
+    border-top: 2px solid #2196f3;
+    border-bottom: 2px solid #2196f3;
+}
+
+.drag-handle {
+    color: #999;
+    font-weight: bold;
+    user-select: none;
+    transition: color 0.2s ease;
+}
+
+.drag-handle:hover {
+    color: #666;
+    cursor: grab;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* 펄스 애니메이션 */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
 /* 일괄 작업 */
 .bulk-actions {
     background: #f8f9fa;
