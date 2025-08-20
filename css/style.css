@@ -602,6 +602,21 @@ textarea {
     color: #856404;
 }
 
+.status-connected {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-connecting {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-disconnected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
 /* 테이블 스타일 */
 .table-container {
     overflow-x: auto;
