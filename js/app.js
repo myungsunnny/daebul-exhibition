@@ -717,267 +717,7 @@ function loadArtworksTable() {
     `).join('');
 }
 
-// === 4. 이벤트 리스너 설정 ===
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎨 DOM 로드 완료 - 갤러리 초기화 시작');
-    
-    // 상태 섹션 표시
-    const statusSection = document.getElementById('statusSection');
-    if (statusSection) {
-        statusSection.classList.add('active');
-        statusSection.style.display = 'block';
-    }
-    
-    // 세션에서 관리자 상태 확인
-    if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
-        isAdmin = true;
-        document.body.classList.add('admin-mode');
-    }
-    
-    // 폼 이벤트 리스너
-    const form = document.getElementById('artworkForm');
-    if (form) {
-        form.addEventListener('submit', handleFormSubmit);
-        console.log('📝 폼 이벤트 리스너 등록됨');
-        
-        // 입력 필드들
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            input.addEventListener('input', validateForm);
-            input.addEventListener('change', validateForm);
-        });
-        console.log('✅ 입력 필드 이벤트 리스너 등록됨:', inputs.length, '개');
-    }
-    
-    // 이미지 파일 입력
-    const imageInput = document.getElementById('imageFile');
-    if (imageInput) {
-        imageInput.addEventListener('change', function(e) {
-            console.log('📁 파일 선택 이벤트 발생');
-            handleFileSelect(this);
-        });
-        console.log('📷 이미지 입력 이벤트 리스너 등록됨');
-    }
-    
-    // 이미지 업로드 영역 클릭
-    const uploadArea = document.querySelector('.image-upload');
-    if (uploadArea) {
-        uploadArea.addEventListener('click', function(e) {
-            if (!e.target.onclick && !e.target.closest('button')) {
-                document.getElementById('imageFile').click();
-            }
-        });
-    }
-    
-    // 필터 버튼들
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            console.log('🔍 필터 버튼 클릭:', this.dataset.category);
-            
-            // 모든 필터 버튼 비활성화
-            filterBtns.forEach(b => b.classList.remove('active'));
-            // 클릭된 버튼 활성화
-            this.classList.add('active');
-            
-            // 필터 적용
-            const category = this.dataset.category;
-            applyGradeFilter(category);
-            showGradeInfo(category);
-            console.log('✅ 필터 적용:', category);
-        });
-    });
-    
-    // 타입 탭 버튼들
-    const typeTabs = document.querySelectorAll('.type-tab');
-    typeTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const type = this.dataset.type;
-            console.log('📑 타입 탭 클릭:', type);
-            switchTypeTab(type);
-        });
-    });
-    
-    // 관리자 탭 버튼들
-    const adminTabs = document.querySelectorAll('.admin-tab');
-    adminTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const text = this.textContent.trim();
-            console.log('⚙️ 관리자 탭 클릭:', text);
-            
-            const tabMap = {
-                '작품 관리': 'artworks',
-                '댓글 관리': 'comments', 
-                '사용자 관리': 'users',
-                '사이트 설정': 'settings'
-            };
-            
-            const tabKey = tabMap[text];
-            if (tabKey) switchAdminTab(tabKey);
-        });
-    });
-    
-    // 검색 입력
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            console.log('🔍 검색어 입력:', this.value);
-            // 검색 로직은 추후 구현
-        });
-    }
-    
-    // 모달 닫기 버튼들
-    const closeBtns = document.querySelectorAll('.close-btn');
-    closeBtns.forEach(btn => {
-        btn.addEventListener('click', closeModal);
-    });
-    
-    // 모달 배경 클릭으로 닫기
-    const modal = document.getElementById('modal');
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-    }
-    
-    // 전체화면 오버레이
-    const fullscreenOverlay = document.getElementById('fullscreenOverlay');
-    if (fullscreenOverlay) {
-        fullscreenOverlay.addEventListener('click', closeFullscreenImage);
-    }
-    
-    console.log('🎉 모든 이벤트 리스너 등록 완료');
-    
-    // 데이터 로드
-    loadArtworks();
-    
-    // 테스트용 함수 등록
-    window.testGallery = function() {
-        console.log('=== 갤러리 테스트 ===');
-        console.log('isConnected:', isConnected);
-        console.log('isAdmin:', isAdmin);
-        console.log('allArtworks:', allArtworks.length);
-        console.log('uploadedImages:', uploadedImages.length);
-        
-        // 테스트 작품 추가
-        const testArtwork = {
-            id: 'test_' + Date.now(),
-            title: '테스트 작품 ' + new Date().getMinutes(),
-            studentName: '테스트 학생',
-            grade: '3학년',
-            category: 'drawing',
-            description: '이것은 테스트용 작품입니다.',
-            imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzY2N2VlYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPu2FjOyKpO2KuCDsnpHtlIg8L3RleHQ+PC9zdmc+'],
-            uploadDate: new Date().toISOString(),
-            link: ''
-        };
-        
-        allArtworks.unshift(testArtwork);
-        addArtworkToGallery(testArtwork);
-        updateCounts();
-        
-        alert('테스트 작품이 추가되었습니다!');
-        console.log('테스트 작품 추가됨:', testArtwork);
-    };
-    
-    console.log('✅ 갤러리 초기화 완료!');
-    console.log('💡 테스트: window.testGallery() 실행해보세요');
-    
-    // 초기 전체 학년 정보 표시
-    showGradeInfo('all');
-});
-
-// === 5. 전역 함수 등록 (HTML onclick용) ===
-// 이미 위에서 정의된 함수들을 window 객체에 명시적으로 등록
-window.toggleUploadPanel = toggleUploadPanel;
-window.toggleAdminPanel = toggleAdminPanel;
-window.switchTypeTab = switchTypeTab;
-window.switchAdminTab = switchAdminTab;
-window.closeModal = closeModal;
-window.openImageInNewTab = openImageInNewTab;
-window.removeImage = removeImage;
-window.deleteArtwork = deleteArtwork;
-window.editArtwork = editArtwork;
-window.saveSettings = saveSettings;
-window.previewImages = previewImages;
-window.previewHeaderImage = previewHeaderImage;
-window.removeHeaderImage = removeHeaderImage;
-window.closeFullscreenImage = closeFullscreenImage;
-window.bulkDeleteArtworks = bulkDeleteArtworks;
-window.bulkDeleteComments = bulkDeleteComments;
-window.exportData = exportData;
-window.resetAllData = resetAllData;
-window.showArtworkDetail = showArtworkDetail;
-
-// Cloudinary 업로드 (선택사항)
-window.uploadToCloudinary = function() {
-    console.log('☁️ Cloudinary 업로드 시도');
-    if (typeof cloudinary !== 'undefined') {
-        cloudinary.createUploadWidget({
-            cloudName: CLOUDINARY_CONFIG.cloudName,
-            uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
-            multiple: true,
-            maxFiles: 10,
-            folder: 'student-gallery'
-        }, (error, result) => {
-            if (!error && result && result.event === 'success') {
-                uploadedImages.push(result.info.secure_url);
-                updateImagePreview();
-                validateForm();
-                console.log('✅ Cloudinary 업로드 성공:', result.info.secure_url);
-            }
-            if (error) {
-                console.error('❌ Cloudinary 업로드 오류:', error);
-                alert('이미지 업로드 중 오류가 발생했습니다.');
-            }
-        }).open();
-    } else {
-        alert('Cloudinary 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
-    }
-};
-
-// === 6. 오류 처리 및 디버깅 ===
-window.addEventListener('error', function(e) {
-    console.error('🚨 전역 오류:', e.error);
-    console.error('파일:', e.filename, '라인:', e.lineno);
-});
-
-window.addEventListener('unhandledrejection', function(e) {
-    console.error('🚨 처리되지 않은 Promise 거부:', e.reason);
-});
-
-// 온라인/오프라인 감지
-window.addEventListener('online', function() {
-    console.log('🌐 온라인 상태로 변경');
-    loadArtworks();
-});
-
-window.addEventListener('offline', function() {
-    console.log('📵 오프라인 상태로 변경');
-    updateConnectionStatus('disconnected', '오프라인');
-});
-
-// 페이지 언로드 감지
-window.addEventListener('beforeunload', function(e) {
-    if (isUploading) {
-        e.preventDefault();
-        e.returnValue = '작품 업로드가 진행 중입니다. 정말 떠나시겠습니까?';
-        return e.returnValue;
-    }
-});
-
-console.log('🚀 학생 갤러리 JavaScript 완전 로드 완료');
-console.log('🔧 디버깅 명령어:');
-console.log('  - window.testGallery() : 테스트 작품 추가');
-console.log('  - toggleUploadPanel() : 업로드 패널 토글');
-console.log('  - toggleAdminPanel() : 관리자 패널 토글');
-console.log('  - console.log(allArtworks) : 전체 작품 데이터 확인');
-
-// 초기화 완료 신호
-setTimeout(() => {
-    // === 7. 학년별 필터 및 정보 표시 ===
+// === 4. 학년별 필터 및 정보 표시 기능 ===
 function applyGradeFilter(grade) {
     console.log('🎯 학년 필터 적용:', grade);
     
@@ -985,20 +725,27 @@ function applyGradeFilter(grade) {
     let visibleCount = 0;
     
     allCards.forEach(card => {
-        const artwork = allArtworks.find(a => a.id === card.dataset.artworkId);
-        if (!artwork) return;
+        const artworkId = card.dataset.artworkId;
+        const artwork = allArtworks.find(a => a.id === artworkId);
+        
+        if (!artwork) {
+            card.style.display = 'none';
+            return;
+        }
         
         let shouldShow = false;
         
         if (grade === 'all') {
             shouldShow = true;
         } else {
-            // "1학년", "2학년" 등과 매칭
+            // 정확한 학년 매칭: "1학년" === "1학년"
             shouldShow = artwork.grade === grade;
         }
         
         if (shouldShow) {
             card.style.display = 'block';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
             visibleCount++;
         } else {
             card.style.display = 'none';
@@ -1021,6 +768,12 @@ function updateFilteredCounts(grade, visibleCount) {
                 countElement.textContent = `${grade} ${visibleCount}개 작품`;
             }
         }
+    }
+    
+    // 전체 카운트도 업데이트
+    const totalCountEl = document.getElementById('totalCount');
+    if (totalCountEl && grade !== 'all') {
+        totalCountEl.textContent = visibleCount;
     }
 }
 
@@ -1120,4 +873,304 @@ function showGradeInfo(grade) {
         gradeInfoSection.style.display = 'none';
     }
 }
-}, 500);
+
+function setupFilterButtons() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            console.log('🔍 필터 버튼 클릭:', this.dataset.category);
+            
+            // 모든 필터 버튼 비활성화
+            filterBtns.forEach(b => b.classList.remove('active'));
+            // 클릭된 버튼 활성화
+            this.classList.add('active');
+            
+            // 필터 적용
+            const category = this.dataset.category;
+            applyGradeFilter(category);
+            showGradeInfo(category);
+            console.log('✅ 필터 적용:', category);
+        });
+    });
+    
+    console.log('✅ 필터 버튼 이벤트 리스너 등록됨:', filterBtns.length, '개');
+}
+
+function initializeGallery() {
+    // 초기 전체 학년 정보 표시
+    showGradeInfo('all');
+    
+    // 필터 버튼 설정
+    setupFilterButtons();
+    
+    console.log('🎨 갤러리 초기화 완료');
+}
+
+// === 5. 이벤트 리스너 설정 (수정된 버전) ===
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎨 DOM 로드 완료 - 갤러리 초기화 시작');
+    
+    // 상태 섹션 표시
+    const statusSection = document.getElementById('statusSection');
+    if (statusSection) {
+        statusSection.classList.add('active');
+        statusSection.style.display = 'block';
+    }
+    
+    // 세션에서 관리자 상태 확인
+    if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+        isAdmin = true;
+        document.body.classList.add('admin-mode');
+    }
+    
+    // 폼 이벤트 리스너
+    const form = document.getElementById('artworkForm');
+    if (form) {
+        form.addEventListener('submit', handleFormSubmit);
+        console.log('📝 폼 이벤트 리스너 등록됨');
+        
+        // 입력 필드들
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('input', validateForm);
+            input.addEventListener('change', validateForm);
+        });
+        console.log('✅ 입력 필드 이벤트 리스너 등록됨:', inputs.length, '개');
+    }
+    
+    // 이미지 파일 입력
+    const imageInput = document.getElementById('imageFile');
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            console.log('📁 파일 선택 이벤트 발생');
+            handleFileSelect(this);
+        });
+        console.log('📷 이미지 입력 이벤트 리스너 등록됨');
+    }
+    
+    // 이미지 업로드 영역 클릭
+    const uploadArea = document.querySelector('.image-upload');
+    if (uploadArea) {
+        uploadArea.addEventListener('click', function(e) {
+            if (!e.target.onclick && !e.target.closest('button')) {
+                document.getElementById('imageFile').click();
+            }
+        });
+    }
+    
+    // 필터 버튼들 (수정된 부분)
+    setupFilterButtons();
+    
+    // 타입 탭 버튼들
+    const typeTabs = document.querySelectorAll('.type-tab');
+    typeTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const type = this.dataset.type;
+            console.log('📑 타입 탭 클릭:', type);
+            switchTypeTab(type);
+        });
+    });
+    
+    // 관리자 탭 버튼들
+    const adminTabs = document.querySelectorAll('.admin-tab');
+    adminTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const text = this.textContent.trim();
+            console.log('⚙️ 관리자 탭 클릭:', text);
+            
+            const tabMap = {
+                '작품 관리': 'artworks',
+                '댓글 관리': 'comments', 
+                '사용자 관리': 'users',
+                '사이트 설정': 'settings'
+            };
+            
+            const tabKey = tabMap[text];
+            if (tabKey) switchAdminTab(tabKey);
+        });
+    });
+    
+    // 검색 입력
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            console.log('🔍 검색어 입력:', this.value);
+            // 검색 로직은 추후 구현
+        });
+    }
+    
+    // 모달 닫기 버튼들
+    const closeBtns = document.querySelectorAll('.close-btn');
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', closeModal);
+    });
+    
+    // 모달 배경 클릭으로 닫기
+    const modal = document.getElementById('modal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    }
+    
+    // 전체화면 오버레이
+    const fullscreenOverlay = document.getElementById('fullscreenOverlay');
+    if (fullscreenOverlay) {
+        fullscreenOverlay.addEventListener('click', closeFullscreenImage);
+    }
+    
+    console.log('🎉 모든 이벤트 리스너 등록 완료');
+    
+    // 데이터 로드
+    loadArtworks();
+    
+    // 갤러리 초기화 (새로 추가)
+    initializeGallery();
+    
+    // 테스트용 함수 등록
+    window.testGallery = function() {
+        console.log('=== 갤러리 테스트 ===');
+        console.log('isConnected:', isConnected);
+        console.log('isAdmin:', isAdmin);
+        console.log('allArtworks:', allArtworks.length);
+        console.log('uploadedImages:', uploadedImages.length);
+        
+        // 테스트 작품 추가 (각 학년별로)
+        const testArtworks = [
+            {
+                id: 'test_1_' + Date.now(),
+                title: '1학년 테스트 작품',
+                studentName: '김철수',
+                grade: '1학년',
+                category: 'drawing',
+                description: '1학년 학생의 그림 작품입니다.',
+                imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmNjk5NCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjHtlZnrhYQg7YWM7Iqk7Yq4PC90ZXh0Pjwvc3ZnPg=='],
+                uploadDate: new Date().toISOString(),
+                link: ''
+            },
+            {
+                id: 'test_3_' + Date.now(),
+                title: '3학년 테스트 작품',
+                studentName: '이영희',
+                grade: '3학년',
+                category: 'craft',
+                description: '3학년 학생의 공예 작품입니다.',
+                imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzY2N2VlYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjPtlZnrhYQg7YWM7Iqk7Yq4PC90ZXh0Pjwvc3ZnPg=='],
+                uploadDate: new Date().toISOString(),
+                link: ''
+            },
+            {
+                id: 'test_6_' + Date.now(),
+                title: '6학년 테스트 작품',
+                studentName: '박민수',
+                grade: '6학년',
+                category: 'digital',
+                description: '6학년 학생의 디지털아트 작품입니다.',
+                imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzM0ZDM5OSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPjbthZnrhYQg7YWM7Iqk7Yq4PC90ZXh0Pjwvc3ZnPg=='],
+                uploadDate: new Date().toISOString(),
+                link: ''
+            }
+        ];
+        
+        testArtworks.forEach(artwork => {
+            allArtworks.unshift(artwork);
+            addArtworkToGallery(artwork);
+        });
+        
+        updateCounts();
+        
+        alert('테스트 작품들이 추가되었습니다! (1학년, 3학년, 6학년)');
+        console.log('테스트 작품들 추가됨:', testArtworks.length, '개');
+    };
+    
+    console.log('✅ 갤러리 초기화 완료!');
+    console.log('💡 테스트: window.testGallery() 실행해보세요');
+});
+
+// === 6. 전역 함수 등록 (HTML onclick용) ===
+// 이미 위에서 정의된 함수들을 window 객체에 명시적으로 등록
+window.toggleUploadPanel = toggleUploadPanel;
+window.toggleAdminPanel = toggleAdminPanel;
+window.switchTypeTab = switchTypeTab;
+window.switchAdminTab = switchAdminTab;
+window.closeModal = closeModal;
+window.openImageInNewTab = openImageInNewTab;
+window.removeImage = removeImage;
+window.deleteArtwork = deleteArtwork;
+window.editArtwork = editArtwork;
+window.saveSettings = saveSettings;
+window.previewImages = previewImages;
+window.previewHeaderImage = previewHeaderImage;
+window.removeHeaderImage = removeHeaderImage;
+window.closeFullscreenImage = closeFullscreenImage;
+window.bulkDeleteArtworks = bulkDeleteArtworks;
+window.bulkDeleteComments = bulkDeleteComments;
+window.exportData = exportData;
+window.resetAllData = resetAllData;
+window.showArtworkDetail = showArtworkDetail;
+
+// Cloudinary 업로드 (선택사항)
+window.uploadToCloudinary = function() {
+    console.log('☁️ Cloudinary 업로드 시도');
+    if (typeof cloudinary !== 'undefined') {
+        cloudinary.createUploadWidget({
+            cloudName: CLOUDINARY_CONFIG.cloudName,
+            uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+            multiple: true,
+            maxFiles: 10,
+            folder: 'student-gallery'
+        }, (error, result) => {
+            if (!error && result && result.event === 'success') {
+                uploadedImages.push(result.info.secure_url);
+                updateImagePreview();
+                validateForm();
+                console.log('✅ Cloudinary 업로드 성공:', result.info.secure_url);
+            }
+            if (error) {
+                console.error('❌ Cloudinary 업로드 오류:', error);
+                alert('이미지 업로드 중 오류가 발생했습니다.');
+            }
+        }).open();
+    } else {
+        alert('Cloudinary 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+    }
+};
+
+// === 7. 오류 처리 및 디버깅 ===
+window.addEventListener('error', function(e) {
+    console.error('🚨 전역 오류:', e.error);
+    console.error('파일:', e.filename, '라인:', e.lineno);
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('🚨 처리되지 않은 Promise 거부:', e.reason);
+});
+
+// 온라인/오프라인 감지
+window.addEventListener('online', function() {
+    console.log('🌐 온라인 상태로 변경');
+    loadArtworks();
+});
+
+window.addEventListener('offline', function() {
+    console.log('📵 오프라인 상태로 변경');
+    updateConnectionStatus('disconnected', '오프라인');
+});
+
+// 페이지 언로드 감지
+window.addEventListener('beforeunload', function(e) {
+    if (isUploading) {
+        e.preventDefault();
+        e.returnValue = '작품 업로드가 진행 중입니다. 정말 떠나시겠습니까?';
+        return e.returnValue;
+    }
+});
+
+console.log('🚀 학생 갤러리 JavaScript 완전 로드 완료');
+console.log('🔧 디버깅 명령어:');
+console.log('  - window.testGallery() : 테스트 작품 추가');
+console.log('  - toggleUploadPanel() : 업로드 패널 토글');
+console.log('  - toggleAdminPanel() : 관리자 패널 토글');
+console.log('  - console.log(allArtworks) : 전체 작품 데이터 확인');
