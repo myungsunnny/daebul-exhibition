@@ -39,7 +39,7 @@
 
         <!-- 작품 업로드 패널 -->
         <div class="panel upload-panel" id="uploadPanel">
-            <h2>📸 새로운 작품 등록</h2>
+            <h2 id="uploadPanelTitle">📸 새로운 작품 등록</h2>
             <form id="artworkForm">
                 <!-- 작품 등록 비밀번호 필드 (설정에서 활성화시 표시) -->
                 <div class="form-group" id="uploadPasswordGroup" style="display: none;">
@@ -97,7 +97,10 @@
                     <label for="artworkLink">관련 링크 (선택 사항)</label>
                     <input type="url" id="artworkLink" placeholder="https://www.example.com">
                 </div>
-                <button type="submit" class="btn btn-primary" id="submitBtn">작품 등록하기</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">작품 등록하기</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">수정 취소</button>
+                </div>
             </form>
         </div>
 
