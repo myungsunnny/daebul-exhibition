@@ -532,7 +532,6 @@ function updateImagePreview() {
 
 function validateForm() {
     const title = document.getElementById('artworkTitle')?.value.trim();
-    const studentName = document.getElementById('studentName')?.value.trim();
     const grade = document.getElementById('studentGrade')?.value;
     const category = document.getElementById('artworkCategory')?.value;
     const description = document.getElementById('artworkDescription')?.value.trim();
@@ -544,7 +543,7 @@ function validateForm() {
         passwordValid = inputPassword === siteSettings.uploadPassword;
     }
     
-    const isValid = title && studentName && grade && category && description && 
+    const isValid = title && grade && category && description && 
                    uploadedImages.length > 0 && isConnected && !isUploading && passwordValid;
     
     const submitBtn = document.getElementById('submitBtn');
@@ -594,7 +593,6 @@ async function handleFormSubmit(e) {
         const formData = {
             id: `artwork_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             title: document.getElementById('artworkTitle').value.trim(),
-            studentName: document.getElementById('studentName').value.trim(),
             grade: document.getElementById('studentGrade').value + '학년',
             category: document.getElementById('artworkCategory').value,
             description: document.getElementById('artworkDescription').value.trim(),
@@ -674,7 +672,7 @@ function createArtworkElement(artwork) {
         </div>
         <div class="artwork-info" onclick="showArtworkDetail('${artwork.id}')">
             <h3 class="artwork-title">${artwork.title}</h3>
-            <p class="artwork-author">${artwork.studentName} (${artwork.grade})</p>
+            <p class="artwork-author">${artwork.grade}</p>
             <p class="artwork-description">${artwork.description}</p>
             <small style="color: #999; font-size: 0.8rem;">📅 ${uploadDate}</small>
         </div>
@@ -695,10 +693,8 @@ function showArtworkDetail(artworkId) {
     
     // 모달 내용 업데이트
     document.getElementById('detailArtworkTitle').textContent = artwork.title;
-    document.getElementById('detailStudentName').textContent = artwork.studentName;
     document.getElementById('detailGrade').textContent = artwork.grade;
     document.getElementById('detailCategory').textContent = categoryMap[artwork.category] || artwork.category;
-    document.getElementById('detailUploadDate').textContent = new Date(artwork.uploadDate).toLocaleDateString('ko-KR');
     document.getElementById('detailDescriptionText').textContent = artwork.description;
     
     // 이미지 갤러리 업데이트
@@ -956,7 +952,6 @@ function loadArtworksTable() {
         <tr>
             <td><input type="checkbox" value="${artwork.id}"></td>
             <td>${artwork.title}</td>
-            <td>${artwork.studentName}</td>
             <td>${artwork.grade}</td>
             <td>${categoryMap[artwork.category] || artwork.category}</td>
             <td>${new Date(artwork.uploadDate).toLocaleDateString()}</td>
