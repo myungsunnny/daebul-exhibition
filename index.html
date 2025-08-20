@@ -1,162 +1,282 @@
-<div class="empty-gallery" id="emptyGallery">
-                <div class="empty-content">
-                    <h3>아직 등록된 작품이 없습니다</h3>
-                    <p>첫 번째 작품을 업로드해서 갤러리를 시작해보세요!</p>
-                    <button class="upload-btn" onclick="openUploadModal()"><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-    <section class="gallery" id="gallery">
-        <div class="container">
-            <h2 class="section-title">작품 갤러리</h2>
-            
-            <div class="connection-status" id="connectionStatus">
-                <span class="status-indicator" id="statusIndicator">●</span>
-                <span class="status-text" id="statusText">연결 중...</span>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리학교 학생 작품 전시관</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-buttons">
+                <button class="header-btn" onclick="toggleUploadPanel()">작품 올리기</button>
+                <button class="header-btn" onclick="toggleAdminPanel()">관리자 모드</button>
             </div>
-            
-            <div class="filter-buttons">
-                <button class="filter-btn active" data-filter="all">전체</button>
-                <button class="filter-btn" data-filter="drawing">그림</button>
-                <button class="filter-btn" data-filter="craft">공예</button>
-                <button class="filter-btn" data-filter="sculpture">조소</button>
-                <button class="filter-btn" data-filter="digital">디지털아트</button>
-            </div>
+            <h1>
+                <img src="" alt="헤더 로고" id="headerImage" class="header-logo" style="display: none;">
+                <span id="headerTitleText">우리학교 학생 작품 전시관</span>
+            </h1>
+            <p class="subtitle">창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</p>
+        </header>
 
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>작품을 불러오는 중...</p>
+        <!-- 시스템 상태 패널 -->
+        <div class="panel status-section" id="statusSection">
+            <h3>시스템 상태</h3>
+            <div id="upstashStatus">
+                <span class="status-indicator status-warning">데이터베이스 연결 확인 중...</span>
             </div>
+            <div id="artworkCount">
+                <span class="status-indicator">등록된 작품: <strong id="totalCount">0</strong>개</span>
+            </div>
+            <div id="commentCount">
+                <span class="status-indicator">총 댓글: <strong id="totalComments">0</strong>개</span>
+            </div>
+            <div id="cloudinaryStatus">
+                <span class="status-indicator">이미지 저장: Cloudinary</span>
+            </div>
+        </div>
 
-            <div class="empty-gallery" id="emptyGallery">
-                <div class="empty-content">
-                    <h3>아직 등록된 작품이 없습니다</h3>
-                    <p>첫 번째 작품을 업로드해서 갤러리를 시작해보세요!</p>
-                    <button class="upload-btn" onclick="openUploadModal()">
-                        첫 작품 올리기
-                    </button>
+        <!-- 작품 업로드 패널 -->
+        <div class="panel upload-panel" id="uploadPanel">
+            <h2>새로운 작품 등록</h2>
+            <form id="artworkForm">
+                <div class="form-group">
+                    <label for="artworkTitle">작품 제목</label>
+                    <input type="text" id="artworkTitle" required placeholder="작품의 제목을 입력해주세요">
                 </div>
-            </div>
-
-            <div class="gallery-grid" id="galleryGrid">
-            </div>
-        </div>
-    </section>
-
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 우리학교 학생 작품 전시관. 모든 작품의 저작권은 학생에게 있습니다.</p>
-            <p>문의: gallery@ourschool.ac.kr | 전화: 02-1234-5678</p>
-        </div>
-    </footer>
-
-    <!-- 작품 업로드 모달 -->
-    <div id="uploadModal" class="upload-modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>작품 업로드</h2>
-                <span class="close-btn" onclick="closeUploadModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="artworkForm">
-                    <div class="form-group">
-                        <label for="artworkTitle">작품 제목</label>
-                        <input type="text" id="artworkTitle" required placeholder="작품의 제목을 입력해주세요">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group half">
-                            <label for="studentGrade">학년</label>
-                            <select id="studentGrade" required>
-                                <option value="">학년 선택</option>
-                                <option value="1">1학년</option>
-                                <option value="2">2학년</option>
-                                <option value="3">3학년</option>
-                                <option value="4">4학년</option>
-                                <option value="5">5학년</option>
-                                <option value="6">6학년</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group half">
-                            <label for="studentClass">반</label>
-                            <select id="studentClass" required>
-                                <option value="">반 선택</option>
-                                <option value="1">1반</option>
-                                <option value="2">2반</option>
-                                <option value="3">3반</option>
-                                <option value="4">4반</option>
-                                <option value="5">5반</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="artworkCategory">작품 분류</label>
-                        <select id="artworkCategory" required>
-                            <option value="">분류를 선택해주세요</option>
-                            <option value="drawing">그림</option>
-                            <option value="craft">공예</option>
-                            <option value="sculpture">조소</option>
-                            <option value="digital">디지털아트</option>
+                
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="studentGrade">학년</label>
+                        <select id="studentGrade" required>
+                            <option value="">학년 선택</option>
+                            <option value="1">1학년</option>
+                            <option value="2">2학년</option>
+                            <option value="3">3학년</option>
+                            <option value="4">4학년</option>
+                            <option value="5">5학년</option>
+                            <option value="6">6학년</option>
                         </select>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="artworkDescription">작품 설명</label>
-                        <textarea id="artworkDescription" rows="3" placeholder="작품에 대한 설명을 입력해주세요 (선택사항)"></textarea>
+                    <div class="form-group half">
+                        <label for="studentClass">반</label>
+                        <select id="studentClass" required>
+                            <option value="">반 선택</option>
+                            <option value="1">1반</option>
+                            <option value="2">2반</option>
+                            <option value="3">3반</option>
+                            <option value="4">4반</option>
+                            <option value="5">5반</option>
+                        </select>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="artworkLink">관련 링크 (선택사항)</label>
-                        <input type="url" id="artworkLink" placeholder="https://example.com">
-                        <small style="color: #86868b; font-size: 12px; margin-top: 4px; display: block;">작품 제작 과정 영상, 관련 자료 등의 링크를 입력할 수 있습니다.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="artworkCategory">작품 분류</label>
+                    <select id="artworkCategory" required>
+                        <option value="">분류를 선택해주세요</option>
+                        <option value="drawing">그림</option>
+                        <option value="craft">공예</option>
+                        <option value="sculpture">조소</option>
+                        <option value="digital">디지털아트</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="artworkDescription">작품 설명</label>
+                    <textarea id="artworkDescription" rows="3" placeholder="작품에 대한 설명을 입력해주세요"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="artworkLink">관련 링크 (선택사항)</label>
+                    <input type="url" id="artworkLink" placeholder="https://example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>작품 이미지 (여러 장 선택 가능)</label>
+                    <div class="image-upload-area" onclick="document.getElementById('imageFile').click()">
+                        <input type="file" id="imageFile" accept="image/*" onchange="previewImages()" multiple style="display: none;">
+                        <div id="uploadText">이미지를 선택하세요</div>
+                        <div class="image-preview-container" id="imagePreviewContainer"></div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>작품 이미지</label>
-                        <div id="imageUploadArea" class="image-upload-area">
-                            <div class="upload-placeholder">
-                                <p>이미지를 업로드하려면 클릭하세요</p>
-                                <p style="color: #86868b; font-size: 14px; margin-top: 4px;">JPG, PNG 파일 / 최대 10MB / 여러 개 선택 가능</p>
-                            </div>
-                            <div id="imagePreviewContainer" class="image-preview-container"></div>
-                        </div>
-                        <input type="hidden" id="uploadedImageUrls">
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">작품 등록하기</button>
+            </form>
+        </div>
+
+        <!-- 관리자 패널 -->
+        <div class="panel admin-panel" id="adminPanel">
+            <h2>관리자 모드</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="statArtworks">0</div>
+                    <div class="stat-label">총 작품 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statComments">0</div>
+                    <div class="stat-label">총 댓글 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statLikes">0</div>
+                    <div class="stat-label">총 좋아요 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statToday">0</div>
+                    <div class="stat-label">오늘 등록</div>
+                </div>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="switchAdminTab('artworks')">작품 관리</button>
+                <button class="admin-tab" onclick="switchAdminTab('comments')">댓글 관리</button>
+                <button class="admin-tab" onclick="switchAdminTab('settings')">사이트 설정</button>
+            </div>
+
+            <div class="admin-content active" id="artworksContent">
+                <div class="table-container">
+                    <table id="artworksTable">
+                        <thead>
+                            <tr>
+                                <th>선택</th>
+                                <th>제목</th>
+                                <th>학년반</th>
+                                <th>분류</th>
+                                <th>등록일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="artworksTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="admin-content" id="commentsContent">
+                <div class="table-container">
+                    <table id="commentsTable">
+                        <thead>
+                            <tr>
+                                <th>선택</th>
+                                <th>작품</th>
+                                <th>작성자</th>
+                                <th>댓글 내용</th>
+                                <th>작성일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="commentsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="admin-content" id="settingsContent">
+                <h3>기본 설정</h3>
+                <div class="form-group">
+                    <label for="siteTitle">사이트 제목</label>
+                    <input type="text" id="siteTitle" value="우리학교 학생 작품 전시관">
+                </div>
+                <div class="form-group">
+                    <label for="siteDescription">사이트 설명</label>
+                    <textarea id="siteDescription">창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</textarea>
+                </div>
+                <button class="submit-btn" onclick="saveSettings()">설정 저장</button>
+            </div>
+        </div>
+
+        <!-- 학년별 필터 -->
+        <div class="filters-container">
+            <div class="filters">
+                <button class="filter-btn active" data-category="all">전체 학년</button>
+                <button class="filter-btn" data-category="1학년">1학년</button>
+                <button class="filter-btn" data-category="2학년">2학년</button>
+                <button class="filter-btn" data-category="3학년">3학년</button>
+                <button class="filter-btn" data-category="4학년">4학년</button>
+                <button class="filter-btn" data-category="5학년">5학년</button>
+                <button class="filter-btn" data-category="6학년">6학년</button>
+            </div>
+        </div>
+        
+        <!-- 검색 -->
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="작품명 또는 학생 이름으로 검색...">
+        </div>
+
+        <!-- 작품 분류 탭 -->
+        <div class="type-tabs">
+            <button class="type-tab active" data-type="all" onclick="switchTypeTab('all')">전체</button>
+            <button class="type-tab" data-type="drawing" onclick="switchTypeTab('drawing')">그림</button>
+            <button class="type-tab" data-type="craft" onclick="switchTypeTab('craft')">공예</button>
+            <button class="type-tab" data-type="sculpture" onclick="switchTypeTab('sculpture')">조소</button>
+            <button class="type-tab" data-type="digital" onclick="switchTypeTab('digital')">디지털아트</button>
+        </div>
+
+        <!-- 갤러리 컨테이너 -->
+        <div id="galleryContainer">
+            <div class="type-section active" id="allSection">
+                <div class="type-header">
+                    <div class="type-title">전체 작품</div>
+                    <div class="type-count" id="allCount">0개 작품</div>
+                </div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>작품을 불러오는 중...</p>
+                </div>
+                <div class="empty-gallery" id="emptyGallery">
+                    <div class="empty-content">
+                        <h3>아직 등록된 작품이 없습니다</h3>
+                        <p>첫 번째 작품을 업로드해서 갤러리를 시작해보세요!</p>
+                        <button class="upload-btn" onclick="toggleUploadPanel()">첫 작품 올리기</button>
                     </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="cancel-btn" onclick="closeUploadModal()">취소</button>
-                        <button type="submit" class="submit-btn" disabled>
-                            <span class="btn-text">작품 등록하기</span>
-                            <span class="btn-loading" style="display: none;">
-                                <span class="loading-spinner"></span>
-                                등록 중...
-                            </span>
-                        </button>
-                    </div>
-                </form>
+                </div>
+                <div class="type-gallery" id="galleryGrid"></div>
+            </div>
+
+            <div class="type-section" id="drawingSection">
+                <div class="type-header">
+                    <div class="type-title">그림 작품</div>
+                    <div class="type-count" id="drawingCount">0개 작품</div>
+                </div>
+                <div class="type-gallery" id="drawingGallery"></div>
+            </div>
+
+            <div class="type-section" id="craftSection">
+                <div class="type-header">
+                    <div class="type-title">공예 작품</div>
+                    <div class="type-count" id="craftCount">0개 작품</div>
+                </div>
+                <div class="type-gallery" id="craftGallery"></div>
+            </div>
+
+            <div class="type-section" id="sculptureSection">
+                <div class="type-header">
+                    <div class="type-title">조소 작품</div>
+                    <div class="type-count" id="sculptureCount">0개 작품</div>
+                </div>
+                <div class="type-gallery" id="sculptureGallery"></div>
+            </div>
+
+            <div class="type-section" id="digitalSection">
+                <div class="type-header">
+                    <div class="type-title">디지털아트 작품</div>
+                    <div class="type-count" id="digitalCount">0개 작품</div>
+                </div>
+                <div class="type-gallery" id="digitalGallery"></div>
             </div>
         </div>
     </div>
 
     <!-- 작품 상세보기 모달 -->
-    <div id="artworkDetailModal" class="upload-modal" style="display: none;">
-        <div class="modal-content detail-modal">
-            <div class="modal-header">
-                <h2 id="detailTitle">작품 상세보기</h2>
-                <span class="close-btn" onclick="closeDetailModal()">&times;</span>
-            </div>
-            <div class="modal-body">
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div id="modalContent">
                 <div class="artwork-detail">
                     <div class="detail-image-container">
-                        <div id="detailImageGallery" class="detail-image-gallery">
-                            <div class="main-image-container">
-                                <button id="prev-image-btn" class="nav-arrow prev" style="display: none;">&lt;</button>
-                                <img id="currentMainImage" src="" alt="작품 이미지">
-                                <button id="next-image-btn" class="nav-arrow next" style="display: none;">&gt;</button>
-                            </div>
-                            <div class="thumbnail-container">
-                            </div>
+                        <div class="modal-image-gallery">
+                            <img id="currentMainImage" src="" alt="작품 이미지" class="modal-main-image">
+                            <div class="modal-thumbnails" id="modalThumbnails"></div>
                         </div>
                     </div>
                     <div class="detail-info">
@@ -176,9 +296,9 @@
                         </div>
                         <div class="detail-actions">
                             <button class="detail-btn" onclick="openImageInNewTab()">원본 크기로 보기</button>
-                            <button class="detail-btn secondary" onclick="closeDetailModal()">닫기</button>
-                            <button id="detailEditBtn" class="detail-btn admin-only" style="background: #ff9f0a;">수정</button>
-                            <button id="detailDeleteBtn" class="detail-btn admin-only" style="background: #ff3b30;">삭제</button>
+                            <button class="detail-btn secondary" onclick="closeModal()">닫기</button>
+                            <button id="detailEditBtn" class="detail-btn admin-only">수정</button>
+                            <button id="detailDeleteBtn" class="detail-btn admin-only">삭제</button>
                         </div>
                     </div>
                 </div>
@@ -186,50 +306,13 @@
         </div>
     </div>
 
+    <!-- 전체화면 이미지 오버레이 -->
+    <div class="fullscreen-overlay" id="fullscreenOverlay" onclick="closeFullscreenImage()">
+        <span class="fullscreen-close-btn">&times;</span>
+        <img src="" alt="Fullscreen Image" class="fullscreen-image" id="fullscreenImage">
+    </div>
+
     <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
     <script src="js/app.js"></script>
 </body>
-</html><meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>우리학교 학생 작품 전시관</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <img src="" alt="헤더 로고" id="headerImage" class="header-logo" style="display: none;">
-                    학생 작품 전시관
-                </div>
-                <nav>
-                    <ul class="nav-menu">
-                        <li><a href="#home">홈</a></li>
-                        <li><a href="#about">소개</a></li>
-                        <li><a href="#gallery">갤러리</a></li>
-                        <li><a href="#" onclick="openUploadModal(); return false;">작품 올리기</a></li>
-                        <li><a href="#" id="adminMenuLink">관리자</a></li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <section class="hero" id="home">
-        <div class="container">
-            <h1>우리들의 멋진 작품들</h1>
-            <p>창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</p>
-        </div>
-    </section>
-
-    <section class="about-section" id="about">
-        <div class="container">
-            <div class="panel active">
-                <h2 class="section-title">소개</h2>
-                <div class="about-content">
-                    <p>우리 학교 학생들의 창의적이고 아름다운 작품들을 전시하는 공간입니다.</p>
-                    <p>그림, 공예, 조소, 디지털 아트 등 다양한 분야의 작품들을 감상하실 수 있습니다.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+</html>
