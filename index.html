@@ -77,9 +77,9 @@
                 </div>
                 <div class="form-group">
                     <label>작품 이미지 (여러 장 선택 가능) *</label>
-                    <div class="image-upload" onclick="document.getElementById('imageFile').click()">
+                    <div class="image-upload">
                         <input type="file" id="imageFile" accept="image/*" multiple style="display: none;">
-                        <div id="uploadText">
+                        <div id="uploadText" onclick="document.getElementById('imageFile').click()" style="cursor: pointer;">
                             📁 이미지를 선택하세요<br>
                             <small style="color: #666; font-size: 0.9rem;">JPG, PNG 파일 / 최대 10MB / 여러 개 선택 가능</small>
                         </div>
