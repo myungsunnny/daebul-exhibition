@@ -42,7 +42,7 @@
             <h2>📸 새로운 작품 등록</h2>
             <form id="artworkForm">
                 <div class="form-group">
-                    <label for="artworkCategory">작품 분류 *</label>
+                    <label for="artworkCategory">작품 분류</label>
                     <select id="artworkCategory" required>
                         <option value="">분류를 선택해주세요</option>
                         <option value="activity">📷 활동 모습</option>
@@ -51,15 +51,15 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="artworkTitle">작품 제목 *</label>
+                    <label for="artworkTitle">작품 제목</label>
                     <input type="text" id="artworkTitle" required placeholder="작품의 제목을 입력해주세요">
                 </div>
                 <div class="form-group">
-                    <label for="studentName">학생 이름 *</label>
+                    <label for="studentName">학생 이름</label>
                     <input type="text" id="studentName" required placeholder="학생의 이름을 입력해주세요">
                 </div>
                 <div class="form-group">
-                    <label for="studentGrade">학년 *</label>
+                    <label for="studentGrade">학년</label>
                     <select id="studentGrade" required>
                         <option value="">선택하세요</option>
                         <option value="1">1학년</option>
@@ -71,14 +71,14 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="artworkDescription">작품 설명 *</label>
+                    <label for="artworkDescription">작품 설명</label>
                     <textarea id="artworkDescription" placeholder="작품에 대해 설명해주세요..." required></textarea>
                 </div>
                 <div class="form-group">
                     <label>작품 이미지 (여러 장 선택 가능) *</label>
                     <div class="image-upload">
                         <input type="file" id="imageFile" accept="image/*" multiple style="display: none;">
-                        <div id="uploadText" style="cursor: pointer; padding: 20px; text-align: center;">
+                        <div id="uploadText" onclick="document.getElementById('imageFile').click()" style="cursor: pointer;">
                             📁 이미지를 선택하세요<br>
                             <small style="color: #666; font-size: 0.9rem;">JPG, PNG 파일 / 최대 10MB / 여러 개 선택 가능</small>
                         </div>
@@ -95,13 +95,7 @@
                     <label for="artworkLink">관련 링크 (선택 사항)</label>
                     <input type="url" id="artworkLink" placeholder="https://www.example.com">
                 </div>
-                
-                <!-- 폼 상태 표시 -->
-                <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 8px; text-align: center;">
-                    <small id="formStatus" class="status-warning">필수 항목을 모두 입력해주세요</small>
-                </div>
-                
-                <button type="submit" class="btn btn-primary" id="submitBtn" disabled>작품 등록하기</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">작품 등록하기</button>
             </form>
         </div>
 
@@ -128,19 +122,18 @@
             </div>
 
             <div class="admin-tabs">
-                <button class="admin-tab active">작품 관리</button>
-                <button class="admin-tab">댓글 관리</button>
-                <button class="admin-tab">사용자 관리</button>
-                <button class="admin-tab">사이트 설정</button>
+                <button class="admin-tab active" onclick="switchAdminTab('artworks')">작품 관리</button>
+                <button class="admin-tab" onclick="switchAdminTab('comments')">댓글 관리</button>
+                <button class="admin-tab" onclick="switchAdminTab('users')">사용자 관리</button>
+                <button class="admin-tab" onclick="switchAdminTab('settings')">사이트 설정</button>
             </div>
 
-            <!-- 작품 관리 탭 -->
             <div class="admin-content active" id="artworksContent">
-                <p style="text-align:center; color: #777; margin-bottom: 15px;">💡 작품을 수정하려면 테이블에서 수정 버튼을, 순서를 변경하려면 행을 드래그하세요.</p>
+                <p style="text-align:center; color: #777; margin-bottom: 15px;">💡 작품 순서를 변경하려면 행을 드래그하여 원하는 위치에 놓으세요.</p>
                 <div class="bulk-actions">
                     <label><input type="checkbox" id="selectAll"> 전체 선택</label>
                     <button class="btn btn-danger btn-small" onclick="bulkDeleteArtworks()">선택 삭제</button>
-                    <button class="btn btn-secondary btn-small" onclick="exportData()">📁 데이터 백업</button>
+                    <button class="btn btn-secondary btn-small" onclick="exportData()">데이터 내보내기</button>
                 </div>
                 <div class="table-container">
                     <table id="artworksTable">
@@ -160,9 +153,7 @@
                 </div>
             </div>
 
-            <!-- 댓글 관리 탭 -->
             <div class="admin-content" id="commentsContent">
-                <p style="text-align:center; color: #777; margin-bottom: 15px;">💬 댓글을 승인하거나 삭제할 수 있습니다.</p>
                 <div class="bulk-actions">
                     <label><input type="checkbox" id="selectAllComments"> 전체 선택</label>
                     <button class="btn btn-danger btn-small" onclick="bulkDeleteComments()">선택 삭제</button>
@@ -184,9 +175,7 @@
                 </div>
             </div>
 
-            <!-- 사용자 관리 탭 -->
             <div class="admin-content" id="usersContent">
-                <p style="text-align:center; color: #777; margin-bottom: 15px;">👥 등록된 사용자들의 활동 현황을 확인할 수 있습니다.</p>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -204,9 +193,8 @@
                 </div>
             </div>
 
-            <!-- 사이트 설정 탭 -->
             <div class="admin-content" id="settingsContent">
-                <h3>🏠 기본 설정</h3>
+                <h3>기본 설정</h3>
                 <div class="form-group">
                     <label for="siteTitle">사이트 제목</label>
                     <input type="text" id="siteTitle" value="우리학교 학생 작품 전시관">
@@ -234,12 +222,9 @@
                         <label for="moderateComments">댓글 승인 필요</label>
                     </div>
                 </div>
-                
-                <h3>🔐 관리자 설정</h3>
                 <div class="form-group">
                     <label for="adminPassword">관리자 비밀번호 변경</label>
-                    <input type="password" id="adminPassword" placeholder="새 관리자 비밀번호 (비워두면 변경하지 않음)">
-                    <small style="color: #666; font-size: 0.9rem;">⚠️ 변경된 비밀번호는 다음 로그인부터 적용됩니다.</small>
+                    <input type="password" id="adminPassword" placeholder="새 비밀번호 (비워두면 변경하지 않음)">
                 </div>
                 
                 <hr>
@@ -254,12 +239,11 @@
                 <div class="form-group">
                     <label for="uploadPassword">등록용 비밀번호 변경</label>
                     <input type="password" id="uploadPassword" placeholder="새 등록용 비밀번호 (기존 값: ****)">
-                    <small style="color: #666; font-size: 0.9rem;">💡 이 비밀번호는 일반 사용자가 작품을 등록할 때 사용됩니다.</small>
                 </div>
 
                 <hr>
 
-                <h3>🎓 학년별 설명 관리</h3>
+                <h3>학년별 설명 관리</h3>
                 <div class="form-group">
                     <label for="gradeTitleAll">전체 학년 제목</label>
                     <input type="text" id="gradeTitleAll" placeholder="전체 학년 소개 제목">
@@ -302,20 +286,9 @@
                     <label for="gradeDesc6" class="sub-label">6학년 설명</label>
                     <textarea id="gradeDesc6" placeholder="6학년에 대한 설명을 입력하세요"></textarea>
                 </div>
-                
                 <hr>
-                
-                <div style="text-align: center; margin-top: 30px;">
-                    <button class="btn btn-primary" onclick="saveSettings()" style="margin-right: 15px;">💾 설정 저장</button>
-                    <button class="btn btn-danger" onclick="resetAllData()">🗑️ 모든 데이터 초기화</button>
-                </div>
-                
-                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; text-align: center;">
-                    <small style="color: #666;">
-                        💡 <strong>팁:</strong> 설정 변경 후 반드시 "설정 저장" 버튼을 클릭하세요.<br>
-                        🔄 비밀번호 변경은 다음 로그인부터 적용됩니다.
-                    </small>
-                </div>
+                <button class="btn btn-primary" onclick="saveSettings()">설정 저장</button>
+                <button class="btn btn-danger" onclick="resetAllData()">모든 데이터 초기화</button>
             </div>
         </div>
 
@@ -334,7 +307,7 @@
         
         <!-- 검색 -->
         <div class="search-container">
-            <input type="text" id="searchInput" placeholder="작품명, 학생 이름, 설명으로 검색...">
+            <input type="text" id="searchInput" placeholder="작품명 또는 학생 이름으로 검색...">
         </div>
 
         <!-- 학년별 정보 섹션 -->
@@ -345,15 +318,15 @@
             </div>
         </div>
 
-        <!-- 작품 분류 탭 -->
+        <!-- 작품 분류 탭 (수정됨) -->
         <div class="type-tabs">
-            <button class="type-tab active" data-type="all">🎯 전체</button>
-            <button class="type-tab" data-type="activity">📷 활동 모습</button>
-            <button class="type-tab" data-type="worksheet">📝 활동지</button>
-            <button class="type-tab" data-type="result">🎨 결과물</button>
+            <button class="type-tab active" data-type="all" onclick="switchTypeTab('all')">🎯 전체</button>
+            <button class="type-tab" data-type="activity" onclick="switchTypeTab('activity')">📷 활동 모습</button>
+            <button class="type-tab" data-type="worksheet" onclick="switchTypeTab('worksheet')">📝 활동지</button>
+            <button class="type-tab" data-type="result" onclick="switchTypeTab('result')">🎨 결과물</button>
         </div>
 
-        <!-- 갤러리 컨테이너 -->
+        <!-- 갤러리 컨테이너 (수정됨) -->
         <div id="galleryContainer">
             <div class="type-section active" id="allSection">
                 <div class="type-header">
@@ -417,8 +390,8 @@
                     <div class="artwork-actions">
                         <button class="btn btn-primary" onclick="openImageInNewTab()">🔍 원본 크기로 보기</button>
                         <button class="btn btn-secondary" onclick="closeModal()">닫기</button>
-                        <button id="detailEditBtn" class="btn btn-warning admin-only">✏️ 수정</button>
-                        <button id="detailDeleteBtn" class="btn btn-danger admin-only">🗑️ 삭제</button>
+                        <button id="detailEditBtn" class="btn btn-warning admin-only">수정</button>
+                        <button id="detailDeleteBtn" class="btn btn-danger admin-only">삭제</button>
                     </div>
                 </div>
             </div>
