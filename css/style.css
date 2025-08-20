@@ -775,59 +775,108 @@ hr {
     border-color: #667eea;
 }
 
-/* 작품 상세 정보 */
-.artwork-detail h3 {
-    font-size: 1.5rem;
+/* 작품 상세 정보 - 새로운 디자인 */
+.artwork-detail {
+    padding: 0;
+}
+
+.artwork-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.artwork-main-title {
+    font-size: 2rem;
     font-weight: bold;
+    color: #2c3e50;
     margin-bottom: 15px;
+    line-height: 1.3;
+}
+
+.artwork-meta {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.grade-badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.category-badge {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    color: white;
+}
+
+.artwork-description-section {
+    margin-bottom: 25px;
+}
+
+.section-title {
+    font-size: 1.3rem;
     color: #2c3e50;
+    margin-bottom: 15px;
+    padding-left: 15px;
+    border-left: 4px solid #667eea;
+    font-weight: 600;
 }
 
-.artwork-detail .artwork-info p {
-    margin-bottom: 8px;
-    font-size: 1rem;
+.description-content {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #e9ecef;
 }
 
-.artwork-detail .artwork-info strong {
-    color: #2c3e50;
+.description-content p {
+    margin: 0;
+    line-height: 1.7;
+    color: #495057;
+    font-size: 1.05rem;
 }
 
-.artwork-description {
-    margin: 20px 0;
+.artwork-link-section {
+    margin-bottom: 25px;
 }
 
-.artwork-description h4 {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #2c3e50;
+.external-link {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.external-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
 }
 
 .artwork-actions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    margin-top: 20px;
-}
-
-.artwork-link {
-    margin: 20px 0;
-}
-
-.artwork-link h4 {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #2c3e50;
-}
-
-.artwork-link a {
-    color: #667eea;
-    text-decoration: none;
-}
-
-.artwork-link a:hover {
-    text-decoration: underline;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f0;
+    justify-content: center;
 }
 
 /* 전체화면 오버레이 */
@@ -949,5 +998,18 @@ body.admin-mode .admin-only {
 
     .artwork-actions {
         flex-direction: column;
+    }
+
+    .artwork-main-title {
+        font-size: 1.5rem;
+    }
+
+    .artwork-meta {
+        gap: 10px;
+    }
+
+    .meta-item {
+        padding: 6px 12px;
+        font-size: 0.8rem;
     }
 }
