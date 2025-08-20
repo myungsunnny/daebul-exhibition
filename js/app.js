@@ -12,6 +12,7 @@ const UPSTASH_CONFIG = {
 };
 
 const REDIS_KEY = 'student_gallery:artworks';
+const SETTINGS_KEY = 'student_gallery:settings';
 const ADMIN_PASSWORD = "admin1234";
 
 // 전역 변수
@@ -20,6 +21,42 @@ let isAdmin = false;
 let allArtworks = [];
 let uploadedImages = [];
 let isUploading = false;
+let siteSettings = {
+    title: '우리학교 학생 작품 전시관',
+    description: '창의적이고 아름다운 학생들의 작품을 함께 감상해보세요',
+    requireUploadPassword: false,
+    uploadPassword: '',
+    gradeInfo: {
+        all: {
+            title: '전체 학년 작품 소개',
+            description: '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.\n\n각 학년별로 다양한 주제와 기법으로 만들어진 작품들이 전시되어 있으며, 학년이 올라갈수록 더욱 정교하고 깊이 있는 작품들을 감상하실 수 있습니다.\n\n활동 모습, 활동지, 결과물 등 다양한 분야의 작품들을 통해 우리 학생들의 무한한 상상력과 예술적 재능을 확인해보세요.'
+        },
+        '1학년': {
+            title: '1학년 작품 - 첫걸음의 순수함',
+            description: '1학년 학생들의 첫 작품 활동입니다.\n\n순수하고 자유로운 상상력으로 만들어진 작품들은 보는 이의 마음을 따뜻하게 만듭니다. 아직 기법이 서툴지만, 그 안에 담긴 진정성과 열정이 느껴집니다.\n\n주로 크레파스, 색연필을 사용한 그림 작품과 간단한 만들기 활동 작품들을 만나보실 수 있습니다.'
+        },
+        '2학년': {
+            title: '2학년 작품 - 호기심 가득한 탐험',
+            description: '2학년 학생들의 호기심과 상상력이 가득 담긴 작품들입니다.\n\n1학년보다 더욱 다양한 재료와 기법에 도전하며, 자신만의 표현 방법을 찾아가는 과정이 작품에 잘 드러나 있습니다.\n\n물감을 사용한 그림, 간단한 조형 활동, 자연물을 활용한 만들기 등 다채로운 작품들을 감상하실 수 있습니다.'
+        },
+        '3학년': {
+            title: '3학년 작품 - 창의력의 발현',
+            description: '3학년 학생들의 창의력이 본격적으로 발현되기 시작하는 시기의 작품들입니다.\n\n기본적인 미술 기법들을 익히기 시작하면서, 자신만의 독특한 아이디어를 작품에 담아내려 노력합니다.\n\n수채화, 판화, 점토 작품 등 다양한 장르의 작품들을 통해 학생들의 성장하는 예술적 감성을 느껴보세요.'
+        },
+        '4학년': {
+            title: '4학년 작품 - 기법과 상상력의 조화',
+            description: '4학년 학생들의 안정된 기법과 풍부한 상상력이 조화를 이루는 작품들입니다.\n\n체계적인 미술 교육을 통해 다양한 표현 기법을 익히고, 이를 바탕으로 자신만의 작품 세계를 구축해 나갑니다.\n\n정교한 그림 작품부터 입체적인 조형 작품까지, 한층 성숙해진 예술적 표현을 만나보실 수 있습니다.'
+        },
+        '5학년': {
+            title: '5학년 작품 - 개성 있는 표현력',
+            description: '5학년 학생들의 뚜렷한 개성과 표현력이 돋보이는 작품들입니다.\n\n고학년으로서 보다 깊이 있는 주제 의식을 가지고 작품을 제작하며, 자신만의 예술적 스타일을 찾아가는 과정을 보여줍니다.\n\n사회적 이슈나 환경 문제 등을 다룬 작품들도 등장하며, 예술을 통한 소통과 메시지 전달의 중요성을 배워갑니다.'
+        },
+        '6학년': {
+            title: '6학년 작품 - 완성도 높은 예술 세계',
+            description: '6학년 학생들의 완성도 높은 작품들로, 초등 미술 교육의 집대성을 보여줍니다.\n\n6년간 쌓아온 미술 기법과 예술적 감성이 어우러져, 어른들도 감탄할 만한 수준 높은 작품들이 탄생합니다.\n\n졸업을 앞두고 있는 만큼, 추억과 미래에 대한 꿈이 담긴 의미 있는 작품들이 많으며, 후배들에게는 좋은 목표가 되고 있습니다.'
+        }
+    }
+};
 
 // === 1. 즉시 실행되는 전역 함수들 ===
 function toggleUploadPanel() {
@@ -43,6 +80,7 @@ function toggleUploadPanel() {
         panel.style.display = 'block';
         button.classList.add('active');
         resetForm();
+        updateUploadPasswordVisibility();
         console.log('📥 업로드 패널 열림');
     }
 }
@@ -57,6 +95,13 @@ function toggleAdminPanel() {
             isAdmin = true;
             document.body.classList.add('admin-mode');
             sessionStorage.setItem('isAdminLoggedIn', 'true');
+            
+            // 시스템 상태 패널 표시
+            const statusSection = document.getElementById('statusSection');
+            if (statusSection) {
+                statusSection.classList.add('active');
+                statusSection.style.display = 'block';
+            }
         } else if (password) {
             alert('❌ 비밀번호가 틀렸습니다.');
             return;
@@ -84,6 +129,7 @@ function toggleAdminPanel() {
         panel.style.display = 'block';
         adminButton.classList.add('active');
         loadAdminData();
+        loadSettingsToForm();
         console.log('⚙️ 관리자 패널 열림');
     }
 }
@@ -147,6 +193,8 @@ function switchAdminTab(tab) {
     
     if (tab === 'artworks') {
         loadArtworksTable();
+    } else if (tab === 'settings') {
+        loadSettingsToForm();
     }
     
     console.log('✅ 관리자 탭 전환 완료:', tab);
@@ -223,7 +271,63 @@ function editArtwork(id) {
 
 function saveSettings() {
     console.log('🖱️ 설정 저장 클릭');
-    alert('설정이 저장되었습니다.');
+    
+    try {
+        // 폼에서 값 읽기
+        const newSettings = {
+            title: document.getElementById('siteTitle').value.trim(),
+            description: document.getElementById('siteDescription').value.trim(),
+            requireUploadPassword: document.getElementById('requireUploadPassword').checked,
+            uploadPassword: document.getElementById('uploadPassword').value || siteSettings.uploadPassword,
+            gradeInfo: {
+                all: {
+                    title: document.getElementById('gradeTitleAll').value.trim(),
+                    description: document.getElementById('gradeDescAll').value.trim()
+                },
+                '1학년': {
+                    title: document.getElementById('gradeTitle1').value.trim(),
+                    description: document.getElementById('gradeDesc1').value.trim()
+                },
+                '2학년': {
+                    title: document.getElementById('gradeTitle2').value.trim(),
+                    description: document.getElementById('gradeDesc2').value.trim()
+                },
+                '3학년': {
+                    title: document.getElementById('gradeTitle3').value.trim(),
+                    description: document.getElementById('gradeDesc3').value.trim()
+                },
+                '4학년': {
+                    title: document.getElementById('gradeTitle4').value.trim(),
+                    description: document.getElementById('gradeDesc4').value.trim()
+                },
+                '5학년': {
+                    title: document.getElementById('gradeTitle5').value.trim(),
+                    description: document.getElementById('gradeDesc5').value.trim()
+                },
+                '6학년': {
+                    title: document.getElementById('gradeTitle6').value.trim(),
+                    description: document.getElementById('gradeDesc6').value.trim()
+                }
+            }
+        };
+        
+        // 설정 업데이트
+        siteSettings = { ...siteSettings, ...newSettings };
+        
+        // 서버에 저장
+        callUpstashAPI('SET', SETTINGS_KEY, JSON.stringify(siteSettings));
+        
+        // UI 즉시 반영
+        applySiteSettings();
+        updateUploadPasswordVisibility();
+        
+        alert('✅ 설정이 저장되었습니다.');
+        console.log('✅ 설정 저장 완료:', siteSettings);
+        
+    } catch (error) {
+        console.error('❌ 설정 저장 오류:', error);
+        alert('설정 저장 중 오류가 발생했습니다.');
+    }
 }
 
 function previewImages() {
@@ -381,8 +485,15 @@ function validateForm() {
     const category = document.getElementById('artworkCategory')?.value;
     const description = document.getElementById('artworkDescription')?.value.trim();
     
+    // 업로드 비밀번호 체크
+    let passwordValid = true;
+    if (siteSettings.requireUploadPassword && !isAdmin) {
+        const inputPassword = document.getElementById('uploadPasswordInput')?.value;
+        passwordValid = inputPassword === siteSettings.uploadPassword;
+    }
+    
     const isValid = title && studentName && grade && category && description && 
-                   uploadedImages.length > 0 && isConnected && !isUploading;
+                   uploadedImages.length > 0 && isConnected && !isUploading && passwordValid;
     
     const submitBtn = document.getElementById('submitBtn');
     if (submitBtn) {
@@ -393,11 +504,29 @@ function validateForm() {
     return isValid;
 }
 
+function updateUploadPasswordVisibility() {
+    const passwordGroup = document.getElementById('uploadPasswordGroup');
+    if (passwordGroup) {
+        if (siteSettings.requireUploadPassword && !isAdmin) {
+            passwordGroup.style.display = 'block';
+        } else {
+            passwordGroup.style.display = 'none';
+        }
+    }
+}
+
 async function handleFormSubmit(e) {
     e.preventDefault();
     console.log('📝 폼 제출 시도');
     
     if (!validateForm()) {
+        if (siteSettings.requireUploadPassword && !isAdmin) {
+            const inputPassword = document.getElementById('uploadPasswordInput')?.value;
+            if (inputPassword !== siteSettings.uploadPassword) {
+                alert('등록 비밀번호가 올바르지 않습니다.');
+                return;
+            }
+        }
         alert('모든 필수 항목을 입력해주세요.');
         return;
     }
@@ -452,7 +581,7 @@ async function handleFormSubmit(e) {
 }
 
 function addArtworkToGallery(artwork) {
-    const galleries = ['galleryGrid', 'drawingGallery', 'craftGallery', 'sculptureGallery', 'digitalGallery'];
+    const galleries = ['galleryGrid', 'activityGallery', 'worksheetGallery', 'resultGallery'];
     
     galleries.forEach(galleryId => {
         const gallery = document.getElementById(galleryId);
@@ -509,8 +638,7 @@ function showArtworkDetail(artworkId) {
     if (!artwork) return;
     
     const categoryMap = { 
-        'drawing': '그림', 'craft': '공예', 
-        'sculpture': '조소', 'digital': '디지털아트' 
+        'activity': '활동 모습', 'worksheet': '활동지', 'result': '결과물' 
     };
     
     // 모달 내용 업데이트
@@ -597,6 +725,9 @@ async function loadArtworks() {
         // 연결 테스트
         await callUpstashAPI('PING');
         
+        // 설정 로드
+        await loadSiteSettings();
+        
         // 데이터 로드
         const data = await callUpstashAPI('GET', REDIS_KEY);
         if (data) {
@@ -617,13 +748,73 @@ async function loadArtworks() {
     }
 }
 
+async function loadSiteSettings() {
+    try {
+        const data = await callUpstashAPI('GET', SETTINGS_KEY);
+        if (data) {
+            const loadedSettings = JSON.parse(data);
+            siteSettings = { ...siteSettings, ...loadedSettings };
+            console.log('⚙️ 설정 로드 완료:', siteSettings);
+        }
+        applySiteSettings();
+    } catch (error) {
+        console.log('⚙️ 기본 설정 사용');
+        applySiteSettings();
+    }
+}
+
+function applySiteSettings() {
+    // 사이트 제목 반영
+    const titleElement = document.getElementById('headerTitleText');
+    if (titleElement) {
+        titleElement.textContent = siteSettings.title;
+    }
+    
+    // 페이지 타이틀 변경
+    document.title = siteSettings.title;
+    
+    // 사이트 설명 반영
+    const subtitleElement = document.getElementById('siteSubtitle');
+    if (subtitleElement) {
+        subtitleElement.textContent = siteSettings.description;
+    }
+    
+    console.log('✅ 사이트 설정 적용 완료');
+}
+
+function loadSettingsToForm() {
+    // 기본 설정 로드
+    const siteTitle = document.getElementById('siteTitle');
+    const siteDescription = document.getElementById('siteDescription');
+    const requireUploadPassword = document.getElementById('requireUploadPassword');
+    const uploadPassword = document.getElementById('uploadPassword');
+    
+    if (siteTitle) siteTitle.value = siteSettings.title;
+    if (siteDescription) siteDescription.value = siteSettings.description;
+    if (requireUploadPassword) requireUploadPassword.checked = siteSettings.requireUploadPassword;
+    if (uploadPassword) uploadPassword.placeholder = siteSettings.uploadPassword ? '현재 비밀번호: ****' : '등록용 비밀번호를 설정하세요';
+    
+    // 학년별 설명 로드
+    Object.keys(siteSettings.gradeInfo).forEach(grade => {
+        const titleKey = grade === 'all' ? 'gradeTitleAll' : `gradeTitle${grade.replace('학년', '')}`;
+        const descKey = grade === 'all' ? 'gradeDescAll' : `gradeDesc${grade.replace('학년', '')}`;
+        
+        const titleElement = document.getElementById(titleKey);
+        const descElement = document.getElementById(descKey);
+        
+        if (titleElement) titleElement.value = siteSettings.gradeInfo[grade].title;
+        if (descElement) descElement.value = siteSettings.gradeInfo[grade].description;
+    });
+    
+    console.log('📝 설정 폼 로드 완료');
+}
+
 function renderAllArtworks() {
     const galleries = {
         galleryGrid: document.getElementById('galleryGrid'),
-        drawingGallery: document.getElementById('drawingGallery'),
-        craftGallery: document.getElementById('craftGallery'),
-        sculptureGallery: document.getElementById('sculptureGallery'),
-        digitalGallery: document.getElementById('digitalGallery')
+        activityGallery: document.getElementById('activityGallery'),
+        worksheetGallery: document.getElementById('worksheetGallery'),
+        resultGallery: document.getElementById('resultGallery')
     };
     
     // 모든 갤러리 초기화
@@ -668,10 +859,9 @@ function updateConnectionStatus(status, message) {
 function updateCounts() {
     const counts = {
         all: allArtworks.length,
-        drawing: allArtworks.filter(a => a.category === 'drawing').length,
-        craft: allArtworks.filter(a => a.category === 'craft').length,
-        sculpture: allArtworks.filter(a => a.category === 'sculpture').length,
-        digital: allArtworks.filter(a => a.category === 'digital').length
+        activity: allArtworks.filter(a => a.category === 'activity').length,
+        worksheet: allArtworks.filter(a => a.category === 'worksheet').length,
+        result: allArtworks.filter(a => a.category === 'result').length
     };
     
     // 카운트 업데이트
@@ -701,13 +891,17 @@ function loadArtworksTable() {
     const tbody = document.getElementById('artworksTableBody');
     if (!tbody) return;
     
+    const categoryMap = { 
+        'activity': '활동 모습', 'worksheet': '활동지', 'result': '결과물' 
+    };
+    
     tbody.innerHTML = allArtworks.map(artwork => `
         <tr>
             <td><input type="checkbox" value="${artwork.id}"></td>
             <td>${artwork.title}</td>
             <td>${artwork.studentName}</td>
             <td>${artwork.grade}</td>
-            <td>${artwork.category}</td>
+            <td>${categoryMap[artwork.category] || artwork.category}</td>
             <td>${new Date(artwork.uploadDate).toLocaleDateString()}</td>
             <td>
                 <button class="btn btn-warning btn-small" onclick="editArtwork('${artwork.id}')">수정</button>
@@ -717,16 +911,88 @@ function loadArtworksTable() {
     `).join('');
 }
 
-// === 4. 이벤트 리스너 설정 ===
+// === 4. 학년별 필터 및 정보 표시 ===
+function applyGradeFilter(grade) {
+    console.log('🎯 학년 필터 적용:', grade);
+    
+    const allCards = document.querySelectorAll('.artwork-card');
+    let visibleCount = 0;
+    
+    allCards.forEach(card => {
+        const artwork = allArtworks.find(a => a.id === card.dataset.artworkId);
+        if (!artwork) return;
+        
+        let shouldShow = false;
+        
+        if (grade === 'all') {
+            shouldShow = true;
+        } else {
+            shouldShow = artwork.grade === grade;
+        }
+        
+        if (shouldShow) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    console.log(`✅ 필터 결과: ${visibleCount}개 작품 표시`);
+    updateFilteredCounts(grade, visibleCount);
+}
+
+function updateFilteredCounts(grade, visibleCount) {
+    const activeSection = document.querySelector('.type-section.active');
+    if (activeSection) {
+        const countElement = activeSection.querySelector('.type-count');
+        if (countElement) {
+            if (grade === 'all') {
+                countElement.textContent = `${visibleCount}개 작품`;
+            } else {
+                countElement.textContent = `${grade} ${visibleCount}개 작품`;
+            }
+        }
+    }
+}
+
+function showGradeInfo(grade) {
+    console.log('📚 학년 정보 표시:', grade);
+    
+    const gradeInfoSection = document.getElementById('gradeInfoSection');
+    const gradeInfoTitle = document.getElementById('gradeInfoTitle');
+    const gradeInfoDescription = document.getElementById('gradeInfoDescription');
+    
+    if (!gradeInfoSection || !gradeInfoTitle || !gradeInfoDescription) {
+        console.error('학년 정보 요소를 찾을 수 없습니다');
+        return;
+    }
+    
+    const info = siteSettings.gradeInfo[grade];
+    if (info) {
+        gradeInfoTitle.textContent = info.title;
+        gradeInfoDescription.textContent = info.description;
+        
+        gradeInfoSection.classList.add('active');
+        gradeInfoSection.style.display = 'block';
+        
+        setTimeout(() => {
+            gradeInfoSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }, 300);
+        
+        console.log('✅ 학년 정보 표시 완료:', grade);
+    } else {
+        gradeInfoSection.classList.remove('active');
+        gradeInfoSection.style.display = 'none';
+    }
+}
+
+// === 5. 이벤트 리스너 설정 ===
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎨 DOM 로드 완료 - 갤러리 초기화 시작');
-    
-    // 상태 섹션 표시
-    const statusSection = document.getElementById('statusSection');
-    if (statusSection) {
-        statusSection.classList.add('active');
-        statusSection.style.display = 'block';
-    }
     
     // 세션에서 관리자 상태 확인
     if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
@@ -775,12 +1041,9 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
             console.log('🔍 필터 버튼 클릭:', this.dataset.category);
             
-            // 모든 필터 버튼 비활성화
             filterBtns.forEach(b => b.classList.remove('active'));
-            // 클릭된 버튼 활성화
             this.classList.add('active');
             
-            // 필터 적용
             const category = this.dataset.category;
             applyGradeFilter(category);
             showGradeInfo(category);
@@ -822,7 +1085,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             console.log('🔍 검색어 입력:', this.value);
-            // 검색 로직은 추후 구현
         });
     }
     
@@ -853,44 +1115,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // 데이터 로드
     loadArtworks();
     
-    // 테스트용 함수 등록
-    window.testGallery = function() {
-        console.log('=== 갤러리 테스트 ===');
-        console.log('isConnected:', isConnected);
-        console.log('isAdmin:', isAdmin);
-        console.log('allArtworks:', allArtworks.length);
-        console.log('uploadedImages:', uploadedImages.length);
-        
-        // 테스트 작품 추가
-        const testArtwork = {
-            id: 'test_' + Date.now(),
-            title: '테스트 작품 ' + new Date().getMinutes(),
-            studentName: '테스트 학생',
-            grade: '3학년',
-            category: 'drawing',
-            description: '이것은 테스트용 작품입니다.',
-            imageUrls: ['data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzY2N2VlYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPu2FjOyKpO2KuCDsnpHtlIg8L3RleHQ+PC9zdmc+'],
-            uploadDate: new Date().toISOString(),
-            link: ''
-        };
-        
-        allArtworks.unshift(testArtwork);
-        addArtworkToGallery(testArtwork);
-        updateCounts();
-        
-        alert('테스트 작품이 추가되었습니다!');
-        console.log('테스트 작품 추가됨:', testArtwork);
-    };
+    // 초기 전체 학년 정보 표시
+    setTimeout(() => {
+        showGradeInfo('all');
+    }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
-    console.log('💡 테스트: window.testGallery() 실행해보세요');
-    
-    // 초기 전체 학년 정보 표시
-    showGradeInfo('all');
 });
 
-// === 5. 전역 함수 등록 (HTML onclick용) ===
-// 이미 위에서 정의된 함수들을 window 객체에 명시적으로 등록
+// === 6. 전역 함수 등록 (HTML onclick용) ===
 window.toggleUploadPanel = toggleUploadPanel;
 window.toggleAdminPanel = toggleAdminPanel;
 window.switchTypeTab = switchTypeTab;
@@ -911,7 +1144,7 @@ window.exportData = exportData;
 window.resetAllData = resetAllData;
 window.showArtworkDetail = showArtworkDetail;
 
-// Cloudinary 업로드 (선택사항)
+// Cloudinary 업로드
 window.uploadToCloudinary = function() {
     console.log('☁️ Cloudinary 업로드 시도');
     if (typeof cloudinary !== 'undefined') {
@@ -938,7 +1171,7 @@ window.uploadToCloudinary = function() {
     }
 };
 
-// === 6. 오류 처리 및 디버깅 ===
+// === 7. 오류 처리 및 디버깅 ===
 window.addEventListener('error', function(e) {
     console.error('🚨 전역 오류:', e.error);
     console.error('파일:', e.filename, '라인:', e.lineno);
@@ -948,7 +1181,6 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('🚨 처리되지 않은 Promise 거부:', e.reason);
 });
 
-// 온라인/오프라인 감지
 window.addEventListener('online', function() {
     console.log('🌐 온라인 상태로 변경');
     loadArtworks();
@@ -959,7 +1191,6 @@ window.addEventListener('offline', function() {
     updateConnectionStatus('disconnected', '오프라인');
 });
 
-// 페이지 언로드 감지
 window.addEventListener('beforeunload', function(e) {
     if (isUploading) {
         e.preventDefault();
@@ -974,150 +1205,3 @@ console.log('  - window.testGallery() : 테스트 작품 추가');
 console.log('  - toggleUploadPanel() : 업로드 패널 토글');
 console.log('  - toggleAdminPanel() : 관리자 패널 토글');
 console.log('  - console.log(allArtworks) : 전체 작품 데이터 확인');
-
-// 초기화 완료 신호
-setTimeout(() => {
-    // === 7. 학년별 필터 및 정보 표시 ===
-function applyGradeFilter(grade) {
-    console.log('🎯 학년 필터 적용:', grade);
-    
-    const allCards = document.querySelectorAll('.artwork-card');
-    let visibleCount = 0;
-    
-    allCards.forEach(card => {
-        const artwork = allArtworks.find(a => a.id === card.dataset.artworkId);
-        if (!artwork) return;
-        
-        let shouldShow = false;
-        
-        if (grade === 'all') {
-            shouldShow = true;
-        } else {
-            // "1학년", "2학년" 등과 매칭
-            shouldShow = artwork.grade === grade;
-        }
-        
-        if (shouldShow) {
-            card.style.display = 'block';
-            visibleCount++;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-    
-    console.log(`✅ 필터 결과: ${visibleCount}개 작품 표시`);
-    updateFilteredCounts(grade, visibleCount);
-}
-
-function updateFilteredCounts(grade, visibleCount) {
-    // 현재 활성화된 타입 섹션의 카운트 업데이트
-    const activeSection = document.querySelector('.type-section.active');
-    if (activeSection) {
-        const countElement = activeSection.querySelector('.type-count');
-        if (countElement) {
-            if (grade === 'all') {
-                countElement.textContent = `${visibleCount}개 작품`;
-            } else {
-                countElement.textContent = `${grade} ${visibleCount}개 작품`;
-            }
-        }
-    }
-}
-
-function showGradeInfo(grade) {
-    console.log('📚 학년 정보 표시:', grade);
-    
-    const gradeInfoSection = document.getElementById('gradeInfoSection');
-    const gradeInfoTitle = document.getElementById('gradeInfoTitle');
-    const gradeInfoDescription = document.getElementById('gradeInfoDescription');
-    
-    if (!gradeInfoSection || !gradeInfoTitle || !gradeInfoDescription) {
-        console.error('학년 정보 요소를 찾을 수 없습니다');
-        return;
-    }
-    
-    // 학년별 정보 데이터
-    const gradeInfoData = {
-        'all': {
-            title: '전체 학년 작품 소개',
-            description: `우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.
-
-각 학년별로 다양한 주제와 기법으로 만들어진 작품들이 전시되어 있으며, 학년이 올라갈수록 더욱 정교하고 깊이 있는 작품들을 감상하실 수 있습니다.
-
-그림, 공예, 조소, 디지털아트 등 다양한 분야의 작품들을 통해 우리 학생들의 무한한 상상력과 예술적 재능을 확인해보세요.`
-        },
-        '1학년': {
-            title: '1학년 작품 - 첫걸음의 순수함',
-            description: `1학년 학생들의 첫 작품 활동입니다.
-
-순수하고 자유로운 상상력으로 만들어진 작품들은 보는 이의 마음을 따뜻하게 만듭니다. 아직 기법이 서툴지만, 그 안에 담긴 진정성과 열정이 느껴집니다.
-
-주로 크레파스, 색연필을 사용한 그림 작품과 간단한 만들기 활동 작품들을 만나보실 수 있습니다.`
-        },
-        '2학년': {
-            title: '2학년 작품 - 호기심 가득한 탐험',
-            description: `2학년 학생들의 호기심과 상상력이 가득 담긴 작품들입니다.
-
-1학년보다 더욱 다양한 재료와 기법에 도전하며, 자신만의 표현 방법을 찾아가는 과정이 작품에 잘 드러나 있습니다.
-
-물감을 사용한 그림, 간단한 조형 활동, 자연물을 활용한 만들기 등 다채로운 작품들을 감상하실 수 있습니다.`
-        },
-        '3학년': {
-            title: '3학년 작품 - 창의력의 발현',
-            description: `3학년 학생들의 창의력이 본격적으로 발현되기 시작하는 시기의 작품들입니다.
-
-기본적인 미술 기법들을 익히기 시작하면서, 자신만의 독특한 아이디어를 작품에 담아내려 노력합니다.
-
-수채화, 판화, 점토 작품 등 다양한 장르의 작품들을 통해 학생들의 성장하는 예술적 감성을 느껴보세요.`
-        },
-        '4학년': {
-            title: '4학년 작품 - 기법과 상상력의 조화',
-            description: `4학년 학생들의 안정된 기법과 풍부한 상상력이 조화를 이루는 작품들입니다.
-
-체계적인 미술 교육을 통해 다양한 표현 기법을 익히고, 이를 바탕으로 자신만의 작품 세계를 구축해 나갑니다.
-
-정교한 그림 작품부터 입체적인 조형 작품까지, 한층 성숙해진 예술적 표현을 만나보실 수 있습니다.`
-        },
-        '5학년': {
-            title: '5학년 작품 - 개성 있는 표현력',
-            description: `5학년 학생들의 뚜렷한 개성과 표현력이 돋보이는 작품들입니다.
-
-고학년으로서 보다 깊이 있는 주제 의식을 가지고 작품을 제작하며, 자신만의 예술적 스타일을 찾아가는 과정을 보여줍니다.
-
-사회적 이슈나 환경 문제 등을 다룬 작품들도 등장하며, 예술을 통한 소통과 메시지 전달의 중요성을 배워갑니다.`
-        },
-        '6학년': {
-            title: '6학년 작품 - 완성도 높은 예술 세계',
-            description: `6학년 학생들의 완성도 높은 작품들로, 초등 미술 교육의 집대성을 보여줍니다.
-
-6년간 쌓아온 미술 기법과 예술적 감성이 어우러져, 어른들도 감탄할 만한 수준 높은 작품들이 탄생합니다.
-
-졸업을 앞두고 있는 만큼, 추억과 미래에 대한 꿈이 담긴 의미 있는 작품들이 많으며, 후배들에게는 좋은 목표가 되고 있습니다.`
-        }
-    };
-    
-    const info = gradeInfoData[grade];
-    if (info) {
-        gradeInfoTitle.textContent = info.title;
-        gradeInfoDescription.textContent = info.description;
-        
-        // 섹션 표시
-        gradeInfoSection.classList.add('active');
-        gradeInfoSection.style.display = 'block';
-        
-        // 부드러운 스크롤 효과
-        setTimeout(() => {
-            gradeInfoSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-        }, 300);
-        
-        console.log('✅ 학년 정보 표시 완료:', grade);
-    } else {
-        // 정보가 없으면 섹션 숨기기
-        gradeInfoSection.classList.remove('active');
-        gradeInfoSection.style.display = 'none';
-    }
-}
-}, 500);
