@@ -96,6 +96,10 @@ function toggleAdminPanel() {
             document.body.classList.add('admin-mode');
             sessionStorage.setItem('isAdminLoggedIn', 'true');
             
+            // 관리자 버튼 텍스트 변경
+            const adminButton = document.querySelectorAll('.header-btn')[1];
+            if (adminButton) adminButton.textContent = '🚪 관리자 나가기';
+            
             // 시스템 상태 패널 표시
             const statusSection = document.getElementById('statusSection');
             if (statusSection) {
@@ -104,6 +108,40 @@ function toggleAdminPanel() {
             }
         } else if (password) {
             alert('❌ 비밀번호가 틀렸습니다.');
+            return;
+        } else {
+            return;
+        }
+    } else {
+        // 관리자 모드 나가기
+        if (confirm('관리자 모드를 종료하시겠습니까?')) {
+            isAdmin = false;
+            document.body.classList.remove('admin-mode');
+            sessionStorage.removeItem('isAdminLoggedIn');
+            
+            // 관리자 버튼 텍스트 원래대로 변경
+            const adminButton = document.querySelectorAll('.header-btn')[1];
+            if (adminButton) adminButton.textContent = '⚙️ 관리자 모드';
+            
+            // 시스템 상태 패널 숨기기
+            const statusSection = document.getElementById('statusSection');
+            if (statusSection) {
+                statusSection.classList.remove('active');
+                statusSection.style.display = 'none';
+            }
+            
+            // 관리자 패널 닫기
+            const panel = document.getElementById('adminPanel');
+            if (panel) {
+                panel.classList.remove('active');
+                panel.style.display = 'none';
+            }
+            
+            // 활성화된 버튼 상태 제거
+            document.querySelectorAll('.header-btn').forEach(b => b.classList.remove('active'));
+            
+            alert('관리자 모드가 종료되었습니다.');
+            console.log('🚪 관리자 모드 종료');
             return;
         } else {
             return;
@@ -210,10 +248,23 @@ function closeModal() {
 }
 
 function openImageInNewTab() {
-    console.log('🖱️ 원본 이미지 보기 클릭');
+    console.log('🖱️ 전체화면 이미지 보기 클릭');
     const mainImg = document.getElementById('currentMainImage');
     if (mainImg && mainImg.src) {
-        window.open(mainImg.src, '_blank');
+        showFullscreenImage(mainImg.src);
+    }
+}
+
+function showFullscreenImage(imageSrc) {
+    console.log('🖼️ 전체화면 이미지 표시:', imageSrc);
+    const overlay = document.getElementById('fullscreenOverlay');
+    const fullscreenImg = document.getElementById('fullscreenImage');
+    
+    if (overlay && fullscreenImg) {
+        fullscreenImg.src = imageSrc;
+        overlay.classList.add('show');
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     }
 }
 
@@ -368,6 +419,7 @@ function closeFullscreenImage() {
     if (overlay) {
         overlay.classList.remove('show');
         overlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
     }
 }
 
@@ -656,6 +708,10 @@ function showArtworkDetail(artworkId) {
     if (mainImg && artwork.imageUrls.length > 0) {
         mainImg.src = artwork.imageUrls[0];
         
+        // 메인 이미지 클릭시 전체화면으로 보기
+        mainImg.onclick = () => showFullscreenImage(mainImg.src);
+        mainImg.style.cursor = 'zoom-in';
+        
         if (thumbnailsContainer) {
             thumbnailsContainer.innerHTML = '';
             if (artwork.imageUrls.length > 1) {
@@ -669,6 +725,7 @@ function showArtworkDetail(artworkId) {
                     
                     thumb.onclick = () => {
                         mainImg.src = url;
+                        mainImg.onclick = () => showFullscreenImage(url);
                         thumbnailsContainer.querySelectorAll('img').forEach(t => t.style.borderColor = 'transparent');
                         thumb.style.borderColor = '#667eea';
                     };
@@ -998,6 +1055,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
         isAdmin = true;
         document.body.classList.add('admin-mode');
+        
+        // 관리자 버튼 텍스트 변경
+        const adminButton = document.querySelectorAll('.header-btn')[1];
+        if (adminButton) adminButton.textContent = '🚪 관리자 나가기';
     }
     
     // 폼 이벤트 리스너
@@ -1107,7 +1168,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // 전체화면 오버레이
     const fullscreenOverlay = document.getElementById('fullscreenOverlay');
     if (fullscreenOverlay) {
-        fullscreenOverlay.addEventListener('click', closeFullscreenImage);
+        fullscreenOverlay.addEventListener('click', function(e) {
+            // 이미지 자체를 클릭한 경우가 아니면 닫기
+            if (e.target === this || e.target.classList.contains('fullscreen-close-btn')) {
+                closeFullscreenImage();
+            }
+        });
     }
     
     console.log('🎉 모든 이벤트 리스너 등록 완료');
@@ -1130,6 +1196,7 @@ window.switchTypeTab = switchTypeTab;
 window.switchAdminTab = switchAdminTab;
 window.closeModal = closeModal;
 window.openImageInNewTab = openImageInNewTab;
+window.showFullscreenImage = showFullscreenImage;
 window.removeImage = removeImage;
 window.deleteArtwork = deleteArtwork;
 window.editArtwork = editArtwork;
