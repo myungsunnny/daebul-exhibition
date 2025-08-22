@@ -1,4 +1,123 @@
-console.log('💾 수정할 작품 데이터:', updatedArtwork);
+Array.from(files).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadedImages.push(e.target.result);
+            updateImagePreview();
+            validateForm();
+            console.log(`✅ 이미지 ${index + 1} 로드 완료`);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function updateImagePreview() {
+    const container = document.getElementById('imagePreviewContainer');
+    const uploadText = document.getElementById('uploadText');
+    
+    if (!container) return;
+    
+    if (uploadedImages.length === 0) {
+        container.innerHTML = '';
+        if (uploadText) uploadText.style.display = 'block';
+        return;
+    }
+    
+    container.innerHTML = uploadedImages.map((url, index) =>
+        `<div style="position: relative; display: inline-block; margin: 5px;">
+            <img src="${url}" alt="미리보기 ${index + 1}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;">
+            <button type="button" onclick="removeImage(${index})" style="position: absolute; top: -8px; right: -8px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; font-weight: bold;">&times;</button>
+        </div>`
+    ).join('');
+    
+    if (uploadText) uploadText.style.display = 'none';
+    
+    console.log('🖼️ 이미지 미리보기 업데이트:', uploadedImages.length, '개');
+}
+
+function validateForm() {
+    const title = document.getElementById('artworkTitle')?.value.trim();
+    const grade = document.getElementById('studentGrade')?.value;
+    const category = document.getElementById('artworkCategory')?.value;
+    const description = document.getElementById('artworkDescription')?.value.trim();
+    
+    // 업로드 비밀번호 체크 (수정 모드나 관리자는 제외)
+    let passwordValid = true;
+    if (siteSettings.requireUploadPassword && !isAdmin && !isEditMode) {
+        const inputPassword = document.getElementById('uploadPasswordInput')?.value;
+        passwordValid = inputPassword === siteSettings.uploadPassword;
+    }
+    
+    const isValid = title && grade && category && description && 
+                   uploadedImages.length > 0 && isConnected && !isUploading && passwordValid;
+    
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = !isValid;
+        submitBtn.style.opacity = isValid ? '1' : '0.5';
+    }
+    
+    return isValid;
+}
+
+function updateUploadPasswordVisibility() {
+    const passwordGroup = document.getElementById('uploadPasswordGroup');
+    if (passwordGroup) {
+        // 수정 모드이거나 관리자인 경우에는 비밀번호 필드 숨기기
+        if (isEditMode || isAdmin || !siteSettings.requireUploadPassword) {
+            passwordGroup.style.display = 'none';
+        } else if (siteSettings.requireUploadPassword) {
+            passwordGroup.style.display = 'block';
+        }
+    }
+}
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    console.log('📝 폼 제출 시도');
+    
+    if (!validateForm()) {
+        if (siteSettings.requireUploadPassword && !isAdmin && !isEditMode) {
+            const inputPassword = document.getElementById('uploadPasswordInput')?.value;
+            if (!inputPassword) {
+                alert('⚠️ 등록 비밀번호를 입력해주세요.');
+                return;
+            }
+            if (inputPassword !== siteSettings.uploadPassword) {
+                alert('❌ 등록 비밀번호가 올바르지 않습니다.\n관리자에게 문의하세요.');
+                return;
+            }
+        }
+        alert('📝 모든 필수 항목을 입력해주세요.');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const originalText = submitBtn.textContent;
+    
+    isUploading = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = isEditMode ? '수정 중...' : '등록 중...';
+
+    try {
+        if (isEditMode) {
+            // 수정 모드
+            const existingArtwork = allArtworks.find(a => a.id === editingArtworkId);
+            if (!existingArtwork) {
+                throw new Error('수정할 작품을 찾을 수 없습니다.');
+            }
+            
+            const updatedArtwork = {
+                ...existingArtwork,
+                title: document.getElementById('artworkTitle').value.trim(),
+                grade: document.getElementById('studentGrade').value + '학년',
+                category: document.getElementById('artworkCategory').value,
+                description: document.getElementById('artworkDescription').value.trim(),
+                link: document.getElementById('artworkLink')?.value.trim() || '',
+                imageUrls: [...uploadedImages],
+                lastModified: new Date().toISOString()
+            };
+            
+            console.log('💾 수정할 작품 데이터:', updatedArtwork);
             
             // 로컬 데이터에서 업데이트
             const index = allArtworks.findIndex(a => a.id === editingArtworkId);
@@ -860,7 +979,54 @@ console.log('🚀 학생 갤러리 JavaScript 완전 로드 완료');
 console.log('🔧 디버깅 명령어:');
 console.log('  - toggleUploadPanel() : 업로드 패널 토글');
 console.log('  - toggleAdminPanel() : 관리자 패널 토글');
-console.log('  - console.log(allArtworks) : 전체 작품 데이터 확인');        '4학년': {
+console.log('  - console.log(allArtworks) : 전체 작품 데이터 확인');// 학생 작품 갤러리 JavaScript - 완전 개선 버전
+
+// 설정
+const CLOUDINARY_CONFIG = {
+    cloudName: 'dc0hyzldx',
+    uploadPreset: 'student_gallery'
+};
+
+const UPSTASH_CONFIG = {
+    url: 'https://sharp-hookworm-54944.upstash.io',
+    token: 'AdagAAIncDFhNjc5YWZmYzQ5NDA0ZTEyODQ5ZGNmNDU5YTEwOGM4MHAxNTQ5NDQ'
+};
+
+const REDIS_KEY = 'student_gallery:artworks';
+const SETTINGS_KEY = 'student_gallery:settings';
+const ADMIN_PASSWORD = "admin1234";
+
+// 전역 변수
+let isConnected = false;
+let isAdmin = false;
+let allArtworks = [];
+let uploadedImages = [];
+let isUploading = false;
+let isEditMode = false;
+let editingArtworkId = null;
+let siteSettings = {
+    title: '우리학교 학생 작품 전시관',
+    description: '창의적이고 아름다운 학생들의 작품을 함께 감상해보세요',
+    requireUploadPassword: false,
+    uploadPassword: '',
+    gradeInfo: {
+        all: {
+            title: '전체 학년 작품 소개',
+            description: '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.\n\n각 학년별로 다양한 주제와 기법으로 만들어진 작품들이 전시되어 있으며, 학년이 올라갈수록 더욱 정교하고 깊이 있는 작품들을 감상하실 수 있습니다.\n\n활동 모습, 활동지, 결과물 등 다양한 분야의 작품들을 통해 우리 학생들의 무한한 상상력과 예술적 재능을 확인해보세요.'
+        },
+        '1학년': {
+            title: '1학년 작품 - 첫걸음의 순수함',
+            description: '1학년 학생들의 첫 작품 활동입니다.\n\n순수하고 자유로운 상상력으로 만들어진 작품들은 보는 이의 마음을 따뜻하게 만듭니다. 아직 기법이 서툴지만, 그 안에 담긴 진정성과 열정이 느껴집니다.\n\n주로 크레파스, 색연필을 사용한 그림 작품과 간단한 만들기 활동 작품들을 만나보실 수 있습니다.'
+        },
+        '2학년': {
+            title: '2학년 작품 - 호기심 가득한 탐험',
+            description: '2학년 학생들의 호기심과 상상력이 가득 담긴 작품들입니다.\n\n1학년보다 더욱 다양한 재료와 기법에 도전하며, 자신만의 표현 방법을 찾아가는 과정이 작품에 잘 드러나 있습니다.\n\n물감을 사용한 그림, 간단한 조형 활동, 자연물을 활용한 만들기 등 다채로운 작품들을 감상하실 수 있습니다.'
+        },
+        '3학년': {
+            title: '3학년 작품 - 창의력의 발현',
+            description: '3학년 학생들의 창의력이 본격적으로 발현되기 시작하는 시기의 작품들입니다.\n\n기본적인 미술 기법들을 익히기 시작하면서, 자신만의 독특한 아이디어를 작품에 담아내려 노력합니다.\n\n수채화, 판화, 점토 작품 등 다양한 장르의 작품들을 통해 학생들의 성장하는 예술적 감성을 느껴보세요.'
+        },
+        '4학년': {
             title: '4학년 작품 - 기법과 상상력의 조화',
             description: '4학년 학생들의 안정된 기법과 풍부한 상상력이 조화를 이루는 작품들입니다.\n\n체계적인 미술 교육을 통해 다양한 표현 기법을 익히고, 이를 바탕으로 자신만의 작품 세계를 구축해 나갑니다.\n\n정교한 그림 작품부터 입체적인 조형 작품까지, 한층 성숙해진 예술적 표현을 만나보실 수 있습니다.'
         },
@@ -1453,163 +1619,3 @@ function handleFileSelect(fileInput) {
             console.log(`✅ 이미지 ${index + 1} 로드 완료`);
         };
         reader.readAsDataURL(file);
-    });
-}
-
-function updateImagePreview() {
-    const container = document.getElementById('imagePreviewContainer');
-    const uploadText = document.getElementById('uploadText');
-    
-    if (!container) return;
-    
-    if (uploadedImages.length === 0) {
-        container.innerHTML = '';
-        if (uploadText) uploadText.style.display = 'block';
-        return;
-    }
-    
-    container.innerHTML = uploadedImages.map((url, index) =>
-        `<div style="position: relative; display: inline-block; margin: 5px;">
-            <img src="${url}" alt="미리보기 ${index + 1}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;">
-            <button type="button" onclick="removeImage(${index})" style="position: absolute; top: -8px; right: -8px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; font-weight: bold;">&times;</button>
-        </div>`
-    ).join('');
-    
-    if (uploadText) uploadText.style.display = 'none';
-    
-    console.log('🖼️ 이미지 미리보기 업데이트:', uploadedImages.length, '개');
-}
-
-function validateForm() {
-    const title = document.getElementById('artworkTitle')?.value.trim();
-    const grade = document.getElementById('studentGrade')?.value;
-    const category = document.getElementById('artworkCategory')?.value;
-    const description = document.getElementById('artworkDescription')?.value.trim();
-    
-    // 업로드 비밀번호 체크 (수정 모드나 관리자는 제외)
-    let passwordValid = true;
-    if (siteSettings.requireUploadPassword && !isAdmin && !isEditMode) {
-        const inputPassword = document.getElementById('uploadPasswordInput')?.value;
-        passwordValid = inputPassword === siteSettings.uploadPassword;
-    }
-    
-    const isValid = title && grade && category && description && 
-                   uploadedImages.length > 0 && isConnected && !isUploading && passwordValid;
-    
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.disabled = !isValid;
-        submitBtn.style.opacity = isValid ? '1' : '0.5';
-    }
-    
-    return isValid;
-}
-
-function updateUploadPasswordVisibility() {
-    const passwordGroup = document.getElementById('uploadPasswordGroup');
-    if (passwordGroup) {
-        // 수정 모드이거나 관리자인 경우에는 비밀번호 필드 숨기기
-        if (isEditMode || isAdmin || !siteSettings.requireUploadPassword) {
-            passwordGroup.style.display = 'none';
-        } else if (siteSettings.requireUploadPassword) {
-            passwordGroup.style.display = 'block';
-        }
-    }
-}
-
-async function handleFormSubmit(e) {
-    e.preventDefault();
-    console.log('📝 폼 제출 시도');
-    
-    if (!validateForm()) {
-        if (siteSettings.requireUploadPassword && !isAdmin && !isEditMode) {
-            const inputPassword = document.getElementById('uploadPasswordInput')?.value;
-            if (!inputPassword) {
-                alert('⚠️ 등록 비밀번호를 입력해주세요.');
-                return;
-            }
-            if (inputPassword !== siteSettings.uploadPassword) {
-                alert('❌ 등록 비밀번호가 올바르지 않습니다.\n관리자에게 문의하세요.');
-                return;
-            }
-        }
-        alert('📝 모든 필수 항목을 입력해주세요.');
-        return;
-    }
-    
-    const submitBtn = document.getElementById('submitBtn');
-    const originalText = submitBtn.textContent;
-    
-    isUploading = true;
-    submitBtn.disabled = true;
-    submitBtn.textContent = isEditMode ? '수정 중...' : '등록 중...';
-
-    try {
-        if (isEditMode) {
-            // 수정 모드
-            const existingArtwork = allArtworks.find(a => a.id === editingArtworkId);
-            if (!existingArtwork) {
-                throw new Error('수정할 작품을 찾을 수 없습니다.');
-            }
-            
-            const updatedArtwork = {
-                ...existingArtwork,
-                title: document.getElementById('artworkTitle').value.trim(),
-                grade: document.getElementById('studentGrade').value + '학년',
-                category: document.getElementById('artworkCategory').value,
-                description: document.getElementById('artworkDescription').value.trim(),
-                link: document.getElementById('artworkLink')?.value.trim() || '',
-                imageUrls: [...uploadedImages],
-                lastModified: new Date().toISOString()
-            };
-            
-            console.log('💾 수정할 // 학생 작품 갤러리 JavaScript - 완전 개선 버전
-
-// 설정
-const CLOUDINARY_CONFIG = {
-    cloudName: 'dc0hyzldx',
-    uploadPreset: 'student_gallery'
-};
-
-const UPSTASH_CONFIG = {
-    url: 'https://sharp-hookworm-54944.upstash.io',
-    token: 'AdagAAIncDFhNjc5YWZmYzQ5NDA0ZTEyODQ5ZGNmNDU5YTEwOGM4MHAxNTQ5NDQ'
-};
-
-const REDIS_KEY = 'student_gallery:artworks';
-const SETTINGS_KEY = 'student_gallery:settings';
-const ADMIN_PASSWORD = "admin1234";
-
-// 전역 변수
-let isConnected = false;
-let isAdmin = false;
-let allArtworks = [];
-let uploadedImages = [];
-let isUploading = false;
-let isEditMode = false;
-let editingArtworkId = null;
-let siteSettings = {
-    title: '우리학교 학생 작품 전시관',
-    description: '창의적이고 아름다운 학생들의 작품을 함께 감상해보세요',
-    requireUploadPassword: false,
-    uploadPassword: '',
-    gradeInfo: {
-        all: {
-            title: '전체 학년 작품 소개',
-            description: '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.\n\n각 학년별로 다양한 주제와 기법으로 만들어진 작품들이 전시되어 있으며, 학년이 올라갈수록 더욱 정교하고 깊이 있는 작품들을 감상하실 수 있습니다.\n\n활동 모습, 활동지, 결과물 등 다양한 분야의 작품들을 통해 우리 학생들의 무한한 상상력과 예술적 재능을 확인해보세요.'
-        },
-        '1학년': {
-            title: '1학년 작품 - 첫걸음의 순수함',
-            description: '1학년 학생들의 첫 작품 활동입니다.\n\n순수하고 자유로운 상상력으로 만들어진 작품들은 보는 이의 마음을 따뜻하게 만듭니다. 아직 기법이 서툴지만, 그 안에 담긴 진정성과 열정이 느껴집니다.\n\n주로 크레파스, 색연필을 사용한 그림 작품과 간단한 만들기 활동 작품들을 만나보실 수 있습니다.'
-        },
-        '2학년': {
-            title: '2학년 작품 - 호기심 가득한 탐험',
-            description: '2학년 학생들의 호기심과 상상력이 가득 담긴 작품들입니다.\n\n1학년보다 더욱 다양한 재료와 기법에 도전하며, 자신만의 표현 방법을 찾아가는 과정이 작품에 잘 드러나 있습니다.\n\n물감을 사용한 그림, 간단한 조형 활동, 자연물을 활용한 만들기 등 다채로운 작품들을 감상하실 수 있습니다.'
-        },
-        '3학년': {
-            title: '3학년 작품 - 창의력의 발현',
-            description: '3학년 학생들의 창의력이 본격적으로 발현되기 시작하는 시기의 작품들입니다.\n\n기본적인 미술 기법들을 익히기 시작하면서, 자신만의 독특한 아이디어를 작품에 담아내려 노력합니다.\n\n수채화, 판화, 점토 작품 등 다양한 장르의 작품들을 통해 학생들의 성장하는 예술적 감성을 느껴보세요.'
-        },
-        '4학년': {
-            title: '4학년 작품 - 기법과 상상력의 조화',
-            description: '4학년 학생들의 안정된 기법과 풍부한 상상력이 조화를 이루는 작품들입니다.\n\n체계적인 미술 교육을 통해 다양한 표현 기법을 익히고, 이를 바탕으로 자신만의 작품 세계를 구축해 나
