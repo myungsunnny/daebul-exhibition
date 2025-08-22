@@ -226,6 +226,8 @@ function addArtworkToGallery(artwork) {
             const element = createArtworkElement(artwork);
             if (element) {
                 gallery.appendChild(element);
+                // 이벤트 리스너 설정
+                setupArtworkCardEvents(element, artwork.id);
                 setTimeout(() => element.classList.add('show'), 100);
             }
         }
@@ -245,16 +247,16 @@ function createArtworkElement(artwork) {
         `<span class="artwork-type">${artwork.imageUrls.length}장</span>` : '';
 
     element.innerHTML = `
-        <div class="artwork-image" onclick="showArtworkDetail('${artwork.id}')">
+        <div class="artwork-image">
             <img src="${artwork.imageUrls[0]}" alt="${artwork.title}" loading="lazy" 
                  style="width: 100%; height: 100%; object-fit: cover;">
             ${imageCount}
             <div class="admin-controls">
-                <button class="btn btn-warning btn-small" onclick="event.stopPropagation(); editArtwork('${artwork.id}')">수정</button>
-                <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deleteArtwork('${artwork.id}')">삭제</button>
+                <button class="btn btn-warning btn-small">수정</button>
+                <button class="btn btn-danger btn-small">삭제</button>
             </div>
         </div>
-        <div class="artwork-info" onclick="showArtworkDetail('${artwork.id}')">
+        <div class="artwork-info">
             <h3 class="artwork-title">${artwork.title}</h3>
             <p class="artwork-author">${artwork.grade}</p>
             <p class="artwork-description">${artwork.description}</p>
@@ -388,9 +390,11 @@ async function callUpstashAPI(command, key, value = null) {
 async function loadArtworks() {
     try {
         updateConnectionStatus('connecting', '연결 중...');
+        console.log('🔄 작품 데이터 로드 시작');
         
         // 연결 테스트
         await callUpstashAPI('PING');
+        console.log('✅ 데이터베이스 연결 성공');
         
         // 설정 로드
         await loadSiteSettings();
@@ -400,18 +404,27 @@ async function loadArtworks() {
         if (data) {
             allArtworks = JSON.parse(data);
             console.log('📊 작품 로드 완료:', allArtworks.length, '개');
+            console.log('첫 번째 작품:', allArtworks[0]);
         } else {
             allArtworks = [];
             console.log('📊 새로운 갤러리 시작');
         }
         
+        // 즉시 렌더링
         renderAllArtworks();
         updateCounts();
         updateConnectionStatus('connected', `온라인 - ${allArtworks.length}개 작품`);
         
+        console.log('🎉 작품 로드 및 렌더링 완료');
+        
     } catch (error) {
-        console.error('데이터 로드 오류:', error);
+        console.error('❌ 데이터 로드 오류:', error);
         updateConnectionStatus('disconnected', '연결 실패');
+        
+        // 오프라인 모드로 빈 갤러리 표시
+        allArtworks = [];
+        renderAllArtworks();
+        updateCounts();
     }
 }
 
@@ -486,31 +499,73 @@ function renderAllArtworks() {
     
     // 모든 갤러리 초기화
     Object.values(galleries).forEach(gallery => {
-        if (gallery) gallery.innerHTML = '';
+        if (gallery) {
+            gallery.innerHTML = '';
+            console.log('갤러리 초기화:', gallery.id);
+        }
     });
+    
+    console.log('📊 렌더링할 작품 수:', allArtworks.length);
     
     // 작품들을 갤러리에 추가
     allArtworks.forEach((artwork, index) => {
-        setTimeout(() => {
-            const element = createArtworkElement(artwork);
-            if (!element) return;
-            
-            // 전체 갤러리에 추가
-            if (galleries.galleryGrid) {
-                const clone1 = element.cloneNode(true);
-                galleries.galleryGrid.appendChild(clone1);
-                setTimeout(() => clone1.classList.add('show'), 100);
-            }
-            
-            // 카테고리별 갤러리에 추가
-            const categoryGallery = galleries[`${artwork.category}Gallery`];
-            if (categoryGallery) {
-                const clone2 = element.cloneNode(true);
-                categoryGallery.appendChild(clone2);
-                setTimeout(() => clone2.classList.add('show'), 100);
-            }
-        }, index * 30);
+        const element = createArtworkElement(artwork);
+        if (!element) {
+            console.error('작품 요소 생성 실패:', artwork.title);
+            return;
+        }
+        
+        // 전체 갤러리에 추가
+        if (galleries.galleryGrid) {
+            const clone1 = element.cloneNode(true);
+            galleries.galleryGrid.appendChild(clone1);
+            // 이벤트 리스너 다시 연결
+            setupArtworkCardEvents(clone1, artwork.id);
+            setTimeout(() => clone1.classList.add('show'), index * 50 + 100);
+        }
+        
+        // 카테고리별 갤러리에 추가
+        const categoryGallery = galleries[`${artwork.category}Gallery`];
+        if (categoryGallery) {
+            const clone2 = element.cloneNode(true);
+            categoryGallery.appendChild(clone2);
+            // 이벤트 리스너 다시 연결
+            setupArtworkCardEvents(clone2, artwork.id);
+            setTimeout(() => clone2.classList.add('show'), index * 50 + 100);
+        }
     });
+    
+    console.log('✅ 모든 작품 렌더링 완료');
+}
+
+function setupArtworkCardEvents(element, artworkId) {
+    // 작품 이미지와 정보 클릭 이벤트
+    const imageDiv = element.querySelector('.artwork-image');
+    const infoDiv = element.querySelector('.artwork-info');
+    
+    if (imageDiv) {
+        imageDiv.onclick = () => showArtworkDetail(artworkId);
+    }
+    if (infoDiv) {
+        infoDiv.onclick = () => showArtworkDetail(artworkId);
+    }
+    
+    // 관리자 버튼들
+    const editBtn = element.querySelector('.btn-warning');
+    const deleteBtn = element.querySelector('.btn-danger');
+    
+    if (editBtn) {
+        editBtn.onclick = (e) => {
+            e.stopPropagation();
+            editArtwork(artworkId);
+        };
+    }
+    if (deleteBtn) {
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteArtwork(artworkId);
+        };
+    }
 }
 
 function updateConnectionStatus(status, message) {
@@ -819,15 +874,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // 타입 탭 버튼들
+    // 타입 탭 버튼들 - 직접 이벤트 리스너와 onclick 모두 설정
     const typeTabs = document.querySelectorAll('.type-tab');
     typeTabs.forEach(tab => {
+        // 기존 onclick 제거
+        tab.removeAttribute('onclick');
+        
         tab.addEventListener('click', function() {
             const type = this.dataset.type;
             console.log('📑 타입 탭 클릭:', type);
             switchTypeTab(type);
         });
+        
+        // onclick도 설정 (이중 보험)
+        tab.onclick = function() {
+            const type = this.dataset.type;
+            console.log('📑 타입 탭 onclick:', type);
+            switchTypeTab(type);
+        };
     });
+    
+    console.log('✅ 타입 탭 이벤트 리스너 등록 완료:', typeTabs.length, '개');
     
     // 관리자 탭 버튼들
     const adminTabs = document.querySelectorAll('.admin-tab');
@@ -886,12 +953,38 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🎉 모든 이벤트 리스너 등록 완료');
     
     // 데이터 로드
+    console.log('🔄 데이터 로드 시작');
     loadArtworks();
+    
+    // 디버깅을 위한 전역 함수 등록
+    window.debugGallery = function() {
+        console.log('=== 갤러리 디버그 정보 ===');
+        console.log('allArtworks 길이:', allArtworks.length);
+        console.log('갤러리 요소들:');
+        console.log('- galleryGrid:', document.getElementById('galleryGrid'));
+        console.log('- activityGallery:', document.getElementById('activityGallery'));
+        console.log('- worksheetGallery:', document.getElementById('worksheetGallery'));
+        console.log('- resultGallery:', document.getElementById('resultGallery'));
+        console.log('현재 보이는 섹션:', document.querySelector('.type-section.active'));
+        console.log('활성 탭:', document.querySelector('.type-tab.active'));
+        
+        // 강제 렌더링 테스트
+        if (allArtworks.length > 0) {
+            console.log('강제 렌더링 시도...');
+            renderAllArtworks();
+        }
+    };
     
     // 초기 전체 학년 정보 표시
     setTimeout(() => {
         showGradeInfo('all');
+        console.log('✅ 초기 학년 정보 표시 완료');
     }, 1000);
+    
+    // 3초 후 디버그 정보 출력
+    setTimeout(() => {
+        window.debugGallery();
+    }, 3000);
     
     console.log('✅ 갤러리 초기화 완료!');
 });
