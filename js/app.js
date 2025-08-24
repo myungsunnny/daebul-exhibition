@@ -1,27 +1,4 @@
-function validateForm() {
-    const title = document.getElementById('artworkTitle')?.value.trim();
-    const grade = document.getElementById('studentGrade')?.value;
-    const category = document.getElementById('artworkCategory')?.value;
-    const description = document.getElementById('artworkDescription')?.value.trim();
-    
-    // 업로드 비밀번호 체크 (수정 모드나 관리자는 제외)
-    let passwordValid = true;
-    if (siteSettings.requireUploadPassword && !isAdmin && !isEditMode) {
-        const inputPassword = document.getElementById('uploadPasswordInput')?.value;
-        passwordValid = inputPassword === siteSettings.uploadPassword;
-    }
-    
-    const isValid = title && grade && category && description && 
-                   uploadedImages.length > 0 && isConnected && !isUploading && passwordValid;
-    
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.disabled = !isValid;
-        submitBtn.style.opacity = isValid ? '1' : '0.5';
-    }
-    
-    return isValid;
-}// 학생 작품 갤러리 JavaScript - 완전 수정 버전
+// 학생 작품 갤러리 JavaScript - 완전 수정 버전
 
 // 설정
 const CLOUDINARY_CONFIG = {
@@ -84,6 +61,56 @@ let siteSettings = {
 };
 
 // === 1. 즉시 실행되는 전역 함수들 ===
+function resetForm() {
+    const form = document.getElementById('artworkForm');
+    if (form) {
+        form.reset();
+    }
+    uploadedImages = [];
+    updateImagePreview();
+    validateForm();
+    
+    // 수정 모드 해제
+    if (isEditMode) {
+        resetEditMode();
+    }
+    
+    console.log('📝 폼 초기화 완료');
+}
+
+function resetEditMode() {
+    isEditMode = false;
+    editingArtworkId = null;
+    
+    // 패널 제목 원래대로
+    const panelTitle = document.getElementById('uploadPanelTitle');
+    if (panelTitle) panelTitle.textContent = '📸 새로운 작품 등록';
+    
+    // 버튼 텍스트 원래대로
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    
+    if (submitBtn) submitBtn.textContent = '작품 등록하기';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    
+    // 폼 초기화
+    resetForm();
+    
+    console.log('📝 수정 모드 해제');
+}
+
+function updateUploadPasswordVisibility() {
+    const passwordGroup = document.getElementById('uploadPasswordGroup');
+    if (passwordGroup) {
+        // 수정 모드이거나 관리자인 경우에는 비밀번호 필드 숨기기
+        if (isEditMode || isAdmin || !siteSettings.requireUploadPassword) {
+            passwordGroup.style.display = 'none';
+        } else if (siteSettings.requireUploadPassword) {
+            passwordGroup.style.display = 'block';
+        }
+    }
+}
+
 function toggleUploadPanel() {
     console.log('🖱️ 작품 올리기 버튼 클릭됨');
     
@@ -432,27 +459,6 @@ function cancelEdit() {
     }
 }
 
-function resetEditMode() {
-    isEditMode = false;
-    editingArtworkId = null;
-    
-    // 패널 제목 원래대로
-    const panelTitle = document.getElementById('uploadPanelTitle');
-    if (panelTitle) panelTitle.textContent = '📸 새로운 작품 등록';
-    
-    // 버튼 텍스트 원래대로
-    const submitBtn = document.getElementById('submitBtn');
-    const cancelBtn = document.getElementById('cancelEditBtn');
-    
-    if (submitBtn) submitBtn.textContent = '작품 등록하기';
-    if (cancelBtn) cancelBtn.style.display = 'none';
-    
-    // 폼 초기화
-    resetForm();
-    
-    console.log('📝 수정 모드 해제');
-}
-
 function saveSettings() {
     console.log('🖱️ 설정 저장 클릭');
     
@@ -624,22 +630,6 @@ function resetAllData() {
 }
 
 // === 2. 헬퍼 함수들 ===
-function resetForm() {
-    const form = document.getElementById('artworkForm');
-    if (form) {
-        form.reset();
-    }
-    uploadedImages = [];
-    updateImagePreview();
-    validateForm();
-    
-    // 수정 모드 해제
-    if (isEditMode) {
-        resetEditMode();
-    }
-    
-    console.log('📝 폼 초기화 완료');
-}
 
 function handleFileSelect(fileInput) {
     if (!fileInput || !fileInput.files) {
@@ -711,18 +701,6 @@ function validateForm() {
     }
     
     return isValid;
-}
-
-function updateUploadPasswordVisibility() {
-    const passwordGroup = document.getElementById('uploadPasswordGroup');
-    if (passwordGroup) {
-        // 수정 모드이거나 관리자인 경우에는 비밀번호 필드 숨기기
-        if (isEditMode || isAdmin || !siteSettings.requireUploadPassword) {
-            passwordGroup.style.display = 'none';
-        } else if (siteSettings.requireUploadPassword) {
-            passwordGroup.style.display = 'block';
-        }
-    }
 }
 
 async function handleFormSubmit(e) {
