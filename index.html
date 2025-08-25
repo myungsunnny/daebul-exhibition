@@ -14,9 +14,9 @@
                 <button class="header-btn" onclick="toggleAdminPanel()">⚙️ 관리자 모드</button>
             </div>
             <h1>
-                <span id="headerTitleText">브릭 톡톡 전시회</span>
+                <span id="headerTitleText">우리학교 학생 작품 전시관</span>
             </h1>
-            <p class="subtitle" id="siteSubtitle">문제를 톡! 브릭을 톡! 아이들이 스스로 쌓아 올린 프로젝트 이야기</p>
+            <p class="subtitle" id="siteSubtitle">창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</p>
         </header>
 
         <!-- 시스템 상태 패널 - 관리자 전용 -->
@@ -28,9 +28,7 @@
             <div id="artworkCount">
                 <span class="status-indicator">등록된 작품: <strong id="totalCount">0</strong>개</span>
             </div>
-            <div id="commentCount">
-                <span class="status-indicator">총 댓글: <strong id="totalComments">0</strong>개</span>
-            </div>
+
             <div id="cloudinaryStatus">
                 <span class="status-indicator">이미지 저장: Cloudinary</span>
             </div>
@@ -111,14 +109,7 @@
                     <div class="stat-number" id="statArtworks">0</div>
                     <div class="stat-label">총 작품 수</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="statComments">0</div>
-                    <div class="stat-label">총 댓글 수</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="statLikes">0</div>
-                    <div class="stat-label">총 좋아요 수</div>
-                </div>
+
                 <div class="stat-card">
                     <div class="stat-number" id="statToday">0</div>
                     <div class="stat-label">오늘 등록</div>
@@ -127,7 +118,7 @@
 
             <div class="admin-tabs">
                 <button class="admin-tab active" onclick="switchAdminTab('artworks')">작품 관리</button>
-                <button class="admin-tab" onclick="switchAdminTab('comments')">댓글 관리</button>
+
                 <button class="admin-tab" onclick="switchAdminTab('users')">사용자 관리</button>
                 <button class="admin-tab" onclick="switchAdminTab('settings')">사이트 설정</button>
             </div>
@@ -158,27 +149,7 @@
                 </div>
             </div>
 
-            <div class="admin-content" id="commentsContent">
-                <div class="bulk-actions">
-                    <label><input type="checkbox" id="selectAllComments"> 전체 선택</label>
-                    <button class="btn btn-danger btn-small" onclick="bulkDeleteComments()">선택 삭제</button>
-                </div>
-                <div class="table-container">
-                    <table id="commentsTable">
-                        <thead>
-                            <tr>
-                                <th>선택</th>
-                                <th>작품</th>
-                                <th>작성자</th>
-                                <th>댓글 내용</th>
-                                <th>작성일</th>
-                                <th>관리</th>
-                            </tr>
-                        </thead>
-                        <tbody id="commentsTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
+
 
             <div class="admin-content" id="usersContent">
                 <div class="table-container">
@@ -188,8 +159,6 @@
                                 <th>학생명</th>
                                 <th>학년</th>
                                 <th>작품 수</th>
-                                <th>댓글 수</th>
-                                <th>좋아요 받은 수</th>
                                 <th>최근 활동</th>
                             </tr>
                         </thead>
@@ -217,16 +186,7 @@
                     <label for="siteDescription">사이트 설명</label>
                     <textarea id="siteDescription">창의적이고 아름다운 학생들의 작품을 함께 감상해보세요</textarea>
                 </div>
-                <div class="settings-options-grid">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="allowComments" checked>
-                        <label for="allowComments">댓글 허용</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="moderateComments">
-                        <label for="moderateComments">댓글 승인 필요</label>
-                    </div>
-                </div>
+
                 <div class="form-group">
                     <label for="adminPassword">관리자 비밀번호 변경</label>
                     <input type="password" id="adminPassword" placeholder="새 비밀번호 (비워두면 변경하지 않음)">
