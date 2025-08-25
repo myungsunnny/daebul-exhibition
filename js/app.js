@@ -28,8 +28,6 @@ let isUploading = false;
 let isEditMode = false;
 let editingArtworkId = null;
 let currentUser = null; // 현재 사용자 정보
-let userLikes = new Set(); // 사용자가 좋아요한 작품들
-let userComments = new Map(); // 사용자 댓글 데이터
 
 // 기본 사이트 설정
 let siteSettings = {
@@ -465,8 +463,7 @@ async function handleNewSubmit() {
             link: document.getElementById('artworkLink')?.value.trim() || '',
             imageUrls: imageUrls,
             uploadDate: new Date().toISOString(),
-            likes: 0, // 좋아요 수 초기화
-            comments: [] // 댓글 배열 초기화
+
         };
         
         console.log('💾 저장할 작품 데이터:', formData);
@@ -498,179 +495,7 @@ async function handleNewSubmit() {
     }
 }
 
-// === 좋아요 및 댓글 기능 ===
-// 좋아요 토글
-async function toggleLike(artworkId) {
-    try {
-        if (!db) {
-            throw new Error('Firebase가 초기화되지 않았습니다.');
-        }
-        
-        const artwork = allArtworks.find(a => a.id === artworkId);
-        if (!artwork) {
-            throw new Error('작품을 찾을 수 없습니다.');
-        }
-        
-        const isLiked = userLikes.has(artworkId);
-        const likeRef = db.collection('artworks').doc(artworkId);
-        
-        if (isLiked) {
-            // 좋아요 취소
-            await likeRef.update({
-                likes: firebase.firestore.FieldValue.increment(-1)
-            });
-            userLikes.delete(artworkId);
-            console.log('💔 좋아요 취소:', artworkId);
-        } else {
-            // 좋아요 추가
-            await likeRef.update({
-                likes: firebase.firestore.FieldValue.increment(1)
-            });
-            userLikes.add(artworkId);
-            console.log('❤️ 좋아요 추가:', artworkId);
-        }
-        
-        // UI 업데이트
-        updateLikeUI(artworkId);
-        
-    } catch (error) {
-        console.error('❌ 좋아요 토글 실패:', error);
-        alert('좋아요 처리에 실패했습니다.');
-    }
-}
 
-// 좋아요 UI 업데이트
-function updateLikeUI(artworkId) {
-    const likeButtons = document.querySelectorAll(`[data-artwork-id="${artworkId}"] .like-button`);
-    const isLiked = userLikes.has(artworkId);
-    
-    likeButtons.forEach(button => {
-        if (isLiked) {
-            button.innerHTML = '❤️';
-            button.classList.add('liked');
-        } else {
-            button.innerHTML = '🤍';
-            button.classList.remove('liked');
-        }
-    });
-}
-
-// 댓글 추가
-async function addComment(artworkId, commentText) {
-    try {
-        if (!db) {
-            throw new Error('Firebase가 초기화되지 않았습니다.');
-        }
-        
-        if (!commentText.trim()) {
-            alert('댓글 내용을 입력해주세요.');
-            return;
-        }
-        
-        const comment = {
-            id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            artworkId: artworkId,
-            text: commentText.trim(),
-            author: currentUser || '익명',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        // Firebase에 댓글 저장
-        await db.collection('comments').add(comment);
-        
-        // 로컬 데이터에 추가
-        if (!userComments.has(artworkId)) {
-            userComments.set(artworkId, []);
-        }
-        userComments.get(artworkId).push(comment);
-        
-        // UI 업데이트
-        displayComments(artworkId);
-        
-        // 댓글 입력 필드 클리어
-        const commentInput = document.querySelector(`[data-artwork-id="${artworkId}"] .comment-input`);
-        if (commentInput) {
-            commentInput.value = '';
-        }
-        
-        console.log('✅ 댓글 추가 완료:', comment);
-        
-    } catch (error) {
-        console.error('❌ 댓글 추가 실패:', error);
-        alert('댓글 추가에 실패했습니다.');
-    }
-}
-
-// 댓글 표시
-async function displayComments(artworkId) {
-    try {
-        if (!db) return;
-        
-        // Firebase에서 댓글 로드
-        const commentsSnapshot = await db.collection('comments')
-            .where('artworkId', '==', artworkId)
-            .orderBy('timestamp', 'desc')
-            .get();
-        
-        const comments = [];
-        commentsSnapshot.forEach(doc => {
-            comments.push({
-                id: doc.id,
-                ...doc.data()
-            });
-        });
-        
-        // 댓글 UI 업데이트
-        const commentSection = document.querySelector(`[data-artwork-id="${artworkId}"] .comments-section`);
-        if (commentSection) {
-            commentSection.innerHTML = comments.map(comment => `
-                <div class="comment-item">
-                    <div class="comment-header">
-                        <span class="comment-author">${comment.author}</span>
-                        <span class="comment-time">${formatTimestamp(comment.timestamp)}</span>
-                    </div>
-                    <div class="comment-text">${comment.text}</div>
-                </div>
-            `).join('');
-        }
-        
-    } catch (error) {
-        console.error('댓글 표시 실패:', error);
-    }
-}
-
-// 타임스탬프 포맷팅
-function formatTimestamp(timestamp) {
-    if (!timestamp) return '방금 전';
-    
-    const now = new Date();
-    const commentTime = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const diffMs = now - commentTime;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 1) return '방금 전';
-    if (diffMins < 60) return `${diffMins}분 전`;
-    if (diffHours < 24) return `${diffHours}시간 전`;
-    if (diffDays < 7) return `${diffDays}일 전`;
-    
-    return commentTime.toLocaleDateString('ko-KR');
-}
-
-// 댓글 섹션 토글
-function toggleComments(artworkId) {
-    const commentSection = document.querySelector(`[data-artwork-id="${artworkId}"] .comments-section`);
-    if (commentSection) {
-        const isVisible = commentSection.style.display !== 'none';
-        commentSection.style.display = isVisible ? 'none' : 'block';
-        
-        if (!isVisible) {
-            // 댓글 섹션이 열릴 때 댓글 로드
-            displayComments(artworkId);
-        }
-    }
-}
 
 // === Firebase 함수들 ===
 // 이미지를 Firebase Storage에 업로드
@@ -951,8 +776,7 @@ function createArtworkElement(artwork) {
     const imageCount = artwork.imageUrls.length > 1 ? 
         `<span class="artwork-type">${artwork.imageUrls.length}장</span>` : '';
     
-    const likeCount = artwork.likes || 0;
-    const isLiked = userLikes.has(artwork.id);
+
 
     element.innerHTML = `
         <div class="artwork-image" onclick="showArtworkDetail('${artwork.id}')">
@@ -972,25 +796,7 @@ function createArtworkElement(artwork) {
                 <small style="color: #999; font-size: 0.8rem;">📅 ${uploadDate}</small>
             </div>
             
-            <div class="artwork-actions">
-                <button class="like-button ${isLiked ? 'liked' : ''}" 
-                        onclick="event.stopPropagation(); toggleLike('${artwork.id}')">
-                    ${isLiked ? '❤️' : '🤍'}
-                </button>
-                <span class="like-count">${likeCount}</span>
-                <button class="comment-toggle" onclick="event.stopPropagation(); toggleComments('${artwork.id}')">
-                    💬 댓글
-                </button>
-            </div>
-            
-            <div class="comments-section" style="display: none;">
-                <div class="comments-list"></div>
-                <div class="comment-input-container">
-                    <input type="text" class="comment-input" placeholder="댓글을 입력하세요..." 
-                           onkeypress="if(event.key==='Enter') addComment('${artwork.id}', this.value)">
-                    <button onclick="addComment('${artwork.id}', this.previousElementSibling.value)">등록</button>
-                </div>
-            </div>
+
         </div>
     `;
     
@@ -1698,11 +1504,7 @@ function bulkDeleteArtworks() {
     });
 }
 
-// 대량 댓글 삭제
-function bulkDeleteComments() {
-    console.log('🗑️ 대량 댓글 삭제 시도');
-    alert('댓글 기능은 아직 구현되지 않았습니다.');
-}
+
 
 // 헤더 이미지 미리보기
 function previewHeaderImage() {
@@ -2236,7 +2038,7 @@ window.resetAllData = resetAllData;
 window.exportData = exportData;
 window.saveArtworkOrder = saveArtworkOrder;
 window.bulkDeleteArtworks = bulkDeleteArtworks;
-window.bulkDeleteComments = bulkDeleteComments;
+
 
 // 헤더 이미지 관련 함수들
 window.previewHeaderImage = previewHeaderImage;
@@ -2248,11 +2050,8 @@ window.updateGradeInfoFromFirebase = updateGradeInfoFromFirebase;
 window.applySettingsToForm = applySettingsToForm;
 window.applyGradeSettingsToForm = applyGradeSettingsToForm;
 
-// 검색 및 소셜 기능
+// 검색 기능
 window.performSearch = performSearch;
-window.toggleLike = toggleLike;
-window.toggleComments = toggleComments;
-window.addComment = addComment;
 
 // === 오류 처리 ===
 window.addEventListener('error', function(e) {
