@@ -6,14 +6,39 @@ const CLOUDINARY_CONFIG = {
     uploadPreset: 'student_gallery'
 };
 
-const UPSTASH_CONFIG = {
-    url: 'https://sharp-hookworm-54944.upstash.io',
-    token: 'AdagAAIncDFhNjc5YWZmYzQ5NDA0ZTEyODQ5ZGNmNDU5YTEwOGM4MHAxNTQ5NDQ'
+// Firebase 설정 (실제 값으로 변경 필요)
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAG6FT61aTv0eSPsRJblSnleNH8xVc7AZc",
+    authDomain: "daebul-exhibition.firebaseapp.com",
+    projectId: "daebul-exhibition",
+    storageBucket: "daebul-exhibition.firebasestorage.app",
+    messagingSenderId: "473765003173",
+    appId: "G-YCZ85EYTFY"
 };
 
-const REDIS_KEY = 'student_gallery:artworks';
-const SETTINGS_KEY = 'student_gallery:settings';
 const ADMIN_PASSWORD = "admin1234";
+
+// Firebase 초기화
+let app, db;
+
+// Firebase 초기화 함수
+function initializeFirebase() {
+    try {
+        // Firebase가 로드되었는지 확인
+        if (typeof firebase !== 'undefined') {
+            app = firebase.initializeApp(FIREBASE_CONFIG);
+            db = firebase.firestore();
+            console.log('✅ Firebase 초기화 성공');
+            return true;
+        } else {
+            console.log('⚠️ Firebase SDK 로딩 중...');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Firebase 초기화 실패:', error);
+        return false;
+    }
+}
 
 // 전역 변수
 let isConnected = false;
@@ -341,7 +366,7 @@ function removeImage(index) {
     }
 }
 
-function deleteArtwork(artworkId) {
+async function deleteArtwork(artworkId) {
     console.log('🖱️ 작품 삭제 클릭:', artworkId);
     
     if (!isAdmin) {
@@ -365,8 +390,8 @@ function deleteArtwork(artworkId) {
             setTimeout(() => element.remove(), 300);
         });
         
-        // 서버 업데이트 (비동기)
-        callUpstashAPI('SET', REDIS_KEY, JSON.stringify(allArtworks));
+        // Firebase에서 삭제 (비동기)
+        await deleteArtworkFromFirebase(artworkId);
         
         alert('작품이 삭제되었습니다.');
         closeModal();
@@ -504,14 +529,14 @@ function saveSettings() {
         // 설정 업데이트
         siteSettings = { ...siteSettings, ...newSettings };
         
-        // 서버에 저장
-        callUpstashAPI('SET', SETTINGS_KEY, JSON.stringify(siteSettings));
+        // Firebase에 설정 저장 (향후 구현)
+        // await saveSettingsToFirebase(siteSettings);
         
         // UI 즉시 반영
         applySiteSettings();
         updateUploadPasswordVisibility();
         
-        alert('✅ 설정이 저장되었습니다.');
+        alert('✅ 설정이 저장되었습니다. (로컬에만 저장)');
         console.log('✅ 설정 저장 완료:', siteSettings);
         
     } catch (error) {
@@ -562,17 +587,19 @@ function closeFullscreenImage() {
     }
 }
 
-function saveArtworkOrder() {
+async function saveArtworkOrder() {
     console.log('💾 작품 순서 저장 클릭');
     
     try {
-        // 서버에 저장
-        callUpstashAPI('SET', REDIS_KEY, JSON.stringify(allArtworks));
+        // Firebase에 저장 (각 작품을 개별적으로 업데이트)
+        for (let i = 0; i < allArtworks.length; i++) {
+            await updateArtworkInFirebase(allArtworks[i].id, { order: i });
+        }
         
         // 갤러리 다시 렌더링
         renderAllArtworks();
         
-        alert('✅ 작품 순서가 저장되었습니다.');
+        alert('✅ 작품 순서가 Firebase에 저장되었습니다.');
         console.log('✅ 작품 순서 저장 완료');
         
     } catch (error) {
@@ -591,10 +618,13 @@ function bulkDeleteComments() {
     alert('댓글 일괄 삭제 기능은 현재 준비 중입니다.');
 }
 
-function exportData() {
+async function exportData() {
     console.log('🖱️ 데이터 내보내기 클릭');
     try {
-        const dataStr = JSON.stringify(allArtworks, null, 2);
+        // Firebase에서 최신 데이터 가져오기
+        const latestArtworks = await loadArtworksFromFirebase();
+        
+        const dataStr = JSON.stringify(latestArtworks, null, 2);
         const dataBlob = new Blob([dataStr], {type: 'application/json'});
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
@@ -604,14 +634,14 @@ function exportData() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        alert('데이터가 내보내기 되었습니다.');
+        alert('Firebase 데이터가 내보내기 되었습니다.');
     } catch (error) {
         console.error('내보내기 오류:', error);
         alert('데이터 내보내기 중 오류가 발생했습니다.');
     }
 }
 
-function resetAllData() {
+async function resetAllData() {
     console.log('🖱️ 데이터 초기화 클릭');
     if (confirm('정말로 모든 데이터를 삭제하시겠습니까?')) {
         if (confirm('한 번 더 확인합니다. 모든 작품이 영구적으로 삭제됩니다.')) {
@@ -623,7 +653,17 @@ function resetAllData() {
             });
             
             updateCounts();
-            callUpstashAPI('DEL', REDIS_KEY);
+            
+            // Firebase에서 모든 작품 삭제
+            try {
+                const snapshot = await db.collection('artworks').get();
+                const deletePromises = snapshot.docs.map(doc => doc.ref.delete());
+                await Promise.all(deletePromises);
+                console.log('✅ Firebase에서 모든 데이터 삭제 완료');
+            } catch (error) {
+                console.error('❌ Firebase 데이터 삭제 오류:', error);
+            }
+            
             alert('모든 데이터가 삭제되었습니다.');
         }
     }
@@ -756,8 +796,8 @@ async function handleFormSubmit(e) {
             // UI에서 업데이트
             updateArtworkInGallery(updatedArtwork);
             
-            // 서버에 저장 (비동기)
-            callUpstashAPI('SET', REDIS_KEY, JSON.stringify(allArtworks));
+            // Firebase에 저장 (비동기)
+            await saveArtworkToFirebase(updatedArtwork);
             
             alert(`✅ "${updatedArtwork.title}" 작품이 성공적으로 수정되었습니다!`);
             console.log('✅ 작품 수정 완료');
@@ -783,8 +823,8 @@ async function handleFormSubmit(e) {
             // UI에 즉시 추가
             addArtworkToGallery(formData);
             
-            // 서버에 저장 (비동기)
-            callUpstashAPI('SET', REDIS_KEY, JSON.stringify(allArtworks));
+            // Firebase에 저장 (비동기)
+            await saveArtworkToFirebase(formData);
             
             alert(`🎉 "${formData.title}" 작품이 성공적으로 등록되었습니다!`);
             console.log('✅ 작품 등록 완료');
@@ -945,68 +985,137 @@ function showArtworkDetail(artworkId) {
     }
 }
 
-// === 3. API 및 데이터 함수들 ===
-async function callUpstashAPI(command, key, value = null) {
+// === 3. Firebase 데이터베이스 함수들 ===
+
+// Firebase에 작품 저장
+async function saveArtworkToFirebase(artwork) {
     try {
-        const url = `${UPSTASH_CONFIG.url}/${command.toLowerCase()}${key ? `/${encodeURIComponent(key)}` : ''}`;
-        const options = {
-            method: command === 'GET' || command === 'PING' ? 'GET' : 'POST',
-            headers: { 'Authorization': `Bearer ${UPSTASH_CONFIG.token}` }
-        };
-        if (value !== null) options.body = value;
+        if (!db) {
+            throw new Error('Firebase가 초기화되지 않았습니다.');
+        }
         
-        const response = await fetch(url, options);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return (await response.json()).result;
+        const docRef = await db.collection('artworks').add({
+            ...artwork,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log('✅ Firebase에 작품 저장 성공:', docRef.id);
+        return docRef.id;
     } catch (error) {
-        console.error('API 오류:', error);
+        console.error('❌ Firebase 저장 오류:', error);
         throw error;
     }
 }
 
+// Firebase에서 작품 불러오기
+async function loadArtworksFromFirebase() {
+    try {
+        if (!db) {
+            throw new Error('Firebase가 초기화되지 않았습니다.');
+        }
+        
+        const snapshot = await db.collection('artworks')
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        const artworks = [];
+        snapshot.forEach(doc => {
+            artworks.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        console.log('✅ Firebase에서 작품 로드 성공:', artworks.length, '개');
+        return artworks;
+    } catch (error) {
+        console.error('❌ Firebase 로드 오류:', error);
+        return [];
+    }
+}
+
+// Firebase에서 작품 삭제
+async function deleteArtworkFromFirebase(artworkId) {
+    try {
+        if (!db) {
+            throw new Error('Firebase가 초기화되지 않았습니다.');
+        }
+        
+        await db.collection('artworks').doc(artworkId).delete();
+        console.log('✅ Firebase에서 작품 삭제 성공:', artworkId);
+        return true;
+    } catch (error) {
+        console.error('❌ Firebase 삭제 오류:', error);
+        throw error;
+    }
+}
+
+// Firebase에서 작품 수정
+async function updateArtworkInFirebase(artworkId, updatedData) {
+    try {
+        if (!db) {
+            throw new Error('Firebase가 초기화되지 않았습니다.');
+        }
+        
+        await db.collection('artworks').doc(artworkId).update({
+            ...updatedData,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log('✅ Firebase에서 작품 수정 성공:', artworkId);
+        return true;
+    } catch (error) {
+        console.error('❌ Firebase 수정 오류:', error);
+        throw error;
+    }
+}
+
+// 기존 Upstash API 함수 (호환성 유지)
+async function callUpstashAPI(command, key, value = null) {
+    console.log('⚠️ Upstash API는 더 이상 사용되지 않습니다. Firebase를 사용하세요.');
+    return null;
+}
+
 async function loadArtworks() {
     try {
-        updateConnectionStatus('connecting', '연결 중...');
+        updateConnectionStatus('connecting', 'Firebase 연결 중...');
         
-        // 연결 테스트
-        await callUpstashAPI('PING');
+        // Firebase 초기화 확인
+        if (!initializeFirebase()) {
+            // Firebase SDK가 로드되지 않은 경우, HTML에서 로드 대기
+            setTimeout(() => {
+                if (initializeFirebase()) {
+                    loadArtworks();
+                } else {
+                    updateConnectionStatus('disconnected', 'Firebase 초기화 실패');
+                }
+            }, 1000);
+            return;
+        }
         
-        // 설정 로드
-        await loadSiteSettings();
+        // Firebase에서 데이터 로드
+        allArtworks = await loadArtworksFromFirebase();
         
-        // 데이터 로드
-        const data = await callUpstashAPI('GET', REDIS_KEY);
-        if (data) {
-            allArtworks = JSON.parse(data);
-            console.log('📊 작품 로드 완료:', allArtworks.length, '개');
+        if (allArtworks.length > 0) {
+            console.log('📊 Firebase에서 작품 로드 완료:', allArtworks.length, '개');
         } else {
-            allArtworks = [];
             console.log('📊 새로운 갤러리 시작');
         }
         
         renderAllArtworks();
         updateCounts();
-        updateConnectionStatus('connected', `온라인 - ${allArtworks.length}개 작품`);
+        updateConnectionStatus('connected', `Firebase 연결됨 - ${allArtworks.length}개 작품`);
         
     } catch (error) {
-        console.error('데이터 로드 오류:', error);
-        updateConnectionStatus('disconnected', '연결 실패');
+        console.error('Firebase 데이터 로드 오류:', error);
+        updateConnectionStatus('disconnected', 'Firebase 연결 실패');
     }
 }
 
-async function loadSiteSettings() {
-    try {
-        const data = await callUpstashAPI('GET', SETTINGS_KEY);
-        if (data) {
-            const loadedSettings = JSON.parse(data);
-            siteSettings = { ...siteSettings, ...loadedSettings };
-            console.log('⚙️ 설정 로드 완료:', siteSettings);
-        }
-        applySiteSettings();
-    } catch (error) {
-        console.log('⚙️ 기본 설정 사용');
-        applySiteSettings();
-    }
+// Firebase 설정은 기본값 사용 (설정 저장 기능은 향후 구현)
+function loadSiteSettings() {
+    console.log('⚙️ 기본 설정 사용');
+    applySiteSettings();
 }
 
 function applySiteSettings() {
