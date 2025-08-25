@@ -849,7 +849,19 @@ function applyGradeFilter(grade) {
 // 필터에 따른 학년별 정보 업데이트
 function updateGradeInfoForFilter(grade) {
     try {
-        const gradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
+        // Firebase에서 로드한 설정을 우선 사용, 없으면 로컬 스토리지 사용
+        let gradeSettings = {};
+        
+        // 먼저 로컬 스토리지에서 Firebase 백업 데이터 확인
+        const localGradeSettings = localStorage.getItem('gradeSettings');
+        if (localGradeSettings) {
+            try {
+                gradeSettings = JSON.parse(localGradeSettings);
+            } catch (e) {
+                console.error('로컬 학년 설정 파싱 실패:', e);
+            }
+        }
+        
         const gradeInfoTitle = document.getElementById('gradeInfoTitle');
         const gradeInfoDescription = document.getElementById('gradeInfoDescription');
         const gradeInfoSection = document.getElementById('gradeInfoSection');
@@ -1073,8 +1085,8 @@ async function saveSettings() {
         // 사이트 제목과 설명 즉시 업데이트
         updateSiteDisplay(newSettings);
         
-        // 학년별 정보 섹션 업데이트
-        updateGradeInfo();
+        // 학년별 정보 섹션을 새로운 설정으로 즉시 업데이트
+        updateGradeInfoFromFirebase(gradeSettings);
         
         alert('✅ 사이트 설정이 성공적으로 저장되었습니다!\n\n이제 다른 컴퓨터에서도 변경된 설정을 볼 수 있습니다.');
         console.log('✅ 사이트 설정 저장 완료');
@@ -1112,7 +1124,31 @@ function updateSiteDisplay(settings) {
     }
 }
 
-// 학년별 정보 업데이트
+// Firebase에서 로드한 학년별 정보로 즉시 업데이트
+function updateGradeInfoFromFirebase(gradeSettings) {
+    try {
+        const gradeInfoTitle = document.getElementById('gradeInfoTitle');
+        const gradeInfoDescription = document.getElementById('gradeInfoDescription');
+        const gradeInfoSection = document.getElementById('gradeInfoSection');
+        
+        if (gradeInfoTitle && gradeInfoDescription && gradeInfoSection) {
+            const allGradeInfo = gradeSettings.gradeAll || {};
+            gradeInfoTitle.textContent = allGradeInfo.title || '전체 학년 작품 소개';
+            gradeInfoDescription.textContent = allGradeInfo.description || '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.';
+            
+            // 학년별 정보 섹션을 활성화하여 표시
+            gradeInfoSection.classList.add('active');
+            gradeInfoSection.style.display = 'block';
+            
+            console.log('✅ Firebase에서 로드한 학년별 정보로 즉시 업데이트 완료');
+        }
+        
+    } catch (error) {
+        console.error('Firebase 학년별 정보 업데이트 실패:', error);
+    }
+}
+
+// 학년별 정보 업데이트 (로컬 스토리지용)
 function updateGradeInfo() {
     try {
         const gradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
@@ -1129,7 +1165,7 @@ function updateGradeInfo() {
             gradeInfoSection.classList.add('active');
             gradeInfoSection.style.display = 'block';
             
-            console.log('✅ 기본 학년별 정보 섹션 활성화');
+            console.log('✅ 로컬 스토리지에서 학년별 정보 업데이트 완료');
         }
         
     } catch (error) {
@@ -1340,8 +1376,8 @@ async function loadSiteSettingsFromFirebase() {
             // 학년별 설정 폼에 적용
             applyGradeSettingsToForm(firebaseGradeSettings);
             
-            // 학년별 정보 섹션 업데이트
-            updateGradeInfo();
+            // 학년별 정보 섹션을 즉시 업데이트 (데이터베이스 값으로)
+            updateGradeInfoFromFirebase(firebaseGradeSettings);
             
             // 로컬 스토리지에 백업
             localStorage.setItem('gradeSettings', JSON.stringify(firebaseGradeSettings));
@@ -1721,13 +1757,9 @@ service firebase.storage {
             updateGradeInfo();
         }
         
-        // 학년별 정보 섹션 초기 표시
-        const gradeInfoSection = document.getElementById('gradeInfoSection');
-        if (gradeInfoSection) {
-            gradeInfoSection.classList.add('active');
-            gradeInfoSection.style.display = 'block';
-            console.log('✅ 학년별 정보 섹션 초기 활성화');
-        }
+        // 학년별 정보 섹션은 데이터가 로드된 후에만 표시
+        // 초기에는 숨겨진 상태로 유지
+        console.log('📝 학년별 정보 섹션은 데이터 로드 후 표시됩니다.');
     }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
@@ -1764,6 +1796,7 @@ window.removeHeaderImage = removeHeaderImage;
 
 // 사이트 설정 관련 함수들
 window.updateSiteDisplay = updateSiteDisplay;
+window.updateGradeInfoFromFirebase = updateGradeInfoFromFirebase;
 window.applySettingsToForm = applySettingsToForm;
 window.applyGradeSettingsToForm = applyGradeSettingsToForm;
 
