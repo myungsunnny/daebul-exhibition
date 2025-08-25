@@ -940,6 +940,31 @@ function showAllArtworks() {
     }
 }
 
+// 학년별 정보 업데이트 (로컬 스토리지용)
+function updateGradeInfo() {
+    try {
+        const gradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
+        const gradeInfoTitle = document.getElementById('gradeInfoTitle');
+        const gradeInfoDescription = document.getElementById('gradeInfoDescription');
+        const gradeInfoSection = document.getElementById('gradeInfoSection');
+        
+        if (gradeInfoTitle && gradeInfoDescription && gradeInfoSection) {
+            const allGradeInfo = gradeSettings.gradeAll || {};
+            gradeInfoTitle.textContent = allGradeInfo.title || '전체 학년 작품 소개';
+            gradeInfoDescription.textContent = allGradeInfo.description || '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.';
+            
+            // 학년별 정보 섹션을 활성화하여 표시
+            gradeInfoSection.classList.add('active');
+            gradeInfoSection.style.display = 'block';
+            
+            console.log('✅ 로컬 스토리지에서 학년별 정보 업데이트 완료');
+        }
+        
+    } catch (error) {
+        console.error('학년별 정보 업데이트 실패:', error);
+    }
+}
+
 // === 기타 함수들 ===
 function applyGradeFilter(grade) {
     console.log('🎯 학년 필터 적용:', grade);
@@ -971,10 +996,62 @@ function applyGradeFilter(grade) {
         }
     });
     
+    // 학년별 정보 섹션 업데이트
+    updateGradeInfoForFilter(grade);
+    
     console.log(`✅ 필터 결과: ${visibleCount}개 작품 표시`);
 }
 
-
+// 필터에 따른 학년별 정보 업데이트
+function updateGradeInfoForFilter(grade) {
+    try {
+        console.log('🎯 학년별 정보 업데이트 시작:', grade);
+        
+        let gradeSettings = {};
+        
+        // 로컬 스토리지에서 학년별 설정 로드
+        const localGradeSettings = localStorage.getItem('gradeSettings');
+        if (localGradeSettings) {
+            try {
+                gradeSettings = JSON.parse(localGradeSettings);
+                console.log('✅ 로컬에서 학년별 설정 로드:', gradeSettings);
+            } catch (e) {
+                console.error('로컬 학년 설정 파싱 실패:', e);
+            }
+        }
+        
+        const gradeInfoTitle = document.getElementById('gradeInfoTitle');
+        const gradeInfoDescription = document.getElementById('gradeInfoDescription');
+        const gradeInfoSection = document.getElementById('gradeInfoSection');
+        
+        if (gradeInfoTitle && gradeInfoDescription && gradeInfoSection) {
+            let title, description;
+            
+            if (grade === 'all') {
+                const allGradeInfo = gradeSettings.gradeAll || {};
+                title = allGradeInfo.title || '전체 학년 작품 소개';
+                description = allGradeInfo.description || '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.';
+            } else {
+                const gradeKey = `grade${grade}`;
+                const gradeInfo = gradeSettings[gradeKey] || {};
+                title = gradeInfo.title || `${grade}학년 작품`;
+                description = gradeInfo.description || `${grade}학년 학생들의 창의적이고 아름다운 작품들입니다.`;
+            }
+            
+            gradeInfoTitle.textContent = title;
+            gradeInfoDescription.textContent = description;
+            
+            // 학년별 정보 섹션을 활성화하여 표시
+            gradeInfoSection.classList.add('active');
+            gradeInfoSection.style.display = 'block';
+            
+            console.log('✅ 학년별 정보 섹션 활성화:', grade, title, description);
+        }
+        
+    } catch (error) {
+        console.error('필터별 학년 정보 업데이트 실패:', error);
+    }
+}
 
 // 작품 분류 탭 전환
 function switchTypeTab(type) {
@@ -1127,29 +1204,64 @@ async function deleteArtwork(artworkId) {
     }
 }
 
-// 작품 등록 설정 저장
+// 작품 등록 설정 및 학년별 설명 저장
 function saveSettings() {
-    console.log('💾 작품 등록 설정 저장 시도');
+    console.log('💾 설정 저장 시도');
     
     try {
-        // 작품 등록 설정만 저장
+        // 작품 등록 설정
         const newSettings = {
             requireUploadPassword: document.getElementById('requireUploadPassword')?.checked || false,
             uploadPassword: document.getElementById('uploadPassword')?.value || ''
         };
         
+        // 학년별 설명
+        const gradeSettings = {};
+        for (let i = 1; i <= 6; i++) {
+            const titleElement = document.getElementById(`gradeTitle${i}`);
+            const descElement = document.getElementById(`gradeDesc${i}`);
+            if (titleElement && descElement) {
+                gradeSettings[`grade${i}`] = {
+                    title: titleElement.value || '',
+                    description: descElement.value || ''
+                };
+            }
+        }
+        
+        const gradeTitleAllElement = document.getElementById('gradeTitleAll');
+        const gradeDescAllElement = document.getElementById('gradeDescAll');
+        if (gradeTitleAllElement && gradeDescAllElement) {
+            gradeSettings.gradeAll = {
+                title: gradeTitleAllElement.value || '',
+                description: gradeDescAllElement.value || ''
+            };
+        }
+        
         // 로컬 스토리지에 저장
         localStorage.setItem('siteSettings', JSON.stringify(newSettings));
+        localStorage.setItem('gradeSettings', JSON.stringify(gradeSettings));
         
         // 설정 저장 후 비밀번호 필드 표시/숨김 업데이트
         updateUploadPasswordVisibility();
         
-        alert('✅ 작품 등록 설정이 성공적으로 저장되었습니다!');
-        console.log('✅ 작품 등록 설정 저장 완료');
+        // 학년별 정보 섹션을 새로운 설정으로 즉시 업데이트
+        updateGradeInfo(gradeSettings);
+        
+        // 현재 활성화된 필터가 있다면 해당 필터의 정보도 업데이트
+        const activeFilter = document.querySelector('.filter-btn.active');
+        if (activeFilter) {
+            const activeGrade = activeFilter.dataset.category;
+            if (activeGrade) {
+                updateGradeInfoForFilter(activeGrade);
+            }
+        }
+        
+        alert('✅ 설정이 성공적으로 저장되었습니다!');
+        console.log('✅ 설정 저장 완료');
         
     } catch (error) {
-        console.error('❌ 작품 등록 설정 저장 실패:', error);
-        alert(`작품 등록 설정 저장에 실패했습니다:\n\n${error.message}`);
+        console.error('❌ 설정 저장 실패:', error);
+        alert(`설정 저장에 실패했습니다:\n\n${error.message}`);
     }
 }
 
@@ -1319,13 +1431,16 @@ function removeHeaderImage() {
     fileInput.value = '';
 }
 
-// 로컬에서 작품 등록 설정 불러오기
+// 로컬에서 설정 불러오기
 function loadSiteSettingsFromLocal() {
     try {
-        console.log('📝 로컬에서 작품 등록 설정 로드 중...');
+        console.log('📝 로컬에서 설정 로드 중...');
         
         // 로컬 스토리지에서 설정 불러오기
         const savedSettings = localStorage.getItem('siteSettings');
+        const savedGradeSettings = localStorage.getItem('gradeSettings');
+        
+        let hasSettings = false;
         
         if (savedSettings) {
             const localSettings = JSON.parse(savedSettings);
@@ -1333,8 +1448,23 @@ function loadSiteSettingsFromLocal() {
             
             // 설정 폼에 적용
             applySettingsToForm(localSettings);
+            hasSettings = true;
+        }
+        
+        if (savedGradeSettings) {
+            const localGradeSettings = JSON.parse(savedGradeSettings);
+            console.log('✅ 로컬에서 학년별 설정 로드:', localGradeSettings);
             
-            console.log('✅ 로컬에서 작품 등록 설정 로드 완료');
+            // 학년별 설정 폼에 적용
+            applyGradeSettingsToForm(localGradeSettings);
+            
+            // 학년별 정보 섹션을 즉시 업데이트
+            updateGradeInfo(localGradeSettings);
+            hasSettings = true;
+        }
+        
+        if (hasSettings) {
+            console.log('✅ 로컬에서 설정 로드 완료');
             return true;
         } else {
             console.log('📝 로컬에 저장된 설정이 없어 기본값을 사용합니다.');
@@ -1344,6 +1474,30 @@ function loadSiteSettingsFromLocal() {
     } catch (error) {
         console.error('❌ 로컬 설정 로드 오류:', error);
         return false;
+    }
+}
+
+// 학년별 설정을 폼에 적용
+function applyGradeSettingsToForm(gradeSettings) {
+    try {
+        Object.keys(gradeSettings).forEach(gradeKey => {
+            if (gradeKey === 'updatedAt') return; // Firebase 타임스탬프 제외
+            
+            const gradeInfo = gradeSettings[gradeKey];
+            if (gradeInfo && gradeInfo.title) {
+                const titleInput = document.getElementById(`${gradeKey}Title`);
+                if (titleInput) titleInput.value = gradeInfo.title;
+            }
+            if (gradeInfo && gradeInfo.description) {
+                const descInput = document.getElementById(`${gradeKey}Desc`);
+                if (descInput) descInput.value = gradeInfo.description;
+            }
+        });
+        
+        console.log('✅ 학년별 설정을 폼에 적용 완료');
+        
+    } catch (error) {
+        console.error('❌ 학년별 설정 폼 적용 실패:', error);
     }
 }
 
@@ -1639,7 +1793,7 @@ service firebase.storage {
     // 데이터 로드
     loadArtworks();
     
-            // 로컬에서 작품 등록 설정 불러오기
+            // 로컬에서 설정 불러오기
     setTimeout(() => {
         loadSiteSettingsFromLocal();
         
@@ -1650,6 +1804,19 @@ service firebase.storage {
                 updateUploadPasswordVisibility();
             });
         }
+        
+        // 학년별 정보 섹션은 데이터가 로드된 후에만 표시
+        // 초기에는 숨겨진 상태로 유지
+        console.log('📝 학년별 정보 섹션은 데이터 로드 후 표시됩니다.');
+        
+        // 기본적으로 '전체 학년' 필터 활성화하여 학년별 정보 표시
+        setTimeout(() => {
+            const allFilterBtn = document.querySelector('.filter-btn[data-category="all"]');
+            if (allFilterBtn) {
+                allFilterBtn.classList.add('active');
+                applyGradeFilter('all');
+            }
+        }, 1500);
     }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
@@ -1686,6 +1853,8 @@ window.removeHeaderImage = removeHeaderImage;
 
 // 작품 등록 설정 관련 함수들
 window.applySettingsToForm = applySettingsToForm;
+window.applyGradeSettingsToForm = applyGradeSettingsToForm;
+window.updateGradeInfo = updateGradeInfo;
 window.loadSiteSettingsFromLocal = loadSiteSettingsFromLocal;
 
 // 검색 기능
