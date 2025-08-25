@@ -535,13 +535,14 @@ async function saveArtworkToFirebase(artwork) {
         
         console.log('💾 Firebase Firestore에 작품 저장 중...');
         
-        const docRef = await db.collection('artworks').add({
+        // 작품 ID를 문서 ID로 사용하여 저장
+        const docRef = await db.collection('artworks').doc(artwork.id).set({
             ...artwork,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
-        console.log('✅ Firebase에 작품 저장 성공:', docRef.id);
-        return docRef.id;
+        console.log('✅ Firebase에 작품 저장 성공 (문서 ID:', artwork.id, ')');
+        return artwork.id;
         
     } catch (error) {
         console.error('❌ Firebase 저장 오류:', error);
@@ -614,6 +615,9 @@ async function updateArtworkInFirebase(artworkId, updatedData) {
             throw new Error('Firebase가 초기화되지 않았습니다.');
         }
         
+        console.log('📝 Firebase에서 작품 수정 중:', artworkId);
+        
+        // 작품 ID를 문서 ID로 사용하여 업데이트
         await db.collection('artworks').doc(artworkId).update({
             ...updatedData,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -633,11 +637,22 @@ async function deleteArtworkFromFirebase(artworkId) {
             throw new Error('Firebase가 초기화되지 않았습니다.');
         }
         
+        console.log('🗑️ Firebase에서 작품 삭제 시도 (문서 ID:', artworkId, ')');
+        
+        // 작품 ID를 문서 ID로 사용하여 직접 삭제
         await db.collection('artworks').doc(artworkId).delete();
         console.log('✅ Firebase에서 작품 삭제 성공:', artworkId);
         return true;
+        
     } catch (error) {
         console.error('❌ Firebase 삭제 오류:', error);
+        
+        // 문서가 존재하지 않는 경우에도 성공으로 처리
+        if (error.code === 'not-found') {
+            console.log('⚠️ Firebase에서 해당 문서를 찾을 수 없음 (이미 삭제됨):', artworkId);
+            return true;
+        }
+        
         throw error;
     }
 }
@@ -1043,25 +1058,43 @@ async function deleteArtwork(artworkId) {
     try {
         // Firebase에서 삭제
         if (db) {
+            console.log('🔥 Firebase에서 작품 삭제 중...');
             await deleteArtworkFromFirebase(artworkId);
+            console.log('✅ Firebase에서 작품 삭제 완료');
+        } else {
+            console.log('⚠️ Firebase가 초기화되지 않아 로컬에서만 삭제');
         }
         
         // 로컬 데이터에서 제거
+        const initialCount = allArtworks.length;
         allArtworks = allArtworks.filter(a => a.id !== artworkId);
+        const removedCount = initialCount - allArtworks.length;
+        console.log(`📊 로컬 데이터에서 ${removedCount}개 작품 제거됨`);
         
         // UI에서 제거
         const artworkElements = document.querySelectorAll(`[data-artwork-id="${artworkId}"]`);
-        artworkElements.forEach(element => element.remove());
+        console.log(`🖼️ UI에서 ${artworkElements.length}개 요소 제거 중...`);
+        artworkElements.forEach(element => {
+            element.style.opacity = '0';
+            element.style.transform = 'scale(0.8)';
+            setTimeout(() => element.remove(), 300);
+        });
         
         // 카운트 업데이트
         updateCounts();
+        
+        // 갤러리 다시 렌더링 (혹시 UI 동기화 문제가 있는 경우)
+        setTimeout(() => {
+            renderAllArtworks();
+            console.log('🔄 갤러리 재렌더링 완료');
+        }, 500);
         
         alert('작품이 성공적으로 삭제되었습니다.');
         console.log('✅ 작품 삭제 완료');
         
     } catch (error) {
         console.error('❌ 작품 삭제 실패:', error);
-        alert('작품 삭제에 실패했습니다.');
+        alert(`작품 삭제에 실패했습니다:\n\n${error.message}`);
     }
 }
 
