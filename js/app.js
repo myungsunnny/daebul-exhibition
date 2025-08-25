@@ -952,11 +952,64 @@ function showAllArtworks() {
 
 // 학년별 정보 표시 (단순화)
 function updateGradeInfo() {
-    // 학년별 정보 섹션을 표시
+    // 학년별 정보 섹션을 표시하고 기본적으로 전체 학년 설명 표시
     const gradeInfoSection = document.getElementById('gradeInfoSection');
     if (gradeInfoSection) {
         gradeInfoSection.style.display = 'block';
-        console.log('✅ 학년별 정보 섹션 표시');
+        
+        // 모든 학년별 정보를 숨기고 전체 학년만 표시
+        const allGradeInfos = document.querySelectorAll('.grade-info-content');
+        allGradeInfos.forEach(info => {
+            info.style.display = 'none';
+        });
+        
+        const allGradeInfo = document.getElementById('gradeInfoAll');
+        if (allGradeInfo) {
+            allGradeInfo.style.display = 'block';
+        }
+        
+        console.log('✅ 학년별 정보 섹션 표시 (전체 학년 기본 표시)');
+    }
+}
+
+// 필터에 따른 학년별 정보 업데이트 (단순화)
+function updateGradeInfoForFilter(grade) {
+    try {
+        console.log('🎯 학년별 정보 업데이트 시작:', grade);
+        
+        // 모든 학년별 정보 섹션을 숨김
+        const allGradeInfos = document.querySelectorAll('.grade-info-content');
+        allGradeInfos.forEach(info => {
+            info.style.display = 'none';
+        });
+        
+        // 선택된 학년의 정보 섹션만 표시
+        let targetId = 'gradeInfoAll'; // 기본값
+        
+        if (grade === 'all') {
+            targetId = 'gradeInfoAll';
+        } else if (grade === '1학년') {
+            targetId = 'gradeInfo1';
+        } else if (grade === '2학년') {
+            targetId = 'gradeInfo2';
+        } else if (grade === '3학년') {
+            targetId = 'gradeInfo3';
+        } else if (grade === '4학년') {
+            targetId = 'gradeInfo4';
+        } else if (grade === '5학년') {
+            targetId = 'gradeInfo5';
+        } else if (grade === '6학년') {
+            targetId = 'gradeInfo6';
+        }
+        
+        const targetInfo = document.getElementById(targetId);
+        if (targetInfo) {
+            targetInfo.style.display = 'block';
+            console.log('✅ 학년별 정보 섹션 활성화:', grade, targetId);
+        }
+        
+    } catch (error) {
+        console.error('필터별 학년 정보 업데이트 실패:', error);
     }
 }
 
@@ -990,6 +1043,9 @@ function applyGradeFilter(grade) {
             visibleCount++;
         }
     });
+    
+    // 학년별 정보 섹션 업데이트
+    updateGradeInfoForFilter(grade);
     
     console.log(`✅ 필터 결과: ${visibleCount}개 작품 표시`);
 }
@@ -1695,9 +1751,9 @@ service firebase.storage {
             });
         }
         
-        // 학년별 정보 섹션은 데이터가 로드된 후에만 표시
-        // 초기에는 숨겨진 상태로 유지
-        console.log('📝 학년별 정보 섹션은 데이터 로드 후 표시됩니다.');
+        // 학년별 정보 섹션 초기화
+        console.log('📝 학년별 정보 섹션 초기화 중...');
+        updateGradeInfo();
         
         // 기본적으로 '전체 학년' 필터 활성화하여 학년별 정보 표시
         setTimeout(() => {
@@ -1706,7 +1762,7 @@ service firebase.storage {
                 allFilterBtn.classList.add('active');
                 applyGradeFilter('all');
             }
-        }, 1500);
+        }, 500);
     }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
