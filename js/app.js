@@ -943,7 +943,7 @@ function showAllArtworks() {
 }
 
 // === 기타 함수들 ===
-async function applyGradeFilter(grade) {
+function applyGradeFilter(grade) {
     console.log('🎯 학년 필터 적용:', grade);
     
     const allCards = document.querySelectorAll('.artwork-card');
@@ -974,61 +974,26 @@ async function applyGradeFilter(grade) {
     });
     
     // 학년별 정보 섹션 업데이트
-    await updateGradeInfoForFilter(grade);
+    updateGradeInfoForFilter(grade);
     
     console.log(`✅ 필터 결과: ${visibleCount}개 작품 표시`);
 }
 
 // 필터에 따른 학년별 정보 업데이트
-async function updateGradeInfoForFilter(grade) {
+function updateGradeInfoForFilter(grade) {
     try {
         console.log('🎯 학년별 정보 업데이트 시작:', grade);
         
         let gradeSettings = {};
         
-        // Firebase에서 최신 학년별 설정 로드 시도
-        if (db) {
+        // 로컬 스토리지에서 학년별 설정 로드
+        const localGradeSettings = localStorage.getItem('gradeSettings');
+        if (localGradeSettings) {
             try {
-                const gradeSettingsDoc = await db.collection('siteSettings').doc('grades').get();
-                if (gradeSettingsDoc.exists) {
-                    gradeSettings = gradeSettingsDoc.data();
-                    console.log('✅ Firebase에서 최신 학년별 설정 로드:', gradeSettings);
-                    
-                    // 로컬 스토리지에 백업
-                    localStorage.setItem('gradeSettings', JSON.stringify(gradeSettings));
-                } else {
-                    console.log('⚠️ Firebase에 학년별 설정이 없어 로컬 백업 사용');
-                    // Firebase에 설정이 없으면 로컬 스토리지 사용
-                    const localGradeSettings = localStorage.getItem('gradeSettings');
-                    if (localGradeSettings) {
-                        try {
-                            gradeSettings = JSON.parse(localGradeSettings);
-                        } catch (e) {
-                            console.error('로컬 학년 설정 파싱 실패:', e);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Firebase에서 학년별 설정 로드 실패, 로컬 백업 사용:', error);
-                // Firebase 로드 실패 시 로컬 스토리지 사용
-                const localGradeSettings = localStorage.getItem('gradeSettings');
-                if (localGradeSettings) {
-                    try {
-                        gradeSettings = JSON.parse(localGradeSettings);
-                    } catch (e) {
-                        console.error('로컬 학년 설정 파싱 실패:', e);
-                    }
-                }
-            }
-        } else {
-            // Firebase가 초기화되지 않은 경우 로컬 스토리지 사용
-            const localGradeSettings = localStorage.getItem('gradeSettings');
-            if (localGradeSettings) {
-                try {
-                    gradeSettings = JSON.parse(localGradeSettings);
-                } catch (e) {
-                    console.error('로컬 학년 설정 파싱 실패:', e);
-                }
+                gradeSettings = JSON.parse(localGradeSettings);
+                console.log('✅ 로컬에서 학년별 설정 로드:', gradeSettings);
+            } catch (e) {
+                console.error('로컬 학년 설정 파싱 실패:', e);
             }
         }
         
@@ -1217,7 +1182,7 @@ async function deleteArtwork(artworkId) {
 }
 
 // 사이트 설정 저장
-async function saveSettings() {
+function saveSettings() {
     console.log('💾 사이트 설정 저장 시도');
     
     try {
@@ -1244,29 +1209,7 @@ async function saveSettings() {
             description: document.getElementById('gradeDescAll').value
         };
         
-        // Firebase에 설정 저장
-        if (db) {
-            try {
-                // 사이트 설정 저장
-                await db.collection('siteSettings').doc('main').set({
-                    ...newSettings,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // 학년별 설정 저장
-                await db.collection('siteSettings').doc('grades').set({
-                    ...gradeSettings,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                console.log('✅ Firebase에 사이트 설정 저장 완료');
-            } catch (error) {
-                console.error('Firebase 설정 저장 실패:', error);
-                throw new Error('데이터베이스 저장에 실패했습니다.');
-            }
-        }
-        
-        // 로컬 스토리지에도 백업 저장
+        // 로컬 스토리지에만 저장
         localStorage.setItem('siteSettings', JSON.stringify(newSettings));
         localStorage.setItem('gradeSettings', JSON.stringify(gradeSettings));
         
@@ -1274,18 +1217,18 @@ async function saveSettings() {
         updateSiteDisplay(newSettings);
         
         // 학년별 정보 섹션을 새로운 설정으로 즉시 업데이트
-        updateGradeInfoFromFirebase(gradeSettings);
+        updateGradeInfo(gradeSettings);
         
         // 현재 활성화된 필터가 있다면 해당 필터의 정보도 업데이트
         const activeFilter = document.querySelector('.filter-btn.active');
         if (activeFilter) {
             const activeGrade = activeFilter.dataset.category;
             if (activeGrade) {
-                await updateGradeInfoForFilter(activeGrade);
+                updateGradeInfoForFilter(activeGrade);
             }
         }
         
-        alert('✅ 사이트 설정이 성공적으로 저장되었습니다!\n\n이제 다른 컴퓨터에서도 변경된 설정을 볼 수 있습니다.');
+        alert('✅ 사이트 설정이 성공적으로 저장되었습니다!\n\n설정이 로컬에 저장되었습니다.');
         console.log('✅ 사이트 설정 저장 완료');
         
     } catch (error) {
@@ -1321,36 +1264,7 @@ function updateSiteDisplay(settings) {
     }
 }
 
-// Firebase에서 로드한 학년별 정보로 즉시 업데이트
-function updateGradeInfoFromFirebase(gradeSettings) {
-    try {
-        console.log('📝 Firebase에서 로드한 학년별 정보로 UI 업데이트 시작:', gradeSettings);
-        
-        const gradeInfoTitle = document.getElementById('gradeInfoTitle');
-        const gradeInfoDescription = document.getElementById('gradeInfoDescription');
-        const gradeInfoSection = document.getElementById('gradeInfoSection');
-        
-        if (gradeInfoTitle && gradeInfoDescription && gradeInfoSection) {
-            const allGradeInfo = gradeSettings.gradeAll || {};
-            gradeInfoTitle.textContent = allGradeInfo.title || '전체 학년 작품 소개';
-            gradeInfoDescription.textContent = allGradeInfo.description || '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.';
-            
-            // 학년별 정보 섹션을 활성화하여 표시
-            gradeInfoSection.classList.add('active');
-            gradeInfoSection.style.display = 'block';
-            
-            console.log('✅ Firebase에서 로드한 학년별 정보로 즉시 업데이트 완료');
-            
-            // 로컬 스토리지에 백업 저장
-            localStorage.setItem('gradeSettings', JSON.stringify(gradeSettings));
-        } else {
-            console.warn('⚠️ 학년별 정보 섹션 요소를 찾을 수 없습니다.');
-        }
-        
-    } catch (error) {
-        console.error('Firebase 학년별 정보 업데이트 실패:', error);
-    }
-}
+
 
 // 학년별 정보 업데이트 (로컬 스토리지용)
 function updateGradeInfo() {
@@ -1537,64 +1451,53 @@ function removeHeaderImage() {
     fileInput.value = '';
 }
 
-// Firebase에서 사이트 설정 불러오기
-async function loadSiteSettingsFromFirebase() {
+// 로컬에서 사이트 설정 불러오기
+function loadSiteSettingsFromLocal() {
     try {
-        if (!db) {
-            console.log('⚠️ Firebase가 초기화되지 않아 로컬 설정을 사용합니다.');
-            return false;
-        }
+        console.log('📝 로컬에서 사이트 설정 로드 중...');
         
-        console.log('📡 Firebase에서 사이트 설정 요청 중...');
+        // 로컬 스토리지에서 설정 불러오기
+        const savedSettings = localStorage.getItem('siteSettings');
+        const savedGradeSettings = localStorage.getItem('gradeSettings');
         
-        // 기본 설정 불러오기
-        const mainSettingsDoc = await db.collection('siteSettings').doc('main').get();
-        const gradeSettingsDoc = await db.collection('siteSettings').doc('grades').get();
+        let hasSettings = false;
         
-        let hasNewSettings = false;
-        
-        if (mainSettingsDoc.exists) {
-            const firebaseSettings = mainSettingsDoc.data();
-            console.log('✅ Firebase에서 기본 설정 로드:', firebaseSettings);
+        if (savedSettings) {
+            const localSettings = JSON.parse(savedSettings);
+            console.log('✅ 로컬에서 기본 설정 로드:', localSettings);
             
             // 설정 폼에 적용
-            applySettingsToForm(firebaseSettings);
+            applySettingsToForm(localSettings);
             
             // 사이트 표시 업데이트
-            updateSiteDisplay(firebaseSettings);
+            updateSiteDisplay(localSettings);
             
-            // 로컬 스토리지에 백업
-            localStorage.setItem('siteSettings', JSON.stringify(firebaseSettings));
-            
-            hasNewSettings = true;
+            hasSettings = true;
         }
         
-        if (gradeSettingsDoc.exists) {
-            const firebaseGradeSettings = gradeSettingsDoc.data();
-            console.log('✅ Firebase에서 학년별 설정 로드:', firebaseGradeSettings);
+        if (savedGradeSettings) {
+            const localGradeSettings = JSON.parse(savedGradeSettings);
+            console.log('✅ 로컬에서 학년별 설정 로드:', localGradeSettings);
             
             // 학년별 설정 폼에 적용
-            applyGradeSettingsToForm(firebaseGradeSettings);
+            applyGradeSettingsToForm(localGradeSettings);
             
-            // 학년별 정보 섹션을 즉시 업데이트 (데이터베이스 값으로)
-            updateGradeInfoFromFirebase(firebaseGradeSettings);
+            // 학년별 정보 섹션을 즉시 업데이트
+            updateGradeInfo(localGradeSettings);
             
-            // 로컬 스토리지에 백업
-            localStorage.setItem('gradeSettings', JSON.stringify(firebaseGradeSettings));
-            
-            hasNewSettings = true;
+            hasSettings = true;
         }
         
-        if (hasNewSettings) {
-            console.log('✅ Firebase에서 사이트 설정 로드 완료');
+        if (hasSettings) {
+            console.log('✅ 로컬에서 사이트 설정 로드 완료');
             return true;
         } else {
-            console.log('📝 Firebase에 저장된 설정이 없어 기본값을 사용합니다.');
+            console.log('📝 로컬에 저장된 설정이 없어 기본값을 사용합니다.');
             return false;
         }
         
     } catch (error) {
-        console.error('❌ Firebase 설정 로드 오류:', error);
+        console.error('❌ 로컬 설정 로드 오류:', error);
         return false;
     }
 }
@@ -1913,9 +1816,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
             
             const category = this.dataset.category;
-            applyGradeFilter(category).catch(error => {
-                console.error('학년 필터 적용 실패:', error);
-            });
+            applyGradeFilter(category);
         });
     });
     
@@ -1987,30 +1888,28 @@ service firebase.storage {
     // 데이터 로드
     loadArtworks();
     
-    // Firebase에서 사이트 설정 불러오기 (우선)
-    setTimeout(async () => {
-        const firebaseLoaded = await loadSiteSettingsFromFirebase();
-        if (!firebaseLoaded) {
-            // Firebase에 설정이 없으면 로컬 설정 사용
-            loadSiteSettings();
-            updateGradeInfo();
-        }
-        
-        // 학년별 정보 섹션은 데이터가 로드된 후에만 표시
-        // 초기에는 숨겨진 상태로 유지
-        console.log('📝 학년별 정보 섹션은 데이터 로드 후 표시됩니다.');
-        
-        // 기본적으로 '전체 학년' 필터 활성화하여 학년별 정보 표시
+            // 로컬에서 사이트 설정 불러오기
         setTimeout(() => {
-            const allFilterBtn = document.querySelector('.filter-btn[data-category="all"]');
-            if (allFilterBtn) {
-                allFilterBtn.classList.add('active');
-                applyGradeFilter('all').catch(error => {
-                    console.error('초기 학년 필터 적용 실패:', error);
-                });
+            const localLoaded = loadSiteSettingsFromLocal();
+            if (!localLoaded) {
+                // 로컬에 설정이 없으면 기본 설정 사용
+                loadSiteSettings();
+                updateGradeInfo();
             }
-        }, 1500);
-    }, 1000);
+            
+            // 학년별 정보 섹션은 데이터가 로드된 후에만 표시
+            // 초기에는 숨겨진 상태로 유지
+            console.log('📝 학년별 정보 섹션은 데이터 로드 후 표시됩니다.');
+            
+            // 기본적으로 '전체 학년' 필터 활성화하여 학년별 정보 표시
+            setTimeout(() => {
+                const allFilterBtn = document.querySelector('.filter-btn[data-category="all"]');
+                if (allFilterBtn) {
+                    allFilterBtn.classList.add('active');
+                    applyGradeFilter('all');
+                }
+            }, 1500);
+        }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
 });
@@ -2046,9 +1945,10 @@ window.removeHeaderImage = removeHeaderImage;
 
 // 사이트 설정 관련 함수들
 window.updateSiteDisplay = updateSiteDisplay;
-window.updateGradeInfoFromFirebase = updateGradeInfoFromFirebase;
+window.updateGradeInfo = updateGradeInfo;
 window.applySettingsToForm = applySettingsToForm;
 window.applyGradeSettingsToForm = applyGradeSettingsToForm;
+window.loadSiteSettingsFromLocal = loadSiteSettingsFromLocal;
 
 // 검색 기능
 window.performSearch = performSearch;
