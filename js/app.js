@@ -31,8 +31,8 @@ let currentUser = null; // 현재 사용자 정보
 
 // 기본 작품 등록 설정
 let siteSettings = {
-    requireUploadPassword: false,
-    uploadPassword: ''
+    requireUploadPassword: true,
+    uploadPassword: '1234'
 };
 
 // === Firebase 초기화 ===
@@ -305,14 +305,17 @@ async function handleFormSubmit(e) {
     e.preventDefault();
     console.log('📝 폼 제출 시도');
     
-    if (!validateForm()) {
-        if (siteSettings.requireUploadPassword && !isAdmin && !isEditMode) {
-            const inputPassword = document.getElementById('uploadPasswordInput')?.value;
-            if (inputPassword !== siteSettings.uploadPassword) {
-                alert('등록 비밀번호가 올바르지 않습니다.');
-                return;
-            }
+    // 비밀번호 확인 (수정 모드가 아닐 때만)
+    if (!isEditMode && siteSettings.requireUploadPassword && !isAdmin) {
+        const inputPassword = document.getElementById('uploadPasswordInput')?.value;
+        if (!inputPassword || inputPassword !== siteSettings.uploadPassword) {
+            alert('❌ 등록 비밀번호가 올바르지 않습니다.');
+            return;
         }
+        console.log('✅ 비밀번호 확인 완료');
+    }
+    
+    if (!validateForm()) {
         alert('모든 필수 항목을 입력해주세요.');
         return;
     }
@@ -1750,6 +1753,9 @@ service firebase.storage {
                 updateUploadPasswordVisibility();
             });
         }
+        
+        // 비밀번호 필드 표시/숨김 업데이트
+        updateUploadPasswordVisibility();
         
         // 학년별 정보 섹션 초기화
         console.log('📝 학년별 정보 섹션 초기화 중...');
