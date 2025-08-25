@@ -377,8 +377,217 @@ textarea {
     text-align: center;
     color: white;
     transition: all 0.4s ease;
-    display: block;
+    display: none;
     box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+/* 검색 컨테이너 */
+.search-container {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.search-container input[type="text"] {
+    width: 80%;
+    max-width: 500px;
+    padding: 12px 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 25px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 16px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.search-container input[type="text"]::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+.search-container input[type="text"]:focus {
+    outline: none;
+    border-color: #667eea;
+    background: rgba(255,255,255,0.2);
+    box-shadow: 0 0 20px rgba(102,126,234,0.3);
+}
+
+/* 작품 카드 개선 */
+.artwork-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.artwork-header {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.artwork-header:hover {
+    transform: translateY(-2px);
+}
+
+.artwork-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+    padding: 10px 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.like-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 5px;
+    border-radius: 50%;
+}
+
+.like-button:hover {
+    transform: scale(1.2);
+}
+
+.like-button.liked {
+    animation: heartBeat 0.6s ease-in-out;
+}
+
+@keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+}
+
+.like-count {
+    color: #ff6b6b;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.comment-toggle {
+    background: rgba(102,126,234,0.2);
+    border: 1px solid rgba(102,126,234,0.3);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.comment-toggle:hover {
+    background: rgba(102,126,234,0.4);
+    transform: translateY(-1px);
+}
+
+/* 댓글 섹션 */
+.comments-section {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.comments-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.comment-item {
+    padding: 10px;
+    margin: 8px 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    border-left: 3px solid #667eea;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 12px;
+}
+
+.comment-author {
+    color: #667eea;
+    font-weight: bold;
+}
+
+.comment-time {
+    color: rgba(255,255,255,0.6);
+}
+
+.comment-text {
+    color: white;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.comment-input-container {
+    display: flex;
+    gap: 10px;
+}
+
+.comment-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 14px;
+}
+
+.comment-input::placeholder {
+    color: rgba(255,255,255,0.6);
+}
+
+.comment-input-container button {
+    background: #667eea;
+    border: none;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.comment-input-container button:hover {
+    background: #5a6fd8;
+    transform: translateY(-1px);
+}
+
+/* 검색 결과 없음 */
+.no-results {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.no-results h3 {
+    margin-bottom: 15px;
+    color: #999;
+}
+
+/* 반응형 개선 */
+@media (max-width: 768px) {
+    .search-container input[type="text"] {
+        width: 90%;
+        font-size: 14px;
+        padding: 10px 15px;
+    }
+    
+    .artwork-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .comment-input-container {
+        flex-direction: column;
+    }
 }
 
 .grade-info-section.active {
