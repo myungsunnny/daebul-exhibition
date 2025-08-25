@@ -27,6 +27,9 @@ let uploadedImages = [];
 let isUploading = false;
 let isEditMode = false;
 let editingArtworkId = null;
+let currentUser = null; // 현재 사용자 정보
+let userLikes = new Set(); // 사용자가 좋아요한 작품들
+let userComments = new Map(); // 사용자 댓글 데이터
 
 // 기본 사이트 설정
 let siteSettings = {
@@ -461,7 +464,9 @@ async function handleNewSubmit() {
             description: document.getElementById('artworkDescription').value.trim(),
             link: document.getElementById('artworkLink')?.value.trim() || '',
             imageUrls: imageUrls,
-            uploadDate: new Date().toISOString()
+            uploadDate: new Date().toISOString(),
+            likes: 0, // 좋아요 수 초기화
+            comments: [] // 댓글 배열 초기화
         };
         
         console.log('💾 저장할 작품 데이터:', formData);
@@ -490,6 +495,180 @@ async function handleNewSubmit() {
         console.error('❌ 새 작품 등록 실패:', error);
         alert(`작품 등록에 실패했습니다:\n\n${error.message}`);
         throw error;
+    }
+}
+
+// === 좋아요 및 댓글 기능 ===
+// 좋아요 토글
+async function toggleLike(artworkId) {
+    try {
+        if (!db) {
+            throw new Error('Firebase가 초기화되지 않았습니다.');
+        }
+        
+        const artwork = allArtworks.find(a => a.id === artworkId);
+        if (!artwork) {
+            throw new Error('작품을 찾을 수 없습니다.');
+        }
+        
+        const isLiked = userLikes.has(artworkId);
+        const likeRef = db.collection('artworks').doc(artworkId);
+        
+        if (isLiked) {
+            // 좋아요 취소
+            await likeRef.update({
+                likes: firebase.firestore.FieldValue.increment(-1)
+            });
+            userLikes.delete(artworkId);
+            console.log('💔 좋아요 취소:', artworkId);
+        } else {
+            // 좋아요 추가
+            await likeRef.update({
+                likes: firebase.firestore.FieldValue.increment(1)
+            });
+            userLikes.add(artworkId);
+            console.log('❤️ 좋아요 추가:', artworkId);
+        }
+        
+        // UI 업데이트
+        updateLikeUI(artworkId);
+        
+    } catch (error) {
+        console.error('❌ 좋아요 토글 실패:', error);
+        alert('좋아요 처리에 실패했습니다.');
+    }
+}
+
+// 좋아요 UI 업데이트
+function updateLikeUI(artworkId) {
+    const likeButtons = document.querySelectorAll(`[data-artwork-id="${artworkId}"] .like-button`);
+    const isLiked = userLikes.has(artworkId);
+    
+    likeButtons.forEach(button => {
+        if (isLiked) {
+            button.innerHTML = '❤️';
+            button.classList.add('liked');
+        } else {
+            button.innerHTML = '🤍';
+            button.classList.remove('liked');
+        }
+    });
+}
+
+// 댓글 추가
+async function addComment(artworkId, commentText) {
+    try {
+        if (!db) {
+            throw new Error('Firebase가 초기화되지 않았습니다.');
+        }
+        
+        if (!commentText.trim()) {
+            alert('댓글 내용을 입력해주세요.');
+            return;
+        }
+        
+        const comment = {
+            id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            artworkId: artworkId,
+            text: commentText.trim(),
+            author: currentUser || '익명',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        // Firebase에 댓글 저장
+        await db.collection('comments').add(comment);
+        
+        // 로컬 데이터에 추가
+        if (!userComments.has(artworkId)) {
+            userComments.set(artworkId, []);
+        }
+        userComments.get(artworkId).push(comment);
+        
+        // UI 업데이트
+        displayComments(artworkId);
+        
+        // 댓글 입력 필드 클리어
+        const commentInput = document.querySelector(`[data-artwork-id="${artworkId}"] .comment-input`);
+        if (commentInput) {
+            commentInput.value = '';
+        }
+        
+        console.log('✅ 댓글 추가 완료:', comment);
+        
+    } catch (error) {
+        console.error('❌ 댓글 추가 실패:', error);
+        alert('댓글 추가에 실패했습니다.');
+    }
+}
+
+// 댓글 표시
+async function displayComments(artworkId) {
+    try {
+        if (!db) return;
+        
+        // Firebase에서 댓글 로드
+        const commentsSnapshot = await db.collection('comments')
+            .where('artworkId', '==', artworkId)
+            .orderBy('timestamp', 'desc')
+            .get();
+        
+        const comments = [];
+        commentsSnapshot.forEach(doc => {
+            comments.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        // 댓글 UI 업데이트
+        const commentSection = document.querySelector(`[data-artwork-id="${artworkId}"] .comments-section`);
+        if (commentSection) {
+            commentSection.innerHTML = comments.map(comment => `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <span class="comment-author">${comment.author}</span>
+                        <span class="comment-time">${formatTimestamp(comment.timestamp)}</span>
+                    </div>
+                    <div class="comment-text">${comment.text}</div>
+                </div>
+            `).join('');
+        }
+        
+    } catch (error) {
+        console.error('댓글 표시 실패:', error);
+    }
+}
+
+// 타임스탬프 포맷팅
+function formatTimestamp(timestamp) {
+    if (!timestamp) return '방금 전';
+    
+    const now = new Date();
+    const commentTime = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const diffMs = now - commentTime;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return '방금 전';
+    if (diffMins < 60) return `${diffMins}분 전`;
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    if (diffDays < 7) return `${diffDays}일 전`;
+    
+    return commentTime.toLocaleDateString('ko-KR');
+}
+
+// 댓글 섹션 토글
+function toggleComments(artworkId) {
+    const commentSection = document.querySelector(`[data-artwork-id="${artworkId}"] .comments-section`);
+    if (commentSection) {
+        const isVisible = commentSection.style.display !== 'none';
+        commentSection.style.display = isVisible ? 'none' : 'block';
+        
+        if (!isVisible) {
+            // 댓글 섹션이 열릴 때 댓글 로드
+            displayComments(artworkId);
+        }
     }
 }
 
@@ -771,6 +950,9 @@ function createArtworkElement(artwork) {
     const uploadDate = new Date(artwork.uploadDate).toLocaleDateString('ko-KR');
     const imageCount = artwork.imageUrls.length > 1 ? 
         `<span class="artwork-type">${artwork.imageUrls.length}장</span>` : '';
+    
+    const likeCount = artwork.likes || 0;
+    const isLiked = userLikes.has(artwork.id);
 
     element.innerHTML = `
         <div class="artwork-image" onclick="showArtworkDetail('${artwork.id}')">
@@ -782,11 +964,33 @@ function createArtworkElement(artwork) {
                 <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deleteArtwork('${artwork.id}')">삭제</button>
             </div>
         </div>
-        <div class="artwork-info" onclick="showArtworkDetail('${artwork.id}')">
-            <h3 class="artwork-title">${artwork.title}</h3>
-            <p class="artwork-author">${artwork.grade}</p>
-            <p class="artwork-description">${artwork.description}</p>
-            <small style="color: #999; font-size: 0.8rem;">📅 ${uploadDate}</small>
+        <div class="artwork-info">
+            <div class="artwork-header" onclick="showArtworkDetail('${artwork.id}')">
+                <h3 class="artwork-title">${artwork.title}</h3>
+                <p class="artwork-author">${artwork.grade}</p>
+                <p class="artwork-description">${artwork.description}</p>
+                <small style="color: #999; font-size: 0.8rem;">📅 ${uploadDate}</small>
+            </div>
+            
+            <div class="artwork-actions">
+                <button class="like-button ${isLiked ? 'liked' : ''}" 
+                        onclick="event.stopPropagation(); toggleLike('${artwork.id}')">
+                    ${isLiked ? '❤️' : '🤍'}
+                </button>
+                <span class="like-count">${likeCount}</span>
+                <button class="comment-toggle" onclick="event.stopPropagation(); toggleComments('${artwork.id}')">
+                    💬 댓글
+                </button>
+            </div>
+            
+            <div class="comments-section" style="display: none;">
+                <div class="comments-list"></div>
+                <div class="comment-input-container">
+                    <input type="text" class="comment-input" placeholder="댓글을 입력하세요..." 
+                           onkeypress="if(event.key==='Enter') addComment('${artwork.id}', this.value)">
+                    <button onclick="addComment('${artwork.id}', this.previousElementSibling.value)">등록</button>
+                </div>
+            </div>
         </div>
     `;
     
@@ -822,6 +1026,114 @@ function updateArtworkInGallery(updatedArtwork) {
     });
     
     console.log('🔄 갤러리에서 작품 업데이트 완료:', updatedArtwork.title);
+}
+
+// === 검색 및 필터 함수들 ===
+// 검색 기능
+function performSearch(searchTerm) {
+    console.log('🔍 검색 실행:', searchTerm);
+    
+    if (!searchTerm.trim()) {
+        // 검색어가 없으면 모든 작품 표시
+        showAllArtworks();
+        return;
+    }
+    
+    const searchResults = allArtworks.filter(artwork => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            artwork.title.toLowerCase().includes(searchLower) ||
+            artwork.grade.toLowerCase().includes(searchLower) ||
+            artwork.description.toLowerCase().includes(searchLower) ||
+            artwork.category.toLowerCase().includes(searchLower)
+        );
+    });
+    
+    console.log(`🔍 검색 결과: ${searchResults.length}개 작품`);
+    displaySearchResults(searchResults, searchTerm);
+}
+
+// 검색 결과 표시
+function displaySearchResults(results, searchTerm) {
+    const galleries = {
+        galleryGrid: document.getElementById('galleryGrid'),
+        activityGallery: document.getElementById('activityGallery'),
+        worksheetGallery: document.getElementById('worksheetGallery'),
+        resultGallery: document.getElementById('resultGallery')
+    };
+    
+    // 모든 갤러리 초기화
+    Object.values(galleries).forEach(gallery => {
+        if (gallery) gallery.innerHTML = '';
+    });
+    
+    if (results.length === 0) {
+        // 검색 결과가 없을 때
+        const noResultsMsg = document.createElement('div');
+        noResultsMsg.className = 'no-results';
+        noResultsMsg.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <h3>🔍 검색 결과가 없습니다</h3>
+                <p>"${searchTerm}"에 대한 검색 결과를 찾을 수 없습니다.</p>
+                <p>다른 검색어를 시도해보세요.</p>
+            </div>
+        `;
+        galleries.galleryGrid.appendChild(noResultsMsg);
+        return;
+    }
+    
+    // 검색 결과를 갤러리에 추가
+    results.forEach((artwork, index) => {
+        setTimeout(() => {
+            const element = createArtworkElement(artwork);
+            if (!element) return;
+            
+            // 전체 갤러리에 추가
+            if (galleries.galleryGrid) {
+                const clone1 = element.cloneNode(true);
+                galleries.galleryGrid.appendChild(clone1);
+                setTimeout(() => clone1.classList.add('show'), 100);
+            }
+            
+            // 카테고리별 갤러리에 추가
+            const categoryGallery = galleries[`${artwork.category}Gallery`];
+            if (categoryGallery) {
+                const clone2 = element.cloneNode(true);
+                categoryGallery.appendChild(clone2);
+                setTimeout(() => clone2.classList.add('show'), 100);
+            }
+        }, index * 30);
+    });
+    
+    // 검색 결과 수 표시
+    updateSearchResultCount(results.length, searchTerm);
+}
+
+// 검색 결과 수 업데이트
+function updateSearchResultCount(count, searchTerm) {
+    const searchContainer = document.querySelector('.search-container');
+    if (searchContainer) {
+        let resultCountEl = searchContainer.querySelector('.search-result-count');
+        if (!resultCountEl) {
+            resultCountEl = document.createElement('div');
+            resultCountEl.className = 'search-result-count';
+            resultCountEl.style.cssText = 'margin-top: 10px; font-size: 14px; color: #666; text-align: center;';
+            searchContainer.appendChild(resultCountEl);
+        }
+        resultCountEl.textContent = `"${searchTerm}"에 대한 검색 결과: ${count}개 작품`;
+    }
+}
+
+// 모든 작품 표시 (검색 초기화)
+function showAllArtworks() {
+    console.log('🔄 모든 작품 표시');
+    renderAllArtworks();
+    
+    // 검색 결과 수 제거
+    const resultCountEl = document.querySelector('.search-result-count');
+    if (resultCountEl) {
+        resultCountEl.remove();
+    }
 }
 
 // === 기타 함수들 ===
@@ -1752,19 +2064,56 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // 검색 입력 이벤트 리스너
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim();
+            
+            // 디바운싱: 타이핑이 끝난 후 300ms 뒤에 검색 실행
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch(searchTerm);
+            }, 300);
+        });
+        
+        // Enter 키로 검색 실행
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const searchTerm = this.value.trim();
+                performSearch(searchTerm);
+            }
+        });
+        
+        // 검색 입력 필드 클리어 시 모든 작품 표시
+        searchInput.addEventListener('search', function() {
+            if (this.value === '') {
+                showAllArtworks();
+            }
+        });
+        
+        console.log('✅ 검색 이벤트 리스너 등록됨');
+    }
+    
     // 필터 버튼들
     const filterBtns = document.querySelectorAll('.filter-btn');
     filterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             console.log('🔍 필터 버튼 클릭:', this.dataset.category);
             
+            // 검색 입력 필드 클리어
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            
             filterBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             
-                    const category = this.dataset.category;
-        applyGradeFilter(category).catch(error => {
-            console.error('학년 필터 적용 실패:', error);
-        });
+            const category = this.dataset.category;
+            applyGradeFilter(category).catch(error => {
+                console.error('학년 필터 적용 실패:', error);
+            });
         });
     });
     
@@ -1898,6 +2247,12 @@ window.updateSiteDisplay = updateSiteDisplay;
 window.updateGradeInfoFromFirebase = updateGradeInfoFromFirebase;
 window.applySettingsToForm = applySettingsToForm;
 window.applyGradeSettingsToForm = applyGradeSettingsToForm;
+
+// 검색 및 소셜 기능
+window.performSearch = performSearch;
+window.toggleLike = toggleLike;
+window.toggleComments = toggleComments;
+window.addComment = addComment;
 
 // === 오류 처리 ===
 window.addEventListener('error', function(e) {
