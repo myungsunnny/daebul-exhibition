@@ -1188,26 +1188,33 @@ function saveSettings() {
     try {
         // 기본 설정
         const newSettings = {
-            title: document.getElementById('siteTitle').value,
-            description: document.getElementById('siteDescription').value,
-            allowComments: document.getElementById('allowComments').checked,
-            moderateComments: document.getElementById('moderateComments').checked,
-            requireUploadPassword: document.getElementById('requireUploadPassword').checked,
-            uploadPassword: document.getElementById('uploadPassword').value
+            title: document.getElementById('siteTitle')?.value || '',
+            description: document.getElementById('siteDescription')?.value || '',
+            requireUploadPassword: document.getElementById('requireUploadPassword')?.checked || false,
+            uploadPassword: document.getElementById('uploadPassword')?.value || ''
         };
         
         // 학년별 설명
         const gradeSettings = {};
         for (let i = 1; i <= 6; i++) {
-            gradeSettings[`grade${i}`] = {
-                title: document.getElementById(`gradeTitle${i}`).value,
-                description: document.getElementById(`gradeDesc${i}`).value
+            const titleElement = document.getElementById(`gradeTitle${i}`);
+            const descElement = document.getElementById(`gradeDesc${i}`);
+            if (titleElement && descElement) {
+                gradeSettings[`grade${i}`] = {
+                    title: titleElement.value || '',
+                    description: descElement.value || ''
+                };
+            }
+        }
+        
+        const gradeTitleAllElement = document.getElementById('gradeTitleAll');
+        const gradeDescAllElement = document.getElementById('gradeDescAll');
+        if (gradeTitleAllElement && gradeDescAllElement) {
+            gradeSettings.gradeAll = {
+                title: gradeTitleAllElement.value || '',
+                description: gradeDescAllElement.value || ''
             };
         }
-        gradeSettings.gradeAll = {
-            title: document.getElementById('gradeTitleAll').value,
-            description: document.getElementById('gradeDescAll').value
-        };
         
         // 로컬 스토리지에만 저장
         localStorage.setItem('siteSettings', JSON.stringify(newSettings));
@@ -1515,15 +1522,7 @@ function applySettingsToForm(settings) {
             if (siteDescInput) siteDescInput.value = settings.description;
         }
         
-        if (settings.allowComments !== undefined) {
-            const allowCommentsInput = document.getElementById('allowComments');
-            if (allowCommentsInput) allowCommentsInput.checked = settings.allowComments;
-        }
-        
-        if (settings.moderateComments !== undefined) {
-            const moderateCommentsInput = document.getElementById('moderateComments');
-            if (moderateCommentsInput) moderateCommentsInput.checked = settings.moderateComments;
-        }
+
         
         if (settings.requireUploadPassword !== undefined) {
             const requirePasswordInput = document.getElementById('requireUploadPassword');
@@ -1549,11 +1548,11 @@ function applyGradeSettingsToForm(gradeSettings) {
             if (gradeKey === 'updatedAt') return; // Firebase 타임스탬프 제외
             
             const gradeInfo = gradeSettings[gradeKey];
-            if (gradeInfo.title) {
+            if (gradeInfo && gradeInfo.title) {
                 const titleInput = document.getElementById(`${gradeKey}Title`);
                 if (titleInput) titleInput.value = gradeInfo.title;
             }
-            if (gradeInfo.description) {
+            if (gradeInfo && gradeInfo.description) {
                 const descInput = document.getElementById(`${gradeKey}Desc`);
                 if (descInput) descInput.value = gradeInfo.description;
             }
@@ -1583,15 +1582,7 @@ function loadSiteSettings() {
             if (siteDescInput) siteDescInput.value = savedSettings.description;
         }
         
-        if (savedSettings.allowComments !== undefined) {
-            const allowCommentsInput = document.getElementById('allowComments');
-            if (allowCommentsInput) allowCommentsInput.checked = savedSettings.allowComments;
-        }
-        
-        if (savedSettings.moderateComments !== undefined) {
-            const moderateCommentsInput = document.getElementById('moderateComments');
-            if (moderateCommentsInput) moderateCommentsInput.checked = savedSettings.moderateComments;
-        }
+
         
         if (savedSettings.requireUploadPassword !== undefined) {
             const requirePasswordInput = document.getElementById('requireUploadPassword');
@@ -1605,12 +1596,14 @@ function loadSiteSettings() {
         
         // 학년별 설정 적용
         Object.keys(savedGradeSettings).forEach(gradeKey => {
+            if (gradeKey === 'updatedAt') return; // Firebase 타임스탬프 제외
+            
             const gradeSettings = savedGradeSettings[gradeKey];
-            if (gradeSettings.title) {
+            if (gradeSettings && gradeSettings.title) {
                 const titleInput = document.getElementById(`${gradeKey}Title`);
                 if (titleInput) titleInput.value = gradeSettings.title;
             }
-            if (gradeSettings.description) {
+            if (gradeSettings && gradeSettings.description) {
                 const descInput = document.getElementById(`${gradeKey}Desc`);
                 if (descInput) descInput.value = gradeSettings.description;
             }
