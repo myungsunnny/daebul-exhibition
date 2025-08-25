@@ -29,10 +29,8 @@ let isEditMode = false;
 let editingArtworkId = null;
 let currentUser = null; // 현재 사용자 정보
 
-// 기본 사이트 설정
+// 기본 작품 등록 설정
 let siteSettings = {
-    title: '우리학교 학생 작품 전시관',
-    description: '창의적이고 아름다운 학생들의 작품을 함께 감상해보세요',
     requireUploadPassword: false,
     uploadPassword: ''
 };
@@ -1181,95 +1179,30 @@ async function deleteArtwork(artworkId) {
     }
 }
 
-// 사이트 설정 저장
+// 작품 등록 설정 저장
 function saveSettings() {
-    console.log('💾 사이트 설정 저장 시도');
+    console.log('💾 작품 등록 설정 저장 시도');
     
     try {
-        // 기본 설정
+        // 작품 등록 설정만 저장
         const newSettings = {
-            title: document.getElementById('siteTitle')?.value || '',
-            description: document.getElementById('siteDescription')?.value || '',
             requireUploadPassword: document.getElementById('requireUploadPassword')?.checked || false,
             uploadPassword: document.getElementById('uploadPassword')?.value || ''
         };
         
-        // 학년별 설명
-        const gradeSettings = {};
-        for (let i = 1; i <= 6; i++) {
-            const titleElement = document.getElementById(`gradeTitle${i}`);
-            const descElement = document.getElementById(`gradeDesc${i}`);
-            if (titleElement && descElement) {
-                gradeSettings[`grade${i}`] = {
-                    title: titleElement.value || '',
-                    description: descElement.value || ''
-                };
-            }
-        }
-        
-        const gradeTitleAllElement = document.getElementById('gradeTitleAll');
-        const gradeDescAllElement = document.getElementById('gradeDescAll');
-        if (gradeTitleAllElement && gradeDescAllElement) {
-            gradeSettings.gradeAll = {
-                title: gradeTitleAllElement.value || '',
-                description: gradeDescAllElement.value || ''
-            };
-        }
-        
-        // 로컬 스토리지에만 저장
+        // 로컬 스토리지에 저장
         localStorage.setItem('siteSettings', JSON.stringify(newSettings));
-        localStorage.setItem('gradeSettings', JSON.stringify(gradeSettings));
         
-        // 사이트 제목과 설명 즉시 업데이트
-        updateSiteDisplay(newSettings);
-        
-        // 학년별 정보 섹션을 새로운 설정으로 즉시 업데이트
-        updateGradeInfo(gradeSettings);
-        
-        // 현재 활성화된 필터가 있다면 해당 필터의 정보도 업데이트
-        const activeFilter = document.querySelector('.filter-btn.active');
-        if (activeFilter) {
-            const activeGrade = activeFilter.dataset.category;
-            if (activeGrade) {
-                updateGradeInfoForFilter(activeGrade);
-            }
-        }
-        
-        alert('✅ 사이트 설정이 성공적으로 저장되었습니다!\n\n설정이 로컬에 저장되었습니다.');
-        console.log('✅ 사이트 설정 저장 완료');
+        alert('✅ 작품 등록 설정이 성공적으로 저장되었습니다!');
+        console.log('✅ 작품 등록 설정 저장 완료');
         
     } catch (error) {
-        console.error('❌ 사이트 설정 저장 실패:', error);
-        alert(`사이트 설정 저장에 실패했습니다:\n\n${error.message}`);
+        console.error('❌ 작품 등록 설정 저장 실패:', error);
+        alert(`작품 등록 설정 저장에 실패했습니다:\n\n${error.message}`);
     }
 }
 
-// 사이트 표시 업데이트
-function updateSiteDisplay(settings) {
-    try {
-        // 헤더 제목 업데이트
-        const headerTitle = document.getElementById('headerTitleText');
-        if (headerTitle && settings.title) {
-            headerTitle.textContent = settings.title;
-        }
-        
-        // 사이트 부제목 업데이트
-        const siteSubtitle = document.getElementById('siteSubtitle');
-        if (siteSubtitle && settings.description) {
-            siteSubtitle.textContent = settings.description;
-        }
-        
-        // 페이지 제목 업데이트
-        if (settings.title) {
-            document.title = settings.title;
-        }
-        
-        console.log('✅ 사이트 표시 업데이트 완료:', settings.title);
-        
-    } catch (error) {
-        console.error('사이트 표시 업데이트 실패:', error);
-    }
-}
+
 
 
 
@@ -1458,45 +1391,22 @@ function removeHeaderImage() {
     fileInput.value = '';
 }
 
-// 로컬에서 사이트 설정 불러오기
+// 로컬에서 작품 등록 설정 불러오기
 function loadSiteSettingsFromLocal() {
     try {
-        console.log('📝 로컬에서 사이트 설정 로드 중...');
+        console.log('📝 로컬에서 작품 등록 설정 로드 중...');
         
         // 로컬 스토리지에서 설정 불러오기
         const savedSettings = localStorage.getItem('siteSettings');
-        const savedGradeSettings = localStorage.getItem('gradeSettings');
-        
-        let hasSettings = false;
         
         if (savedSettings) {
             const localSettings = JSON.parse(savedSettings);
-            console.log('✅ 로컬에서 기본 설정 로드:', localSettings);
+            console.log('✅ 로컬에서 작품 등록 설정 로드:', localSettings);
             
             // 설정 폼에 적용
             applySettingsToForm(localSettings);
             
-            // 사이트 표시 업데이트
-            updateSiteDisplay(localSettings);
-            
-            hasSettings = true;
-        }
-        
-        if (savedGradeSettings) {
-            const localGradeSettings = JSON.parse(savedGradeSettings);
-            console.log('✅ 로컬에서 학년별 설정 로드:', localGradeSettings);
-            
-            // 학년별 설정 폼에 적용
-            applyGradeSettingsToForm(localGradeSettings);
-            
-            // 학년별 정보 섹션을 즉시 업데이트
-            updateGradeInfo(localGradeSettings);
-            
-            hasSettings = true;
-        }
-        
-        if (hasSettings) {
-            console.log('✅ 로컬에서 사이트 설정 로드 완료');
+            console.log('✅ 로컬에서 작품 등록 설정 로드 완료');
             return true;
         } else {
             console.log('📝 로컬에 저장된 설정이 없어 기본값을 사용합니다.');
@@ -1509,21 +1419,9 @@ function loadSiteSettingsFromLocal() {
     }
 }
 
-// 설정을 폼에 적용
+// 작품 등록 설정을 폼에 적용
 function applySettingsToForm(settings) {
     try {
-        if (settings.title) {
-            const siteTitleInput = document.getElementById('siteTitle');
-            if (siteTitleInput) siteTitleInput.value = settings.title;
-        }
-        
-        if (settings.description) {
-            const siteDescInput = document.getElementById('siteDescription');
-            if (siteDescInput) siteDescInput.value = settings.description;
-        }
-        
-
-        
         if (settings.requireUploadPassword !== undefined) {
             const requirePasswordInput = document.getElementById('requireUploadPassword');
             if (requirePasswordInput) requirePasswordInput.checked = settings.requireUploadPassword;
@@ -1534,87 +1432,16 @@ function applySettingsToForm(settings) {
             if (uploadPasswordInput) uploadPasswordInput.value = settings.uploadPassword;
         }
         
-        console.log('✅ 설정을 폼에 적용 완료');
+        console.log('✅ 작품 등록 설정을 폼에 적용 완료');
         
     } catch (error) {
-        console.error('❌ 설정 폼 적용 실패:', error);
+        console.error('❌ 작품 등록 설정 폼 적용 실패:', error);
     }
 }
 
-// 학년별 설정을 폼에 적용
-function applyGradeSettingsToForm(gradeSettings) {
-    try {
-        Object.keys(gradeSettings).forEach(gradeKey => {
-            if (gradeKey === 'updatedAt') return; // Firebase 타임스탬프 제외
-            
-            const gradeInfo = gradeSettings[gradeKey];
-            if (gradeInfo && gradeInfo.title) {
-                const titleInput = document.getElementById(`${gradeKey}Title`);
-                if (titleInput) titleInput.value = gradeInfo.title;
-            }
-            if (gradeInfo && gradeInfo.description) {
-                const descInput = document.getElementById(`${gradeKey}Desc`);
-                if (descInput) descInput.value = gradeInfo.description;
-            }
-        });
-        
-        console.log('✅ 학년별 설정을 폼에 적용 완료');
-        
-    } catch (error) {
-        console.error('❌ 학년별 설정 폼 적용 실패:', error);
-    }
-}
 
-// 저장된 사이트 설정 불러오기 (로컬 백업용)
-function loadSiteSettings() {
-    try {
-        const savedSettings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
-        const savedGradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
-        
-        // 기본 설정 적용
-        if (savedSettings.title) {
-            const siteTitleInput = document.getElementById('siteTitle');
-            if (siteTitleInput) siteTitleInput.value = savedSettings.title;
-        }
-        
-        if (savedSettings.description) {
-            const siteDescInput = document.getElementById('siteDescription');
-            if (siteDescInput) siteDescInput.value = savedSettings.description;
-        }
-        
 
-        
-        if (savedSettings.requireUploadPassword !== undefined) {
-            const requirePasswordInput = document.getElementById('requireUploadPassword');
-            if (requirePasswordInput) requirePasswordInput.checked = savedSettings.requireUploadPassword;
-        }
-        
-        if (savedSettings.uploadPassword) {
-            const uploadPasswordInput = document.getElementById('uploadPassword');
-            if (uploadPasswordInput) uploadPasswordInput.value = savedSettings.uploadPassword;
-        }
-        
-        // 학년별 설정 적용
-        Object.keys(savedGradeSettings).forEach(gradeKey => {
-            if (gradeKey === 'updatedAt') return; // Firebase 타임스탬프 제외
-            
-            const gradeSettings = savedGradeSettings[gradeKey];
-            if (gradeSettings && gradeSettings.title) {
-                const titleInput = document.getElementById(`${gradeKey}Title`);
-                if (titleInput) titleInput.value = gradeSettings.title;
-            }
-            if (gradeSettings && gradeSettings.description) {
-                const descInput = document.getElementById(`${gradeKey}Desc`);
-                if (descInput) descInput.value = gradeSettings.description;
-            }
-        });
-        
-        console.log('✅ 로컬 사이트 설정 불러오기 완료');
-        
-    } catch (error) {
-        console.error('❌ 로컬 사이트 설정 불러오기 실패:', error);
-    }
-}
+
 
 function showArtworkDetail(artworkId) {
     console.log('🖱️ 작품 상세보기:', artworkId);
@@ -1881,28 +1708,10 @@ service firebase.storage {
     // 데이터 로드
     loadArtworks();
     
-    // 로컬에서 사이트 설정 불러오기
-    setTimeout(() => {
-        const localLoaded = loadSiteSettingsFromLocal();
-        if (!localLoaded) {
-            // 로컬에 설정이 없으면 기본 설정 사용
-            loadSiteSettings();
-            updateGradeInfo();
-        }
-        
-        // 학년별 정보 섹션은 데이터가 로드된 후에만 표시
-        // 초기에는 숨겨진 상태로 유지
-        console.log('📝 학년별 정보 섹션은 데이터 로드 후 표시됩니다.');
-        
-        // 기본적으로 '전체 학년' 필터 활성화하여 학년별 정보 표시
+            // 로컬에서 작품 등록 설정 불러오기
         setTimeout(() => {
-            const allFilterBtn = document.querySelector('.filter-btn[data-category="all"]');
-            if (allFilterBtn) {
-                allFilterBtn.classList.add('active');
-                applyGradeFilter('all');
-            }
-        }, 1500);
-    }, 1000);
+            loadSiteSettingsFromLocal();
+        }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
 });
@@ -1936,11 +1745,8 @@ window.bulkDeleteArtworks = bulkDeleteArtworks;
 window.previewHeaderImage = previewHeaderImage;
 window.removeHeaderImage = removeHeaderImage;
 
-// 사이트 설정 관련 함수들
-window.updateSiteDisplay = updateSiteDisplay;
-window.updateGradeInfo = updateGradeInfo;
+// 작품 등록 설정 관련 함수들
 window.applySettingsToForm = applySettingsToForm;
-window.applyGradeSettingsToForm = applyGradeSettingsToForm;
 window.loadSiteSettingsFromLocal = loadSiteSettingsFromLocal;
 
 // 검색 기능
@@ -1957,3 +1763,4 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 console.log('🚀 학생 갤러리 JavaScript 완전 로드 완료');
+
