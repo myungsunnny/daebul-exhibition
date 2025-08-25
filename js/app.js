@@ -669,11 +669,11 @@ async function loadArtworks() {
         // Firebase 초기화 확인
         if (!initializeFirebase()) {
             setTimeout(() => {
-                if (initializeFirebase()) {
-                    loadArtworks();
-                } else {
-                    updateConnectionStatus('disconnected', 'Firebase 초기화 실패');
-                }
+                            if (initializeFirebase()) {
+                loadArtworks();
+            } else {
+                updateConnectionStatus('disconnected', 'Firebase 초기화 실패');
+            }
             }, 1000);
             return;
         }
@@ -1888,28 +1888,28 @@ service firebase.storage {
     // 데이터 로드
     loadArtworks();
     
-            // 로컬에서 사이트 설정 불러오기
+    // 로컬에서 사이트 설정 불러오기
+    setTimeout(() => {
+        const localLoaded = loadSiteSettingsFromLocal();
+        if (!localLoaded) {
+            // 로컬에 설정이 없으면 기본 설정 사용
+            loadSiteSettings();
+            updateGradeInfo();
+        }
+        
+        // 학년별 정보 섹션은 데이터가 로드된 후에만 표시
+        // 초기에는 숨겨진 상태로 유지
+        console.log('📝 학년별 정보 섹션은 데이터 로드 후 표시됩니다.');
+        
+        // 기본적으로 '전체 학년' 필터 활성화하여 학년별 정보 표시
         setTimeout(() => {
-            const localLoaded = loadSiteSettingsFromLocal();
-            if (!localLoaded) {
-                // 로컬에 설정이 없으면 기본 설정 사용
-                loadSiteSettings();
-                updateGradeInfo();
+            const allFilterBtn = document.querySelector('.filter-btn[data-category="all"]');
+            if (allFilterBtn) {
+                allFilterBtn.classList.add('active');
+                applyGradeFilter('all');
             }
-            
-            // 학년별 정보 섹션은 데이터가 로드된 후에만 표시
-            // 초기에는 숨겨진 상태로 유지
-            console.log('📝 학년별 정보 섹션은 데이터 로드 후 표시됩니다.');
-            
-            // 기본적으로 '전체 학년' 필터 활성화하여 학년별 정보 표시
-            setTimeout(() => {
-                const allFilterBtn = document.querySelector('.filter-btn[data-category="all"]');
-                if (allFilterBtn) {
-                    allFilterBtn.classList.add('active');
-                    applyGradeFilter('all');
-                }
-            }, 1500);
-        }, 1000);
+        }, 1500);
+    }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
 });
