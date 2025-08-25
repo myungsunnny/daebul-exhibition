@@ -810,7 +810,7 @@ function updateArtworkInGallery(updatedArtwork) {
 }
 
 // === 기타 함수들 ===
-function applyGradeFilter(grade) {
+async function applyGradeFilter(grade) {
     console.log('🎯 학년 필터 적용:', grade);
     
     const allCards = document.querySelectorAll('.artwork-card');
@@ -841,24 +841,61 @@ function applyGradeFilter(grade) {
     });
     
     // 학년별 정보 섹션 업데이트
-    updateGradeInfoForFilter(grade);
+    await updateGradeInfoForFilter(grade);
     
     console.log(`✅ 필터 결과: ${visibleCount}개 작품 표시`);
 }
 
 // 필터에 따른 학년별 정보 업데이트
-function updateGradeInfoForFilter(grade) {
+async function updateGradeInfoForFilter(grade) {
     try {
-        // Firebase에서 로드한 설정을 우선 사용, 없으면 로컬 스토리지 사용
+        console.log('🎯 학년별 정보 업데이트 시작:', grade);
+        
         let gradeSettings = {};
         
-        // 먼저 로컬 스토리지에서 Firebase 백업 데이터 확인
-        const localGradeSettings = localStorage.getItem('gradeSettings');
-        if (localGradeSettings) {
+        // Firebase에서 최신 학년별 설정 로드 시도
+        if (db) {
             try {
-                gradeSettings = JSON.parse(localGradeSettings);
-            } catch (e) {
-                console.error('로컬 학년 설정 파싱 실패:', e);
+                const gradeSettingsDoc = await db.collection('siteSettings').doc('grades').get();
+                if (gradeSettingsDoc.exists) {
+                    gradeSettings = gradeSettingsDoc.data();
+                    console.log('✅ Firebase에서 최신 학년별 설정 로드:', gradeSettings);
+                    
+                    // 로컬 스토리지에 백업
+                    localStorage.setItem('gradeSettings', JSON.stringify(gradeSettings));
+                } else {
+                    console.log('⚠️ Firebase에 학년별 설정이 없어 로컬 백업 사용');
+                    // Firebase에 설정이 없으면 로컬 스토리지 사용
+                    const localGradeSettings = localStorage.getItem('gradeSettings');
+                    if (localGradeSettings) {
+                        try {
+                            gradeSettings = JSON.parse(localGradeSettings);
+                        } catch (e) {
+                            console.error('로컬 학년 설정 파싱 실패:', e);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Firebase에서 학년별 설정 로드 실패, 로컬 백업 사용:', error);
+                // Firebase 로드 실패 시 로컬 스토리지 사용
+                const localGradeSettings = localStorage.getItem('gradeSettings');
+                if (localGradeSettings) {
+                    try {
+                        gradeSettings = JSON.parse(localGradeSettings);
+                    } catch (e) {
+                        console.error('로컬 학년 설정 파싱 실패:', e);
+                    }
+                }
+            }
+        } else {
+            // Firebase가 초기화되지 않은 경우 로컬 스토리지 사용
+            const localGradeSettings = localStorage.getItem('gradeSettings');
+            if (localGradeSettings) {
+                try {
+                    gradeSettings = JSON.parse(localGradeSettings);
+                } catch (e) {
+                    console.error('로컬 학년 설정 파싱 실패:', e);
+                }
             }
         }
         
@@ -887,7 +924,7 @@ function updateGradeInfoForFilter(grade) {
             gradeInfoSection.classList.add('active');
             gradeInfoSection.style.display = 'block';
             
-            console.log('✅ 학년별 정보 섹션 활성화:', grade, title);
+            console.log('✅ 학년별 정보 섹션 활성화:', grade, title, description);
         }
         
     } catch (error) {
@@ -1088,6 +1125,15 @@ async function saveSettings() {
         // 학년별 정보 섹션을 새로운 설정으로 즉시 업데이트
         updateGradeInfoFromFirebase(gradeSettings);
         
+        // 현재 활성화된 필터가 있다면 해당 필터의 정보도 업데이트
+        const activeFilter = document.querySelector('.filter-btn.active');
+        if (activeFilter) {
+            const activeGrade = activeFilter.dataset.category;
+            if (activeGrade) {
+                await updateGradeInfoForFilter(activeGrade);
+            }
+        }
+        
         alert('✅ 사이트 설정이 성공적으로 저장되었습니다!\n\n이제 다른 컴퓨터에서도 변경된 설정을 볼 수 있습니다.');
         console.log('✅ 사이트 설정 저장 완료');
         
@@ -1127,6 +1173,8 @@ function updateSiteDisplay(settings) {
 // Firebase에서 로드한 학년별 정보로 즉시 업데이트
 function updateGradeInfoFromFirebase(gradeSettings) {
     try {
+        console.log('📝 Firebase에서 로드한 학년별 정보로 UI 업데이트 시작:', gradeSettings);
+        
         const gradeInfoTitle = document.getElementById('gradeInfoTitle');
         const gradeInfoDescription = document.getElementById('gradeInfoDescription');
         const gradeInfoSection = document.getElementById('gradeInfoSection');
@@ -1141,6 +1189,11 @@ function updateGradeInfoFromFirebase(gradeSettings) {
             gradeInfoSection.style.display = 'block';
             
             console.log('✅ Firebase에서 로드한 학년별 정보로 즉시 업데이트 완료');
+            
+            // 로컬 스토리지에 백업 저장
+            localStorage.setItem('gradeSettings', JSON.stringify(gradeSettings));
+        } else {
+            console.warn('⚠️ 학년별 정보 섹션 요소를 찾을 수 없습니다.');
         }
         
     } catch (error) {
@@ -1675,8 +1728,10 @@ document.addEventListener('DOMContentLoaded', function() {
             filterBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             
-            const category = this.dataset.category;
-            applyGradeFilter(category);
+                    const category = this.dataset.category;
+        applyGradeFilter(category).catch(error => {
+            console.error('학년 필터 적용 실패:', error);
+        });
         });
     });
     
@@ -1760,6 +1815,17 @@ service firebase.storage {
         // 학년별 정보 섹션은 데이터가 로드된 후에만 표시
         // 초기에는 숨겨진 상태로 유지
         console.log('📝 학년별 정보 섹션은 데이터 로드 후 표시됩니다.');
+        
+        // 기본적으로 '전체 학년' 필터 활성화하여 학년별 정보 표시
+        setTimeout(() => {
+            const allFilterBtn = document.querySelector('.filter-btn[data-category="all"]');
+            if (allFilterBtn) {
+                allFilterBtn.classList.add('active');
+                applyGradeFilter('all').catch(error => {
+                    console.error('초기 학년 필터 적용 실패:', error);
+                });
+            }
+        }, 1500);
     }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
