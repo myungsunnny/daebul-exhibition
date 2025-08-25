@@ -51,6 +51,7 @@ function initializeFirebase() {
             db = firebase.firestore();
             storage = firebase.storage();
             console.log('✅ Firebase 이미 초기화됨 (Firestore + Storage)');
+            updateStorageStatus('connected', 'Firebase Storage 연결됨');
             return true;
         }
         
@@ -58,11 +59,13 @@ function initializeFirebase() {
         app = firebase.initializeApp(FIREBASE_CONFIG);
         db = firebase.firestore();
         storage = firebase.storage();
-        console.log('✅ Firebase 초기화 성공 (Firestore + Storage)');
+        console.log('✅ Firebase 초기화 성공 (Firebase + Storage)');
+        updateStorageStatus('connected', 'Firebase Storage 연결됨');
         return true;
         
     } catch (error) {
         console.error('❌ Firebase 초기화 실패:', error);
+        updateStorageStatus('disconnected', 'Firebase Storage 연결 실패');
         return false;
     }
 }
@@ -697,13 +700,20 @@ async function loadArtworks() {
 
 // === UI 업데이트 함수들 ===
 function updateConnectionStatus(status, message) {
-    const statusEl = document.getElementById('upstashStatus');
+    const statusEl = document.getElementById('firebaseStatus');
     if (statusEl) {
         statusEl.innerHTML = `<span class="status-indicator status-${status}">${message}</span>`;
     }
     
     isConnected = status === 'connected';
     validateForm();
+}
+
+function updateStorageStatus(status, message) {
+    const storageEl = document.getElementById('storageStatus');
+    if (storageEl) {
+        storageEl.innerHTML = `<span class="status-indicator status-${status}">${message}</span>`;
+    }
 }
 
 function updateCounts() {
@@ -1830,6 +1840,7 @@ window.showFullscreenImage = showFullscreenImage;
 window.removeImage = removeImage;
 window.showArtworkDetail = showArtworkDetail;
 window.closeFullscreenImage = closeFullscreenImage;
+window.updateStorageStatus = updateStorageStatus;
 
 // 필터 및 탭 전환 함수들
 window.switchTypeTab = switchTypeTab;
