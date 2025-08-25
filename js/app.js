@@ -852,8 +852,9 @@ function updateGradeInfoForFilter(grade) {
         const gradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
         const gradeInfoTitle = document.getElementById('gradeInfoTitle');
         const gradeInfoDescription = document.getElementById('gradeInfoDescription');
+        const gradeInfoSection = document.getElementById('gradeInfoSection');
         
-        if (gradeInfoTitle && gradeInfoDescription) {
+        if (gradeInfoTitle && gradeInfoDescription && gradeInfoSection) {
             let title, description;
             
             if (grade === 'all') {
@@ -869,6 +870,12 @@ function updateGradeInfoForFilter(grade) {
             
             gradeInfoTitle.textContent = title;
             gradeInfoDescription.textContent = description;
+            
+            // 학년별 정보 섹션을 활성화하여 표시
+            gradeInfoSection.classList.add('active');
+            gradeInfoSection.style.display = 'block';
+            
+            console.log('✅ 학년별 정보 섹션 활성화:', grade, title);
         }
         
     } catch (error) {
@@ -1111,11 +1118,18 @@ function updateGradeInfo() {
         const gradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
         const gradeInfoTitle = document.getElementById('gradeInfoTitle');
         const gradeInfoDescription = document.getElementById('gradeInfoDescription');
+        const gradeInfoSection = document.getElementById('gradeInfoSection');
         
-        if (gradeInfoTitle && gradeInfoDescription) {
+        if (gradeInfoTitle && gradeInfoDescription && gradeInfoSection) {
             const allGradeInfo = gradeSettings.gradeAll || {};
             gradeInfoTitle.textContent = allGradeInfo.title || '전체 학년 작품 소개';
             gradeInfoDescription.textContent = allGradeInfo.description || '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.';
+            
+            // 학년별 정보 섹션을 활성화하여 표시
+            gradeInfoSection.classList.add('active');
+            gradeInfoSection.style.display = 'block';
+            
+            console.log('✅ 기본 학년별 정보 섹션 활성화');
         }
         
     } catch (error) {
@@ -1705,6 +1719,14 @@ service firebase.storage {
             // Firebase에 설정이 없으면 로컬 설정 사용
             loadSiteSettings();
             updateGradeInfo();
+        }
+        
+        // 학년별 정보 섹션 초기 표시
+        const gradeInfoSection = document.getElementById('gradeInfoSection');
+        if (gradeInfoSection) {
+            gradeInfoSection.classList.add('active');
+            gradeInfoSection.style.display = 'block';
+            console.log('✅ 학년별 정보 섹션 초기 활성화');
         }
     }, 1000);
     
