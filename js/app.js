@@ -533,6 +533,8 @@ async function saveArtworkToFirebase(artwork) {
             throw new Error('Firebase가 초기화되지 않았습니다.');
         }
         
+        console.log('💾 Firebase Firestore에 작품 저장 중...');
+        
         const docRef = await db.collection('artworks').add({
             ...artwork,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -540,8 +542,17 @@ async function saveArtworkToFirebase(artwork) {
         
         console.log('✅ Firebase에 작품 저장 성공:', docRef.id);
         return docRef.id;
+        
     } catch (error) {
         console.error('❌ Firebase 저장 오류:', error);
+        
+        // 권한 오류인 경우 상세 안내
+        if (error.code === 'permission-denied') {
+            const errorMsg = 'Firebase 권한 오류가 발생했습니다.\n\nFirebase 콘솔에서 Firestore 보안 규칙을 수정해야 합니다.\n\n자세한 내용은 개발자 도구 콘솔을 확인하세요.';
+            console.error('🔒 Firebase 권한 오류:', errorMsg);
+            throw new Error(errorMsg);
+        }
+        
         throw error;
     }
 }
@@ -551,6 +562,8 @@ async function loadArtworksFromFirebase() {
         if (!db) {
             throw new Error('Firebase가 초기화되지 않았습니다.');
         }
+        
+        console.log('📡 Firebase에서 작품 데이터 요청 중...');
         
         const snapshot = await db.collection('artworks')
             .orderBy('createdAt', 'desc')
@@ -566,8 +579,31 @@ async function loadArtworksFromFirebase() {
         
         console.log('✅ Firebase에서 작품 로드 성공:', artworks.length, '개');
         return artworks;
+        
     } catch (error) {
         console.error('❌ Firebase 로드 오류:', error);
+        
+        // 권한 오류인 경우 상세 안내
+        if (error.code === 'permission-denied') {
+            console.error('🔒 Firebase 권한 오류 - Firestore 규칙을 확인하세요:');
+            console.error('1. Firebase 콘솔 → Firestore Database → 규칙');
+            console.error('2. 다음 규칙으로 설정:');
+            console.error(`
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+            `);
+            console.error('3. 게시 버튼 클릭');
+            
+            // 사용자에게도 안내
+            alert('Firebase 권한 오류가 발생했습니다.\n\nFirebase 콘솔에서 Firestore 보안 규칙을 수정해야 합니다.\n\n자세한 내용은 개발자 도구 콘솔을 확인하세요.');
+        }
+        
         return [];
     }
 }
@@ -1000,6 +1036,34 @@ document.addEventListener('DOMContentLoaded', function() {
         config: FIREBASE_CONFIG
     });
     
+    // Firebase 권한 설정 안내
+    console.log('📋 Firebase 권한 설정이 필요합니다:');
+    console.log('1. Firebase 콘솔 (https://console.firebase.google.com) 접속');
+    console.log('2. 프로젝트 선택: daebul-exhibition');
+    console.log('3. Firestore Database → 규칙 탭에서 다음 규칙으로 설정:');
+    console.log(`
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+    `);
+    console.log('4. Storage → 규칙 탭에서 다음 규칙으로 설정:');
+    console.log(`
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}
+    `);
+    console.log('5. 각각 게시 버튼 클릭');
+    
     // 데이터 로드
     loadArtworks();
     
@@ -1026,22 +1090,3 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 console.log('🚀 학생 갤러리 JavaScript 완전 로드 완료');
-
-// Firebase Storage 규칙 설정 안내
-console.log('📋 Firebase Storage 규칙 설정이 필요합니다:');
-console.log('1. Firebase 콘솔 (https://console.firebase.google.com) 접속');
-console.log('2. 프로젝트 선택: daebul-exhibition');
-console.log('3. Storage 메뉴 클릭');
-console.log('4. 규칙 탭에서 다음 규칙으로 설정:');
-console.log(`
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /artworks/{artworkId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if true;
-    }
-  }
-}
-`);
-console.log('5. 게시 버튼 클릭');
