@@ -971,62 +971,10 @@ function applyGradeFilter(grade) {
         }
     });
     
-    // 학년별 정보 섹션 업데이트
-    updateGradeInfoForFilter(grade);
-    
     console.log(`✅ 필터 결과: ${visibleCount}개 작품 표시`);
 }
 
-// 필터에 따른 학년별 정보 업데이트
-function updateGradeInfoForFilter(grade) {
-    try {
-        console.log('🎯 학년별 정보 업데이트 시작:', grade);
-        
-        let gradeSettings = {};
-        
-        // 로컬 스토리지에서 학년별 설정 로드
-        const localGradeSettings = localStorage.getItem('gradeSettings');
-        if (localGradeSettings) {
-            try {
-                gradeSettings = JSON.parse(localGradeSettings);
-                console.log('✅ 로컬에서 학년별 설정 로드:', gradeSettings);
-            } catch (e) {
-                console.error('로컬 학년 설정 파싱 실패:', e);
-            }
-        }
-        
-        const gradeInfoTitle = document.getElementById('gradeInfoTitle');
-        const gradeInfoDescription = document.getElementById('gradeInfoDescription');
-        const gradeInfoSection = document.getElementById('gradeInfoSection');
-        
-        if (gradeInfoTitle && gradeInfoDescription && gradeInfoSection) {
-            let title, description;
-            
-            if (grade === 'all') {
-                const allGradeInfo = gradeSettings.gradeAll || {};
-                title = allGradeInfo.title || '전체 학년 작품 소개';
-                description = allGradeInfo.description || '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.';
-            } else {
-                const gradeKey = `grade${grade}`;
-                const gradeInfo = gradeSettings[gradeKey] || {};
-                title = gradeInfo.title || `${grade}학년 작품`;
-                description = gradeInfo.description || `${grade}학년 학생들의 창의적이고 아름다운 작품들입니다.`;
-            }
-            
-            gradeInfoTitle.textContent = title;
-            gradeInfoDescription.textContent = description;
-            
-            // 학년별 정보 섹션을 활성화하여 표시
-            gradeInfoSection.classList.add('active');
-            gradeInfoSection.style.display = 'block';
-            
-            console.log('✅ 학년별 정보 섹션 활성화:', grade, title, description);
-        }
-        
-    } catch (error) {
-        console.error('필터별 학년 정보 업데이트 실패:', error);
-    }
-}
+
 
 // 작품 분류 탭 전환
 function switchTypeTab(type) {
@@ -1193,6 +1141,9 @@ function saveSettings() {
         // 로컬 스토리지에 저장
         localStorage.setItem('siteSettings', JSON.stringify(newSettings));
         
+        // 설정 저장 후 비밀번호 필드 표시/숨김 업데이트
+        updateUploadPasswordVisibility();
+        
         alert('✅ 작품 등록 설정이 성공적으로 저장되었습니다!');
         console.log('✅ 작품 등록 설정 저장 완료');
         
@@ -1206,30 +1157,7 @@ function saveSettings() {
 
 
 
-// 학년별 정보 업데이트 (로컬 스토리지용)
-function updateGradeInfo() {
-    try {
-        const gradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
-        const gradeInfoTitle = document.getElementById('gradeInfoTitle');
-        const gradeInfoDescription = document.getElementById('gradeInfoDescription');
-        const gradeInfoSection = document.getElementById('gradeInfoSection');
-        
-        if (gradeInfoTitle && gradeInfoDescription && gradeInfoSection) {
-            const allGradeInfo = gradeSettings.gradeAll || {};
-            gradeInfoTitle.textContent = allGradeInfo.title || '전체 학년 작품 소개';
-            gradeInfoDescription.textContent = allGradeInfo.description || '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.';
-            
-            // 학년별 정보 섹션을 활성화하여 표시
-            gradeInfoSection.classList.add('active');
-            gradeInfoSection.style.display = 'block';
-            
-            console.log('✅ 로컬 스토리지에서 학년별 정보 업데이트 완료');
-        }
-        
-    } catch (error) {
-        console.error('학년별 정보 업데이트 실패:', error);
-    }
-}
+
 
 // 모든 데이터 초기화
 async function resetAllData() {
@@ -1431,6 +1359,9 @@ function applySettingsToForm(settings) {
             const uploadPasswordInput = document.getElementById('uploadPassword');
             if (uploadPasswordInput) uploadPasswordInput.value = settings.uploadPassword;
         }
+        
+        // 설정 적용 후 비밀번호 필드 표시/숨김 업데이트
+        updateUploadPasswordVisibility();
         
         console.log('✅ 작품 등록 설정을 폼에 적용 완료');
         
@@ -1709,9 +1640,17 @@ service firebase.storage {
     loadArtworks();
     
             // 로컬에서 작품 등록 설정 불러오기
-        setTimeout(() => {
-            loadSiteSettingsFromLocal();
-        }, 1000);
+    setTimeout(() => {
+        loadSiteSettingsFromLocal();
+        
+        // 작품 등록 비밀번호 요구 체크박스 이벤트 리스너 추가
+        const requirePasswordCheckbox = document.getElementById('requireUploadPassword');
+        if (requirePasswordCheckbox) {
+            requirePasswordCheckbox.addEventListener('change', function() {
+                updateUploadPasswordVisibility();
+            });
+        }
+    }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
 });
