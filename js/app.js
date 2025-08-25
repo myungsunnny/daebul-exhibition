@@ -25,7 +25,14 @@ let app, db;
 function initializeFirebase() {
     try {
         // Firebase가 로드되었는지 확인
-        if (typeof firebase !== 'undefined') {
+        if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+            // 이미 초기화된 경우
+            app = firebase.app();
+            db = firebase.firestore();
+            console.log('✅ Firebase 이미 초기화됨');
+            return true;
+        } else if (typeof firebase !== 'undefined') {
+            // 새로 초기화
             app = firebase.initializeApp(FIREBASE_CONFIG);
             db = firebase.firestore();
             console.log('✅ Firebase 초기화 성공');
@@ -706,12 +713,17 @@ function updateImagePreview() {
         return;
     }
     
-    container.innerHTML = uploadedImages.map((url, index) =>
-        `<div style="position: relative; display: inline-block; margin: 5px;">
-            <img src="${url}" alt="미리보기 ${index + 1}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;">
+    container.innerHTML = uploadedImages.map((imageData, index) => {
+        // 이미지 데이터가 문자열(URL)인지 객체인지 확인
+        const imageUrl = typeof imageData === 'string' ? imageData : imageData.url;
+        const imageName = typeof imageData === 'string' ? `이미지 ${index + 1}` : (imageData.name || `이미지 ${index + 1}`);
+        
+        return `<div style="position: relative; display: inline-block; margin: 5px;">
+            <img src="${imageUrl}" alt="${imageName}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;">
             <button type="button" onclick="removeImage(${index})" style="position: absolute; top: -8px; right: -8px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; font-weight: bold;">&times;</button>
-        </div>`
-    ).join('');
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 2px; text-align: center; border-radius: 0 0 8px 8px;">${imageName}</div>
+        </div>`;
+    }).join('');
     
     if (uploadText) uploadText.style.display = 'none';
     
@@ -774,6 +786,9 @@ async function handleFormSubmit(e) {
                 throw new Error('수정할 작품을 찾을 수 없습니다.');
             }
             
+            // 이미지 URL 배열 생성 (Cloudinary와 로컬 파일 모두 처리)
+            const imageUrls = uploadedImages.map(img => typeof img === 'string' ? img : img.url);
+            
             const updatedArtwork = {
                 ...existingArtwork,
                 title: document.getElementById('artworkTitle').value.trim(),
@@ -781,7 +796,7 @@ async function handleFormSubmit(e) {
                 category: document.getElementById('artworkCategory').value,
                 description: document.getElementById('artworkDescription').value.trim(),
                 link: document.getElementById('artworkLink')?.value.trim() || '',
-                imageUrls: [...uploadedImages],
+                imageUrls: imageUrls,
                 lastModified: new Date().toISOString()
             };
             
@@ -804,6 +819,9 @@ async function handleFormSubmit(e) {
             
         } else {
             // 새 등록 모드
+            // 이미지 URL 배열 생성 (Cloudinary와 로컬 파일 모두 처리)
+            const imageUrls = uploadedImages.map(img => typeof img === 'string' ? img : img.url);
+            
             const formData = {
                 id: `artwork_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 title: document.getElementById('artworkTitle').value.trim(),
@@ -811,7 +829,7 @@ async function handleFormSubmit(e) {
                 category: document.getElementById('artworkCategory').value,
                 description: document.getElementById('artworkDescription').value.trim(),
                 link: document.getElementById('artworkLink')?.value.trim() || '',
-                imageUrls: [...uploadedImages],
+                imageUrls: imageUrls,
                 uploadDate: new Date().toISOString()
             };
             
@@ -1573,6 +1591,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('🎉 모든 이벤트 리스너 등록 완료');
     
+    // Firebase 초기화 상태 확인
+    console.log('🔥 Firebase 초기화 상태:', {
+        firebaseLoaded: typeof firebase !== 'undefined',
+        firebaseApps: firebase?.apps?.length || 0,
+        config: FIREBASE_CONFIG
+    });
+    
     // 데이터 로드
     loadArtworks();
     
@@ -1610,27 +1635,60 @@ window.saveArtworkOrder = saveArtworkOrder;
 // Cloudinary 업로드
 window.uploadToCloudinary = function() {
     console.log('☁️ Cloudinary 업로드 시도');
-    if (typeof cloudinary !== 'undefined') {
-        cloudinary.createUploadWidget({
-            cloudName: CLOUDINARY_CONFIG.cloudName,
-            uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
-            multiple: true,
-            maxFiles: 10,
-            folder: 'student-gallery'
-        }, (error, result) => {
-            if (!error && result && result.event === 'success') {
-                uploadedImages.push(result.info.secure_url);
-                updateImagePreview();
-                validateForm();
-                console.log('✅ Cloudinary 업로드 성공:', result.info.secure_url);
-            }
-            if (error) {
-                console.error('❌ Cloudinary 업로드 오류:', error);
-                alert('이미지 업로드 중 오류가 발생했습니다.');
-            }
-        }).open();
-    } else {
-        alert('Cloudinary 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+    
+    try {
+        if (typeof cloudinary !== 'undefined') {
+            const uploadWidget = cloudinary.createUploadWidget({
+                cloudName: CLOUDINARY_CONFIG.cloudName,
+                uploadPreset: CLOUDINARY_CONFIG.uploadPreset,
+                multiple: true,
+                maxFiles: 10,
+                folder: 'student-gallery',
+                sources: ['local', 'camera'],
+                showAdvancedOptions: false,
+                cropping: false,
+                showSkipCropButton: true,
+                showUploadMoreButton: true,
+                clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+                maxFileSize: 10000000 // 10MB
+            }, (error, result) => {
+                console.log('Cloudinary 콜백:', { error, result });
+                
+                if (error) {
+                    console.error('❌ Cloudinary 업로드 오류:', error);
+                    alert(`이미지 업로드 중 오류가 발생했습니다:\n\n${error.message || '알 수 없는 오류'}`);
+                    return;
+                }
+                
+                if (result && result.event === 'success') {
+                    console.log('✅ Cloudinary 업로드 성공:', result.info);
+                    
+                    // 이미지 데이터를 올바른 형식으로 저장
+                    const imageData = {
+                        url: result.info.secure_url,
+                        publicId: result.info.public_id,
+                        originalFile: null, // Cloudinary에서는 파일 객체가 없음
+                        name: result.info.original_filename || '업로드된 이미지'
+                    };
+                    
+                    uploadedImages.push(imageData);
+                    updateImagePreview();
+                    validateForm();
+                    
+                    console.log('📸 업로드된 이미지 목록:', uploadedImages);
+                } else if (result && result.event === 'close') {
+                    console.log('📱 Cloudinary 업로드 위젯 닫힘');
+                }
+            });
+            
+            uploadWidget.open();
+        } else {
+            console.error('❌ Cloudinary SDK가 로드되지 않음');
+            alert('Cloudinary 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        }
+    } catch (error) {
+        console.error('❌ Cloudinary 업로드 함수 오류:', error);
+        alert(`업로드 함수 실행 중 오류가 발생했습니다:\n\n${error.message}`);
     }
 };
 
