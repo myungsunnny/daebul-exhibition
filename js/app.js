@@ -19,7 +19,7 @@ const FIREBASE_CONFIG = {
 const ADMIN_PASSWORD = "admin1234";
 
 // === 전역 변수 ===
-let app, db;
+let app, db, storage;
 let isConnected = false;
 let isAdmin = false;
 let allArtworks = [];
@@ -50,14 +50,16 @@ function initializeFirebase() {
         if (firebase.apps && firebase.apps.length > 0) {
             app = firebase.app();
             db = firebase.firestore();
-            console.log('✅ Firebase 이미 초기화됨');
+            storage = firebase.storage();
+            console.log('✅ Firebase 이미 초기화됨 (Firestore + Storage)');
             return true;
         }
         
         // 새로 초기화
         app = firebase.initializeApp(FIREBASE_CONFIG);
         db = firebase.firestore();
-        console.log('✅ Firebase 초기화 성공');
+        storage = firebase.storage();
+        console.log('✅ Firebase 초기화 성공 (Firestore + Storage)');
         return true;
         
     } catch (error) {
@@ -211,6 +213,18 @@ function handleFileSelect(fileInput) {
     uploadedImages = [];
     
     Array.from(files).forEach((file, index) => {
+        // 파일 크기 체크 (10MB 제한)
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`이미지 ${file.name}이 너무 큽니다. 10MB 이하의 이미지를 선택해주세요.`);
+            return;
+        }
+        
+        // 파일 타입 체크
+        if (!file.type.startsWith('image/')) {
+            alert(`파일 ${file.name}은 이미지가 아닙니다. 이미지 파일을 선택해주세요.`);
+            return;
+        }
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             uploadedImages.push({
@@ -220,7 +234,7 @@ function handleFileSelect(fileInput) {
             });
             updateImagePreview();
             validateForm();
-            console.log(`✅ 이미지 ${index + 1} 로드 완료`);
+            console.log(`✅ 이미지 ${index + 1} 로드 완료: ${file.name}`);
         };
         reader.readAsDataURL(file);
     });
@@ -333,84 +347,186 @@ async function handleFormSubmit(e) {
 }
 
 async function handleEditSubmit() {
-    const existingArtwork = allArtworks.find(a => a.id === editingArtworkId);
-    if (!existingArtwork) {
-        throw new Error('수정할 작품을 찾을 수 없습니다.');
-    }
-    
-    const imageUrls = uploadedImages.map(img => img.url);
-    
-    const updatedArtwork = {
-        ...existingArtwork,
-        title: document.getElementById('artworkTitle').value.trim(),
-        grade: document.getElementById('studentGrade').value + '학년',
-        category: document.getElementById('artworkCategory').value,
-        description: document.getElementById('artworkDescription').value.trim(),
-        link: document.getElementById('artworkLink')?.value.trim() || '',
-        imageUrls: imageUrls,
-        lastModified: new Date().toISOString()
-    };
-    
-    console.log('💾 수정할 작품 데이터:', updatedArtwork);
-    
-    // 로컬 데이터에서 업데이트
-    const index = allArtworks.findIndex(a => a.id === editingArtworkId);
-    if (index !== -1) {
-        allArtworks[index] = updatedArtwork;
-    }
-    
-    // UI에서 업데이트
-    updateArtworkInGallery(updatedArtwork);
-    
-    // Firebase에 저장
-    if (db) {
-        try {
-            await updateArtworkInFirebase(editingArtworkId, updatedArtwork);
-        } catch (error) {
-            console.error('Firebase 업데이트 실패:', error);
+    try {
+        const existingArtwork = allArtworks.find(a => a.id === editingArtworkId);
+        if (!existingArtwork) {
+            throw new Error('수정할 작품을 찾을 수 없습니다.');
         }
+        
+        console.log('📤 수정 모드 이미지 처리 시작...');
+        
+        // 새로운 이미지가 있는지 확인하고 Firebase Storage에 업로드
+        const imageUrls = [];
+        for (let i = 0; i < uploadedImages.length; i++) {
+            const imageData = uploadedImages[i];
+            if (imageData.file) {
+                // 새로운 이미지 파일인 경우 Storage에 업로드
+                try {
+                    const downloadURL = await uploadImageToStorage(imageData.file, editingArtworkId);
+                    imageUrls.push(downloadURL);
+                    console.log(`✅ 새 이미지 ${i + 1} 업로드 완료: ${downloadURL}`);
+                } catch (error) {
+                    console.error(`❌ 새 이미지 ${i + 1} 업로드 실패:`, error);
+                    throw new Error(`새 이미지 업로드에 실패했습니다: ${error.message}`);
+                }
+            } else {
+                // 기존 이미지 URL인 경우
+                imageUrls.push(imageData.url);
+                console.log(`📸 기존 이미지 ${i + 1} 유지: ${imageData.url}`);
+            }
+        }
+        
+        if (imageUrls.length === 0) {
+            throw new Error('업로드할 이미지가 없습니다.');
+        }
+        
+        const updatedArtwork = {
+            ...existingArtwork,
+            title: document.getElementById('artworkTitle').value.trim(),
+            grade: document.getElementById('studentGrade').value + '학년',
+            category: document.getElementById('artworkCategory').value,
+            description: document.getElementById('artworkDescription').value.trim(),
+            link: document.getElementById('artworkLink')?.value.trim() || '',
+            imageUrls: imageUrls,
+            lastModified: new Date().toISOString()
+        };
+        
+        console.log('💾 수정할 작품 데이터:', updatedArtwork);
+        
+        // 로컬 데이터에서 업데이트
+        const index = allArtworks.findIndex(a => a.id === editingArtworkId);
+        if (index !== -1) {
+            allArtworks[index] = updatedArtwork;
+        }
+        
+        // UI에서 업데이트
+        updateArtworkInGallery(updatedArtwork);
+        
+        // Firebase에 저장
+        if (db) {
+            try {
+                await updateArtworkInFirebase(editingArtworkId, updatedArtwork);
+                console.log('✅ Firebase Firestore에 작품 수정 완료');
+            } catch (error) {
+                console.error('Firebase 업데이트 실패:', error);
+                throw new Error('데이터베이스 수정에 실패했습니다.');
+            }
+        }
+        
+        alert(`✅ "${updatedArtwork.title}" 작품이 성공적으로 수정되었습니다!\n\n새로운 이미지가 Firebase Storage에 업로드되고, 작품 정보가 데이터베이스에 업데이트되었습니다.`);
+        console.log('✅ 작품 수정 완료');
+        
+    } catch (error) {
+        console.error('❌ 작품 수정 실패:', error);
+        alert(`작품 수정에 실패했습니다:\n\n${error.message}`);
+        throw error;
     }
-    
-    alert(`✅ "${updatedArtwork.title}" 작품이 성공적으로 수정되었습니다!`);
-    console.log('✅ 작품 수정 완료');
 }
 
 async function handleNewSubmit() {
-    const imageUrls = uploadedImages.map(img => img.url);
-    
-    const formData = {
-        id: `artwork_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        title: document.getElementById('artworkTitle').value.trim(),
-        grade: document.getElementById('studentGrade').value + '학년',
-        category: document.getElementById('artworkCategory').value,
-        description: document.getElementById('artworkDescription').value.trim(),
-        link: document.getElementById('artworkLink')?.value.trim() || '',
-        imageUrls: imageUrls,
-        uploadDate: new Date().toISOString()
-    };
-    
-    console.log('💾 저장할 작품 데이터:', formData);
-    
-    // 로컬 데이터에 추가
-    allArtworks.unshift(formData);
-    
-    // UI에 즉시 추가
-    addArtworkToGallery(formData);
-    
-    // Firebase에 저장
-    if (db) {
-        try {
-            await saveArtworkToFirebase(formData);
-        } catch (error) {
-            console.error('Firebase 저장 실패:', error);
+    try {
+        // 작품 ID 생성
+        const artworkId = `artwork_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        console.log('📤 이미지 업로드 시작...');
+        
+        // 이미지를 Firebase Storage에 업로드
+        const imageUrls = [];
+        for (let i = 0; i < uploadedImages.length; i++) {
+            const imageData = uploadedImages[i];
+            if (imageData.file) {
+                try {
+                    const downloadURL = await uploadImageToStorage(imageData.file, artworkId);
+                    imageUrls.push(downloadURL);
+                    console.log(`✅ 이미지 ${i + 1} 업로드 완료: ${downloadURL}`);
+                } catch (error) {
+                    console.error(`❌ 이미지 ${i + 1} 업로드 실패:`, error);
+                    throw new Error(`이미지 업로드에 실패했습니다: ${error.message}`);
+                }
+            } else {
+                // 이미 URL인 경우 (수정 모드에서 기존 이미지)
+                imageUrls.push(imageData.url);
+            }
         }
+        
+        if (imageUrls.length === 0) {
+            throw new Error('업로드할 이미지가 없습니다.');
+        }
+        
+        const formData = {
+            id: artworkId,
+            title: document.getElementById('artworkTitle').value.trim(),
+            grade: document.getElementById('studentGrade').value + '학년',
+            category: document.getElementById('artworkCategory').value,
+            description: document.getElementById('artworkDescription').value.trim(),
+            link: document.getElementById('artworkLink')?.value.trim() || '',
+            imageUrls: imageUrls,
+            uploadDate: new Date().toISOString()
+        };
+        
+        console.log('💾 저장할 작품 데이터:', formData);
+        
+        // 로컬 데이터에 추가
+        allArtworks.unshift(formData);
+        
+        // UI에 즉시 추가
+        addArtworkToGallery(formData);
+        
+        // Firebase Firestore에 저장
+        if (db) {
+            try {
+                await saveArtworkToFirebase(formData);
+                console.log('✅ Firebase Firestore에 작품 저장 완료');
+            } catch (error) {
+                console.error('Firebase Firestore 저장 실패:', error);
+                throw new Error('데이터베이스 저장에 실패했습니다.');
+            }
+        }
+        
+        alert(`🎉 "${formData.title}" 작품이 성공적으로 등록되었습니다!\n\n이미지가 Firebase Storage에 업로드되고, 작품 정보가 데이터베이스에 저장되었습니다.`);
+        console.log('✅ 작품 등록 완료');
+        
+    } catch (error) {
+        console.error('❌ 새 작품 등록 실패:', error);
+        alert(`작품 등록에 실패했습니다:\n\n${error.message}`);
+        throw error;
     }
-    
-    alert(`🎉 "${formData.title}" 작품이 성공적으로 등록되었습니다!`);
-    console.log('✅ 작품 등록 완료');
 }
 
 // === Firebase 함수들 ===
+// 이미지를 Firebase Storage에 업로드
+async function uploadImageToStorage(imageFile, artworkId) {
+    try {
+        if (!storage) {
+            throw new Error('Firebase Storage가 초기화되지 않았습니다.');
+        }
+        
+        const fileName = `artworks/${artworkId}/${Date.now()}_${imageFile.name}`;
+        const storageRef = storage.ref().child(fileName);
+        
+        console.log('📤 이미지 업로드 시작:', fileName);
+        
+        const snapshot = await storageRef.put(imageFile);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+        
+        console.log('✅ 이미지 업로드 성공:', downloadURL);
+        return downloadURL;
+        
+    } catch (error) {
+        console.error('❌ 이미지 업로드 실패:', error);
+        
+        // Firebase Storage 규칙 오류인 경우 안내
+        if (error.code === 'storage/unauthorized') {
+            throw new Error('Firebase Storage 접근 권한이 없습니다. Firebase 콘솔에서 Storage 규칙을 수정해야 합니다.');
+        } else if (error.code === 'storage/quota-exceeded') {
+            throw new Error('Firebase Storage 용량이 초과되었습니다.');
+        } else {
+            throw new Error(`이미지 업로드 실패: ${error.message}`);
+        }
+    }
+}
+
+// Firebase에 작품 저장
 async function saveArtworkToFirebase(artwork) {
     try {
         if (!db) {
@@ -879,6 +995,8 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🔥 Firebase 초기화 상태:', {
         firebaseLoaded: typeof firebase !== 'undefined',
         firebaseApps: firebase?.apps?.length || 0,
+        firestoreLoaded: typeof firebase?.firestore !== 'undefined',
+        storageLoaded: typeof firebase?.storage !== 'undefined',
         config: FIREBASE_CONFIG
     });
     
@@ -908,3 +1026,22 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 console.log('🚀 학생 갤러리 JavaScript 완전 로드 완료');
+
+// Firebase Storage 규칙 설정 안내
+console.log('📋 Firebase Storage 규칙 설정이 필요합니다:');
+console.log('1. Firebase 콘솔 (https://console.firebase.google.com) 접속');
+console.log('2. 프로젝트 선택: daebul-exhibition');
+console.log('3. Storage 메뉴 클릭');
+console.log('4. 규칙 탭에서 다음 규칙으로 설정:');
+console.log(`
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /artworks/{artworkId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
+`);
+console.log('5. 게시 버튼 클릭');
