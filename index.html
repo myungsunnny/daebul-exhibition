@@ -22,15 +22,15 @@
         <!-- 시스템 상태 패널 - 관리자 전용 -->
         <div class="panel status-section admin-only" id="statusSection">
             <h3>🚀 시스템 상태</h3>
-            <div id="upstashStatus">
-                <span class="status-indicator status-warning">데이터베이스 연결 확인 중...</span>
+            <div id="firebaseStatus">
+                <span class="status-indicator status-warning">Firebase 연결 확인 중...</span>
             </div>
             <div id="artworkCount">
                 <span class="status-indicator">등록된 작품: <strong id="totalCount">0</strong>개</span>
             </div>
 
-            <div id="cloudinaryStatus">
-                <span class="status-indicator">이미지 저장: Cloudinary</span>
+            <div id="storageStatus">
+                <span class="status-indicator">이미지 저장: Firebase Storage</span>
             </div>
         </div>
 
@@ -83,12 +83,7 @@
                         </div>
                         <div class="image-preview-container" id="imagePreviewContainer"></div>
                     </div>
-                    <div style="margin-top: 10px; text-align: center;">
-                        <button type="button" onclick="uploadToCloudinary()" class="btn btn-secondary btn-small" style="margin-right: 10px;">
-                            ☁️ 클라우드 업로드
-                        </button>
-                        <small style="color: #666; font-size: 0.8rem;">또는 클라우드 업로드를 이용하세요</small>
-                    </div>
+
                 </div>
                 <div class="form-group">
                     <label for="artworkLink">관련 링크 (선택 사항)</label>
