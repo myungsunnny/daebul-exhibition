@@ -816,6 +816,12 @@ function applyGradeFilter(grade) {
     const allCards = document.querySelectorAll('.artwork-card');
     let visibleCount = 0;
     
+    // 모든 카드 숨기기
+    allCards.forEach(card => {
+        card.style.display = 'none';
+    });
+    
+    // 필터에 맞는 카드만 표시
     allCards.forEach(card => {
         const artwork = allArtworks.find(a => a.id === card.dataset.artworkId);
         if (!artwork) return;
@@ -831,12 +837,466 @@ function applyGradeFilter(grade) {
         if (shouldShow) {
             card.style.display = 'block';
             visibleCount++;
-        } else {
-            card.style.display = 'none';
         }
     });
     
+    // 학년별 정보 섹션 업데이트
+    updateGradeInfoForFilter(grade);
+    
     console.log(`✅ 필터 결과: ${visibleCount}개 작품 표시`);
+}
+
+// 필터에 따른 학년별 정보 업데이트
+function updateGradeInfoForFilter(grade) {
+    try {
+        const gradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
+        const gradeInfoTitle = document.getElementById('gradeInfoTitle');
+        const gradeInfoDescription = document.getElementById('gradeInfoDescription');
+        
+        if (gradeInfoTitle && gradeInfoDescription) {
+            let title, description;
+            
+            if (grade === 'all') {
+                const allGradeInfo = gradeSettings.gradeAll || {};
+                title = allGradeInfo.title || '전체 학년 작품 소개';
+                description = allGradeInfo.description || '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.';
+            } else {
+                const gradeKey = `grade${grade}`;
+                const gradeInfo = gradeSettings[gradeKey] || {};
+                title = gradeInfo.title || `${grade}학년 작품`;
+                description = gradeInfo.description || `${grade}학년 학생들의 창의적이고 아름다운 작품들입니다.`;
+            }
+            
+            gradeInfoTitle.textContent = title;
+            gradeInfoDescription.textContent = description;
+        }
+        
+    } catch (error) {
+        console.error('필터별 학년 정보 업데이트 실패:', error);
+    }
+}
+
+// 작품 분류 탭 전환
+function switchTypeTab(type) {
+    console.log('🔄 작품 분류 탭 전환:', type);
+    
+    // 모든 섹션 숨기기
+    document.querySelectorAll('.type-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // 모든 탭 비활성화
+    document.querySelectorAll('.type-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // 선택된 섹션과 탭 활성화
+    const targetSection = document.getElementById(`${type}Section`);
+    const targetTab = document.querySelector(`[data-type="${type}"]`);
+    
+    if (targetSection) targetSection.classList.add('active');
+    if (targetTab) targetTab.classList.add('active');
+    
+    console.log(`✅ ${type} 탭으로 전환 완료`);
+}
+
+// 관리자 탭 전환
+function switchAdminTab(tabName) {
+    console.log('🔄 관리자 탭 전환:', tabName);
+    
+    // 모든 탭 비활성화
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // 모든 콘텐츠 숨기기
+    document.querySelectorAll('.admin-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // 선택된 탭과 콘텐츠 활성화
+    const targetTab = document.querySelector(`[onclick="switchAdminTab('${tabName}')"]`);
+    const targetContent = document.getElementById(`${tabName}Content`);
+    
+    if (targetTab) targetTab.classList.add('active');
+    if (targetContent) targetContent.classList.add('active');
+    
+    console.log(`✅ ${tabName} 탭으로 전환 완료`);
+}
+
+// 작품 수정 모드
+function editArtwork(artworkId) {
+    console.log('✏️ 작품 수정 모드 시작:', artworkId);
+    
+    const artwork = allArtworks.find(a => a.id === artworkId);
+    if (!artwork) {
+        alert('수정할 작품을 찾을 수 없습니다.');
+        return;
+    }
+    
+    // 수정 모드 활성화
+    isEditMode = true;
+    editingArtworkId = artworkId;
+    
+    // 폼에 기존 데이터 채우기
+    document.getElementById('artworkTitle').value = artwork.title;
+    document.getElementById('studentGrade').value = artwork.grade.replace('학년', '');
+    document.getElementById('artworkCategory').value = artwork.category;
+    document.getElementById('artworkDescription').value = artwork.description;
+    if (artwork.link) {
+        document.getElementById('artworkLink').value = artwork.link;
+    }
+    
+    // 이미지 미리보기 설정
+    uploadedImages = artwork.imageUrls.map(url => ({
+        url: url,
+        name: '기존 이미지',
+        file: null
+    }));
+    updateImagePreview();
+    
+    // UI 업데이트
+    const panelTitle = document.getElementById('uploadPanelTitle');
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    
+    if (panelTitle) panelTitle.textContent = '✏️ 작품 수정';
+    if (submitBtn) submitBtn.textContent = '수정 완료';
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    
+    // 업로드 패널 열기
+    toggleUploadPanel();
+    
+    console.log('✅ 수정 모드 활성화 완료');
+}
+
+// 작품 수정 취소
+function cancelEdit() {
+    console.log('❌ 작품 수정 취소');
+    resetEditMode();
+}
+
+// 작품 삭제
+async function deleteArtwork(artworkId) {
+    console.log('🗑️ 작품 삭제 시도:', artworkId);
+    
+    if (!confirm('정말로 이 작품을 삭제하시겠습니까?')) {
+        return;
+    }
+    
+    try {
+        // Firebase에서 삭제
+        if (db) {
+            await deleteArtworkFromFirebase(artworkId);
+        }
+        
+        // 로컬 데이터에서 제거
+        allArtworks = allArtworks.filter(a => a.id !== artworkId);
+        
+        // UI에서 제거
+        const artworkElements = document.querySelectorAll(`[data-artwork-id="${artworkId}"]`);
+        artworkElements.forEach(element => element.remove());
+        
+        // 카운트 업데이트
+        updateCounts();
+        
+        alert('작품이 성공적으로 삭제되었습니다.');
+        console.log('✅ 작품 삭제 완료');
+        
+    } catch (error) {
+        console.error('❌ 작품 삭제 실패:', error);
+        alert('작품 삭제에 실패했습니다.');
+    }
+}
+
+// 사이트 설정 저장
+function saveSettings() {
+    console.log('💾 사이트 설정 저장 시도');
+    
+    try {
+        // 기본 설정
+        const newSettings = {
+            title: document.getElementById('siteTitle').value,
+            description: document.getElementById('siteDescription').value,
+            allowComments: document.getElementById('allowComments').checked,
+            moderateComments: document.getElementById('moderateComments').checked,
+            requireUploadPassword: document.getElementById('requireUploadPassword').checked,
+            uploadPassword: document.getElementById('uploadPassword').value
+        };
+        
+        // 학년별 설명
+        const gradeSettings = {};
+        for (let i = 1; i <= 6; i++) {
+            gradeSettings[`grade${i}`] = {
+                title: document.getElementById(`gradeTitle${i}`).value,
+                description: document.getElementById(`gradeDesc${i}`).value
+            };
+        }
+        gradeSettings.gradeAll = {
+            title: document.getElementById('gradeTitleAll').value,
+            description: document.getElementById('gradeDescAll').value
+        };
+        
+        // 로컬 스토리지에 저장
+        localStorage.setItem('siteSettings', JSON.stringify(newSettings));
+        localStorage.setItem('gradeSettings', JSON.stringify(gradeSettings));
+        
+        // 사이트 제목과 설명 업데이트
+        const headerTitle = document.getElementById('headerTitleText');
+        const siteSubtitle = document.getElementById('siteSubtitle');
+        
+        if (headerTitle) headerTitle.textContent = newSettings.title;
+        if (siteSubtitle) siteSubtitle.textContent = newSettings.description;
+        
+        // 학년별 정보 섹션 업데이트
+        updateGradeInfo();
+        
+        alert('✅ 사이트 설정이 성공적으로 저장되었습니다!');
+        console.log('✅ 사이트 설정 저장 완료');
+        
+    } catch (error) {
+        console.error('❌ 사이트 설정 저장 실패:', error);
+        alert('사이트 설정 저장에 실패했습니다.');
+    }
+}
+
+// 학년별 정보 업데이트
+function updateGradeInfo() {
+    try {
+        const gradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
+        const gradeInfoTitle = document.getElementById('gradeInfoTitle');
+        const gradeInfoDescription = document.getElementById('gradeInfoDescription');
+        
+        if (gradeInfoTitle && gradeInfoDescription) {
+            const allGradeInfo = gradeSettings.gradeAll || {};
+            gradeInfoTitle.textContent = allGradeInfo.title || '전체 학년 작품 소개';
+            gradeInfoDescription.textContent = allGradeInfo.description || '우리 학교 1학년부터 6학년까지 모든 학생들의 창의적이고 아름다운 작품들을 한눈에 볼 수 있습니다.';
+        }
+        
+    } catch (error) {
+        console.error('학년별 정보 업데이트 실패:', error);
+    }
+}
+
+// 모든 데이터 초기화
+async function resetAllData() {
+    console.log('🗑️ 모든 데이터 초기화 시도');
+    
+    if (!confirm('정말로 모든 데이터를 초기화하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다!')) {
+        return;
+    }
+    
+    try {
+        // Firebase에서 모든 작품 삭제
+        if (db) {
+            const snapshot = await db.collection('artworks').get();
+            const deletePromises = snapshot.docs.map(doc => doc.ref.delete());
+            await Promise.all(deletePromises);
+            console.log('✅ Firebase에서 모든 작품 삭제 완료');
+        }
+        
+        // 로컬 데이터 초기화
+        allArtworks = [];
+        
+        // UI 초기화
+        renderAllArtworks();
+        updateCounts();
+        
+        alert('✅ 모든 데이터가 성공적으로 초기화되었습니다!');
+        console.log('✅ 데이터 초기화 완료');
+        
+    } catch (error) {
+        console.error('❌ 데이터 초기화 실패:', error);
+        alert('데이터 초기화에 실패했습니다.');
+    }
+}
+
+// 데이터 내보내기
+async function exportData() {
+    console.log('📤 데이터 내보내기 시도');
+    
+    try {
+        // Firebase에서 최신 데이터 가져오기
+        let exportData = [];
+        if (db) {
+            exportData = await loadArtworksFromFirebase();
+        } else {
+            exportData = [...allArtworks];
+        }
+        
+        // JSON 파일로 다운로드
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `artworks_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        console.log('✅ 데이터 내보내기 완료:', exportData.length, '개 작품');
+        
+    } catch (error) {
+        console.error('❌ 데이터 내보내기 실패:', error);
+        alert('데이터 내보내기에 실패했습니다.');
+    }
+}
+
+// 작품 순서 저장
+async function saveArtworkOrder() {
+    console.log('💾 작품 순서 저장 시도');
+    
+    try {
+        // 현재 UI 순서대로 작품 순서 업데이트
+        const galleryGrid = document.getElementById('galleryGrid');
+        if (galleryGrid) {
+            const artworkElements = galleryGrid.querySelectorAll('.artwork-card');
+            const newOrder = [];
+            
+            artworkElements.forEach((element, index) => {
+                const artworkId = element.dataset.artworkId;
+                const artwork = allArtworks.find(a => a.id === artworkId);
+                if (artwork) {
+                    artwork.order = index;
+                    newOrder.push(artwork);
+                }
+            });
+            
+            // Firebase에 순서 업데이트
+            if (db) {
+                const updatePromises = newOrder.map(artwork => 
+                    db.collection('artworks').doc(artwork.id).update({ order: artwork.order })
+                );
+                await Promise.all(updatePromises);
+            }
+            
+            // 로컬 데이터 업데이트
+            allArtworks = newOrder;
+            
+            alert('✅ 작품 순서가 성공적으로 저장되었습니다!');
+            console.log('✅ 작품 순서 저장 완료');
+        }
+        
+    } catch (error) {
+        console.error('❌ 작품 순서 저장 실패:', error);
+        alert('작품 순서 저장에 실패했습니다.');
+    }
+}
+
+// 대량 작품 삭제
+function bulkDeleteArtworks() {
+    console.log('🗑️ 대량 작품 삭제 시도');
+    
+    const checkboxes = document.querySelectorAll('#artworksTableBody input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+        alert('삭제할 작품을 선택해주세요.');
+        return;
+    }
+    
+    if (!confirm(`선택된 ${checkboxes.length}개 작품을 정말로 삭제하시겠습니까?`)) {
+        return;
+    }
+    
+    // 선택된 작품들 삭제
+    checkboxes.forEach(checkbox => {
+        const artworkId = checkbox.closest('tr').dataset.artworkId;
+        if (artworkId) {
+            deleteArtwork(artworkId);
+        }
+    });
+}
+
+// 대량 댓글 삭제
+function bulkDeleteComments() {
+    console.log('🗑️ 대량 댓글 삭제 시도');
+    alert('댓글 기능은 아직 구현되지 않았습니다.');
+}
+
+// 헤더 이미지 미리보기
+function previewHeaderImage() {
+    const fileInput = document.getElementById('headerImageFile');
+    const preview = document.getElementById('headerImagePreview');
+    const uploadText = document.getElementById('headerUploadText');
+    
+    if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            uploadText.style.display = 'none';
+        };
+        
+        reader.readAsDataURL(file);
+    }
+}
+
+// 헤더 이미지 제거
+function removeHeaderImage() {
+    const preview = document.getElementById('headerImagePreview');
+    const uploadText = document.getElementById('headerUploadText');
+    const fileInput = document.getElementById('headerImageFile');
+    
+    preview.style.display = 'none';
+    uploadText.style.display = 'block';
+    fileInput.value = '';
+}
+
+// 저장된 사이트 설정 불러오기
+function loadSiteSettings() {
+    try {
+        const savedSettings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
+        const savedGradeSettings = JSON.parse(localStorage.getItem('gradeSettings') || '{}');
+        
+        // 기본 설정 적용
+        if (savedSettings.title) {
+            const siteTitleInput = document.getElementById('siteTitle');
+            if (siteTitleInput) siteTitleInput.value = savedSettings.title;
+        }
+        
+        if (savedSettings.description) {
+            const siteDescInput = document.getElementById('siteDescription');
+            if (siteDescInput) siteDescInput.value = savedSettings.description;
+        }
+        
+        if (savedSettings.allowComments !== undefined) {
+            const allowCommentsInput = document.getElementById('allowComments');
+            if (allowCommentsInput) allowCommentsInput.checked = savedSettings.allowComments;
+        }
+        
+        if (savedSettings.moderateComments !== undefined) {
+            const moderateCommentsInput = document.getElementById('moderateComments');
+            if (moderateCommentsInput) moderateCommentsInput.checked = savedSettings.moderateComments;
+        }
+        
+        if (savedSettings.requireUploadPassword !== undefined) {
+            const requirePasswordInput = document.getElementById('requireUploadPassword');
+            if (requirePasswordInput) requirePasswordInput.checked = savedSettings.requireUploadPassword;
+        }
+        
+        if (savedSettings.uploadPassword) {
+            const uploadPasswordInput = document.getElementById('uploadPassword');
+            if (uploadPasswordInput) uploadPasswordInput.value = savedSettings.uploadPassword;
+        }
+        
+        // 학년별 설정 적용
+        Object.keys(savedGradeSettings).forEach(gradeKey => {
+            const gradeSettings = savedGradeSettings[gradeKey];
+            if (gradeSettings.title) {
+                const titleInput = document.getElementById(`${gradeKey}Title`);
+                if (titleInput) titleInput.value = gradeSettings.title;
+            }
+            if (gradeSettings.description) {
+                const descInput = document.getElementById(`${gradeKey}Desc`);
+                if (descInput) descInput.value = gradeSettings.description;
+            }
+        });
+        
+        console.log('✅ 사이트 설정 불러오기 완료');
+        
+    } catch (error) {
+        console.error('❌ 사이트 설정 불러오기 실패:', error);
+    }
 }
 
 function showArtworkDetail(artworkId) {
@@ -1067,6 +1527,12 @@ service firebase.storage {
     // 데이터 로드
     loadArtworks();
     
+    // 저장된 사이트 설정 불러오기
+    loadSiteSettings();
+    
+    // 학년별 정보 업데이트
+    updateGradeInfo();
+    
     console.log('✅ 갤러리 초기화 완료!');
 });
 
@@ -1078,6 +1544,26 @@ window.showFullscreenImage = showFullscreenImage;
 window.removeImage = removeImage;
 window.showArtworkDetail = showArtworkDetail;
 window.closeFullscreenImage = closeFullscreenImage;
+
+// 필터 및 탭 전환 함수들
+window.switchTypeTab = switchTypeTab;
+window.applyGradeFilter = applyGradeFilter;
+
+// 관리자 모드 함수들
+window.switchAdminTab = switchAdminTab;
+window.editArtwork = editArtwork;
+window.cancelEdit = cancelEdit;
+window.deleteArtwork = deleteArtwork;
+window.saveSettings = saveSettings;
+window.resetAllData = resetAllData;
+window.exportData = exportData;
+window.saveArtworkOrder = saveArtworkOrder;
+window.bulkDeleteArtworks = bulkDeleteArtworks;
+window.bulkDeleteComments = bulkDeleteComments;
+
+// 헤더 이미지 관련 함수들
+window.previewHeaderImage = previewHeaderImage;
+window.removeHeaderImage = removeHeaderImage;
 
 // === 오류 처리 ===
 window.addEventListener('error', function(e) {
