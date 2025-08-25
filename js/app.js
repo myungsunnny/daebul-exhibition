@@ -1010,7 +1010,7 @@ async function deleteArtwork(artworkId) {
 }
 
 // 사이트 설정 저장
-function saveSettings() {
+async function saveSettings() {
     console.log('💾 사이트 설정 저장 시도');
     
     try {
@@ -1037,26 +1037,71 @@ function saveSettings() {
             description: document.getElementById('gradeDescAll').value
         };
         
-        // 로컬 스토리지에 저장
+        // Firebase에 설정 저장
+        if (db) {
+            try {
+                // 사이트 설정 저장
+                await db.collection('siteSettings').doc('main').set({
+                    ...newSettings,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // 학년별 설정 저장
+                await db.collection('siteSettings').doc('grades').set({
+                    ...gradeSettings,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                console.log('✅ Firebase에 사이트 설정 저장 완료');
+            } catch (error) {
+                console.error('Firebase 설정 저장 실패:', error);
+                throw new Error('데이터베이스 저장에 실패했습니다.');
+            }
+        }
+        
+        // 로컬 스토리지에도 백업 저장
         localStorage.setItem('siteSettings', JSON.stringify(newSettings));
         localStorage.setItem('gradeSettings', JSON.stringify(gradeSettings));
         
-        // 사이트 제목과 설명 업데이트
-        const headerTitle = document.getElementById('headerTitleText');
-        const siteSubtitle = document.getElementById('siteSubtitle');
-        
-        if (headerTitle) headerTitle.textContent = newSettings.title;
-        if (siteSubtitle) siteSubtitle.textContent = newSettings.description;
+        // 사이트 제목과 설명 즉시 업데이트
+        updateSiteDisplay(newSettings);
         
         // 학년별 정보 섹션 업데이트
         updateGradeInfo();
         
-        alert('✅ 사이트 설정이 성공적으로 저장되었습니다!');
+        alert('✅ 사이트 설정이 성공적으로 저장되었습니다!\n\n이제 다른 컴퓨터에서도 변경된 설정을 볼 수 있습니다.');
         console.log('✅ 사이트 설정 저장 완료');
         
     } catch (error) {
         console.error('❌ 사이트 설정 저장 실패:', error);
-        alert('사이트 설정 저장에 실패했습니다.');
+        alert(`사이트 설정 저장에 실패했습니다:\n\n${error.message}`);
+    }
+}
+
+// 사이트 표시 업데이트
+function updateSiteDisplay(settings) {
+    try {
+        // 헤더 제목 업데이트
+        const headerTitle = document.getElementById('headerTitleText');
+        if (headerTitle && settings.title) {
+            headerTitle.textContent = settings.title;
+        }
+        
+        // 사이트 부제목 업데이트
+        const siteSubtitle = document.getElementById('siteSubtitle');
+        if (siteSubtitle && settings.description) {
+            siteSubtitle.textContent = settings.description;
+        }
+        
+        // 페이지 제목 업데이트
+        if (settings.title) {
+            document.title = settings.title;
+        }
+        
+        console.log('✅ 사이트 표시 업데이트 완료:', settings.title);
+        
+    } catch (error) {
+        console.error('사이트 표시 업데이트 실패:', error);
     }
 }
 
@@ -1242,7 +1287,133 @@ function removeHeaderImage() {
     fileInput.value = '';
 }
 
-// 저장된 사이트 설정 불러오기
+// Firebase에서 사이트 설정 불러오기
+async function loadSiteSettingsFromFirebase() {
+    try {
+        if (!db) {
+            console.log('⚠️ Firebase가 초기화되지 않아 로컬 설정을 사용합니다.');
+            return false;
+        }
+        
+        console.log('📡 Firebase에서 사이트 설정 요청 중...');
+        
+        // 기본 설정 불러오기
+        const mainSettingsDoc = await db.collection('siteSettings').doc('main').get();
+        const gradeSettingsDoc = await db.collection('siteSettings').doc('grades').get();
+        
+        let hasNewSettings = false;
+        
+        if (mainSettingsDoc.exists) {
+            const firebaseSettings = mainSettingsDoc.data();
+            console.log('✅ Firebase에서 기본 설정 로드:', firebaseSettings);
+            
+            // 설정 폼에 적용
+            applySettingsToForm(firebaseSettings);
+            
+            // 사이트 표시 업데이트
+            updateSiteDisplay(firebaseSettings);
+            
+            // 로컬 스토리지에 백업
+            localStorage.setItem('siteSettings', JSON.stringify(firebaseSettings));
+            
+            hasNewSettings = true;
+        }
+        
+        if (gradeSettingsDoc.exists) {
+            const firebaseGradeSettings = gradeSettingsDoc.data();
+            console.log('✅ Firebase에서 학년별 설정 로드:', firebaseGradeSettings);
+            
+            // 학년별 설정 폼에 적용
+            applyGradeSettingsToForm(firebaseGradeSettings);
+            
+            // 학년별 정보 섹션 업데이트
+            updateGradeInfo();
+            
+            // 로컬 스토리지에 백업
+            localStorage.setItem('gradeSettings', JSON.stringify(firebaseGradeSettings));
+            
+            hasNewSettings = true;
+        }
+        
+        if (hasNewSettings) {
+            console.log('✅ Firebase에서 사이트 설정 로드 완료');
+            return true;
+        } else {
+            console.log('📝 Firebase에 저장된 설정이 없어 기본값을 사용합니다.');
+            return false;
+        }
+        
+    } catch (error) {
+        console.error('❌ Firebase 설정 로드 오류:', error);
+        return false;
+    }
+}
+
+// 설정을 폼에 적용
+function applySettingsToForm(settings) {
+    try {
+        if (settings.title) {
+            const siteTitleInput = document.getElementById('siteTitle');
+            if (siteTitleInput) siteTitleInput.value = settings.title;
+        }
+        
+        if (settings.description) {
+            const siteDescInput = document.getElementById('siteDescription');
+            if (siteDescInput) siteDescInput.value = settings.description;
+        }
+        
+        if (settings.allowComments !== undefined) {
+            const allowCommentsInput = document.getElementById('allowComments');
+            if (allowCommentsInput) allowCommentsInput.checked = settings.allowComments;
+        }
+        
+        if (settings.moderateComments !== undefined) {
+            const moderateCommentsInput = document.getElementById('moderateComments');
+            if (moderateCommentsInput) moderateCommentsInput.checked = settings.moderateComments;
+        }
+        
+        if (settings.requireUploadPassword !== undefined) {
+            const requirePasswordInput = document.getElementById('requireUploadPassword');
+            if (requirePasswordInput) requirePasswordInput.checked = settings.requireUploadPassword;
+        }
+        
+        if (settings.uploadPassword) {
+            const uploadPasswordInput = document.getElementById('uploadPassword');
+            if (uploadPasswordInput) uploadPasswordInput.value = settings.uploadPassword;
+        }
+        
+        console.log('✅ 설정을 폼에 적용 완료');
+        
+    } catch (error) {
+        console.error('❌ 설정 폼 적용 실패:', error);
+    }
+}
+
+// 학년별 설정을 폼에 적용
+function applyGradeSettingsToForm(gradeSettings) {
+    try {
+        Object.keys(gradeSettings).forEach(gradeKey => {
+            if (gradeKey === 'updatedAt') return; // Firebase 타임스탬프 제외
+            
+            const gradeInfo = gradeSettings[gradeKey];
+            if (gradeInfo.title) {
+                const titleInput = document.getElementById(`${gradeKey}Title`);
+                if (titleInput) titleInput.value = gradeInfo.title;
+            }
+            if (gradeInfo.description) {
+                const descInput = document.getElementById(`${gradeKey}Desc`);
+                if (descInput) descInput.value = gradeInfo.description;
+            }
+        });
+        
+        console.log('✅ 학년별 설정을 폼에 적용 완료');
+        
+    } catch (error) {
+        console.error('❌ 학년별 설정 폼 적용 실패:', error);
+    }
+}
+
+// 저장된 사이트 설정 불러오기 (로컬 백업용)
 function loadSiteSettings() {
     try {
         const savedSettings = JSON.parse(localStorage.getItem('siteSettings') || '{}');
@@ -1292,10 +1463,10 @@ function loadSiteSettings() {
             }
         });
         
-        console.log('✅ 사이트 설정 불러오기 완료');
+        console.log('✅ 로컬 사이트 설정 불러오기 완료');
         
     } catch (error) {
-        console.error('❌ 사이트 설정 불러오기 실패:', error);
+        console.error('❌ 로컬 사이트 설정 불러오기 실패:', error);
     }
 }
 
@@ -1527,11 +1698,15 @@ service firebase.storage {
     // 데이터 로드
     loadArtworks();
     
-    // 저장된 사이트 설정 불러오기
-    loadSiteSettings();
-    
-    // 학년별 정보 업데이트
-    updateGradeInfo();
+    // Firebase에서 사이트 설정 불러오기 (우선)
+    setTimeout(async () => {
+        const firebaseLoaded = await loadSiteSettingsFromFirebase();
+        if (!firebaseLoaded) {
+            // Firebase에 설정이 없으면 로컬 설정 사용
+            loadSiteSettings();
+            updateGradeInfo();
+        }
+    }, 1000);
     
     console.log('✅ 갤러리 초기화 완료!');
 });
@@ -1564,6 +1739,11 @@ window.bulkDeleteComments = bulkDeleteComments;
 // 헤더 이미지 관련 함수들
 window.previewHeaderImage = previewHeaderImage;
 window.removeHeaderImage = removeHeaderImage;
+
+// 사이트 설정 관련 함수들
+window.updateSiteDisplay = updateSiteDisplay;
+window.applySettingsToForm = applySettingsToForm;
+window.applyGradeSettingsToForm = applyGradeSettingsToForm;
 
 // === 오류 처리 ===
 window.addEventListener('error', function(e) {
