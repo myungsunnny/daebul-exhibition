@@ -42,8 +42,39 @@ function checkAdminStatus() {
             document.body.classList.remove('admin-mode');
             console.log('✅ 일반 사용자 모드 상태 확인됨');
         }
+        
+        // 관리자 모드 상태 변경 시 UI 업데이트
+        updateAdminUI();
     }
     return isAdmin;
+}
+
+// 관리자 UI 업데이트 함수
+function updateAdminUI() {
+    // 모든 작품 카드의 관리자 컨트롤 표시/숨김 업데이트
+    const artworkCards = document.querySelectorAll('.artwork-card');
+    artworkCards.forEach(card => {
+        const adminControls = card.querySelector('.admin-controls');
+        if (adminControls) {
+            if (isAdmin) {
+                adminControls.style.display = 'flex';
+            } else {
+                adminControls.style.display = 'none';
+            }
+        }
+    });
+    
+    // 드래그 핸들 표시/숨김 업데이트
+    const dragHandles = document.querySelectorAll('.drag-handle');
+    dragHandles.forEach(handle => {
+        if (isAdmin) {
+            handle.style.display = 'flex';
+        } else {
+            handle.style.display = 'none';
+        }
+    });
+    
+    console.log('🔄 관리자 UI 업데이트 완료');
 }
 
 // 기본 작품 등록 설정
@@ -182,9 +213,10 @@ function toggleAdminPanel() {
             
             alert('✅ 관리자 모드가 활성화되었습니다.');
             
-            // 관리자 모드 활성화 후 Sortable 초기화
+            // 관리자 모드 활성화 후 Sortable 초기화 및 UI 업데이트
             setTimeout(() => {
                 initializeSortable();
+                updateAdminUI();
             }, 500);
             
         } else if (password) {
@@ -828,6 +860,9 @@ function renderAllArtworks() {
     if (isAdmin) {
         initializeSortable();
     }
+    
+    // 관리자 UI 업데이트
+    updateAdminUI();
 }
 
 // Sortable.js 초기화 함수
@@ -943,8 +978,8 @@ function createArtworkElement(artwork) {
     // 관리자 모드일 때 드래그 핸들과 컨트롤 추가
     const dragHandle = isAdminMode ? '<div class="drag-handle">🔄</div>' : '';
     const adminControls = isAdminMode ? `
-        <div class="admin-controls">
-            <button class="btn btn-warning btn-small" onclick="event.stopPropagation(); editArtwork('${artwork.id}')">수정</button>
+        <div class="admin-controls" style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+            <button class="btn btn-warning btn-small" onclick="event.stopPropagation(); editArtwork('${artwork.id}')" style="margin-bottom: 5px;">수정</button>
             <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deleteArtwork('${artwork.id}')">삭제</button>
         </div>
     ` : '';
