@@ -862,6 +862,18 @@ function renderAllArtworks() {
                 const clone1 = element.cloneNode(true);
                 galleries.galleryGrid.appendChild(clone1);
                 setTimeout(() => clone1.classList.add('show'), 100);
+                
+                // 관리자 모드일 때 컨트롤 표시 강제 적용
+                if (checkAdminStatus()) {
+                    setTimeout(() => {
+                        const adminControlsElement = clone1.querySelector('.admin-controls');
+                        if (adminControlsElement) {
+                            adminControlsElement.style.display = 'flex';
+                            adminControlsElement.style.visibility = 'visible';
+                            adminControlsElement.style.opacity = '1';
+                        }
+                    }, 200);
+                }
             }
             
             // 카테고리별 갤러리에 추가
@@ -870,6 +882,18 @@ function renderAllArtworks() {
                 const clone2 = element.cloneNode(true);
                 categoryGallery.appendChild(clone2);
                 setTimeout(() => clone2.classList.add('show'), 100);
+                
+                // 관리자 모드일 때 컨트롤 표시 강제 적용
+                if (checkAdminStatus()) {
+                    setTimeout(() => {
+                        const adminControlsElement = clone2.querySelector('.admin-controls');
+                        if (adminControlsElement) {
+                            adminControlsElement.style.display = 'flex';
+                            adminControlsElement.style.visibility = 'visible';
+                            adminControlsElement.style.opacity = '1';
+                        }
+                    }, 200);
+                }
             }
         }, index * 30);
     });
@@ -994,6 +1018,7 @@ function createArtworkElement(artwork) {
     
     // 관리자 상태 확인
     const isAdminMode = checkAdminStatus();
+    console.log('🔍 작품 카드 생성 - 관리자 모드:', isAdminMode);
     
     // 관리자 모드일 때 드래그 핸들과 컨트롤 추가
     const dragHandle = isAdminMode ? '<div class="drag-handle" style="position: absolute; top: 10px; left: 10px; background: rgba(255, 255, 255, 0.9); color: #666; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: grab; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">🔄</div>' : '';
@@ -1003,6 +1028,8 @@ function createArtworkElement(artwork) {
             <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deleteArtwork('${artwork.id}')" style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">삭제</button>
         </div>
     ` : '';
+    
+    console.log('🔧 관리자 컨트롤 HTML:', adminControls ? '생성됨' : '생성되지 않음');
 
     element.innerHTML = `
         <div class="artwork-image" onclick="showArtworkDetail('${artwork.id}')">
@@ -1022,6 +1049,19 @@ function createArtworkElement(artwork) {
         </div>
     `;
     
+    // 관리자 모드일 때 컨트롤 표시 강제 적용
+    if (isAdminMode) {
+        setTimeout(() => {
+            const adminControlsElement = element.querySelector('.admin-controls');
+            if (adminControlsElement) {
+                adminControlsElement.style.display = 'flex';
+                adminControlsElement.style.visibility = 'visible';
+                adminControlsElement.style.opacity = '1';
+                console.log('✅ 관리자 컨트롤 강제 표시 완료');
+            }
+        }, 100);
+    }
+    
     return element;
 }
 
@@ -1037,6 +1077,19 @@ function addArtworkToGallery(artwork) {
             if (element) {
                 gallery.appendChild(element);
                 setTimeout(() => element.classList.add('show'), 100);
+                
+                // 관리자 모드일 때 컨트롤 표시 강제 적용
+                if (checkAdminStatus()) {
+                    setTimeout(() => {
+                        const adminControlsElement = element.querySelector('.admin-controls');
+                        if (adminControlsElement) {
+                            adminControlsElement.style.display = 'flex';
+                            adminControlsElement.style.visibility = 'visible';
+                            adminControlsElement.style.opacity = '1';
+                            console.log('✅ 갤러리 추가 시 관리자 컨트롤 강제 표시 완료');
+                        }
+                    }, 200);
+                }
             }
         }
     });
@@ -1050,6 +1103,19 @@ function updateArtworkInGallery(updatedArtwork) {
         if (newElement) {
             element.parentNode.replaceChild(newElement, element);
             setTimeout(() => newElement.classList.add('show'), 100);
+            
+            // 관리자 모드일 때 컨트롤 표시 강제 적용
+            if (checkAdminStatus()) {
+                setTimeout(() => {
+                    const adminControlsElement = newElement.querySelector('.admin-controls');
+                    if (adminControlsElement) {
+                        adminControlsElement.style.display = 'flex';
+                        adminControlsElement.style.visibility = 'visible';
+                        adminControlsElement.style.opacity = '1';
+                        console.log('✅ 갤러리 업데이트 시 관리자 컨트롤 강제 표시 완료');
+                    }
+                }, 200);
+            }
         }
     });
     
@@ -1121,6 +1187,18 @@ function displaySearchResults(results, searchTerm) {
                 const clone1 = element.cloneNode(true);
                 galleries.galleryGrid.appendChild(clone1);
                 setTimeout(() => clone1.classList.add('show'), 100);
+                
+                // 관리자 모드일 때 컨트롤 표시 강제 적용
+                if (checkAdminStatus()) {
+                    setTimeout(() => {
+                        const adminControlsElement = clone1.querySelector('.admin-controls');
+                        if (adminControlsElement) {
+                            adminControlsElement.style.display = 'flex';
+                            adminControlsElement.style.visibility = 'visible';
+                            adminControlsElement.style.opacity = '1';
+                        }
+                    }, 200);
+                }
             }
             
             // 카테고리별 갤러리에 추가
@@ -1129,6 +1207,18 @@ function displaySearchResults(results, searchTerm) {
                 const clone2 = element.cloneNode(true);
                 categoryGallery.appendChild(clone2);
                 setTimeout(() => clone2.classList.add('show'), 100);
+                
+                // 관리자 모드일 때 컨트롤 표시 강제 적용
+                if (checkAdminStatus()) {
+                    setTimeout(() => {
+                        const adminControlsElement = clone2.querySelector('.admin-controls');
+                        if (adminControlsElement) {
+                            adminControlsElement.style.display = 'flex';
+                            adminControlsElement.style.visibility = 'visible';
+                            adminControlsElement.style.opacity = '1';
+                        }
+                    }, 200);
+                }
             }
         }, index * 30);
     });
