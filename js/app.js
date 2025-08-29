@@ -30,6 +30,22 @@ let editingArtworkId = null;
 let currentUser = null; // 현재 사용자 정보
 let sortableInstances = []; // Sortable 인스턴스들을 저장
 
+// 관리자 모드 상태 확인 함수
+function checkAdminStatus() {
+    const adminMode = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+    if (adminMode !== isAdmin) {
+        isAdmin = adminMode;
+        if (isAdmin) {
+            document.body.classList.add('admin-mode');
+            console.log('✅ 관리자 모드 상태 확인됨');
+        } else {
+            document.body.classList.remove('admin-mode');
+            console.log('✅ 일반 사용자 모드 상태 확인됨');
+        }
+    }
+    return isAdmin;
+}
+
 // 기본 작품 등록 설정
 let siteSettings = {
     requireUploadPassword: true,
@@ -150,6 +166,9 @@ function toggleUploadPanel() {
 
 function toggleAdminPanel() {
     console.log('🖱️ 관리자 패널 토글');
+    
+    // 관리자 상태 확인
+    checkAdminStatus();
     
     if (!isAdmin) {
         const password = prompt('관리자 비밀번호를 입력하세요:');
@@ -918,18 +937,24 @@ function createArtworkElement(artwork) {
     const imageCount = artwork.imageUrls.length > 1 ? 
         `<span class="artwork-type">${artwork.imageUrls.length}장</span>` : '';
     
-    // 관리자 모드일 때 드래그 핸들 추가
-    const dragHandle = isAdmin ? '<div class="drag-handle">🔄</div>' : '';
+    // 관리자 상태 확인
+    const isAdminMode = checkAdminStatus();
+    
+    // 관리자 모드일 때 드래그 핸들과 컨트롤 추가
+    const dragHandle = isAdminMode ? '<div class="drag-handle">🔄</div>' : '';
+    const adminControls = isAdminMode ? `
+        <div class="admin-controls">
+            <button class="btn btn-warning btn-small" onclick="event.stopPropagation(); editArtwork('${artwork.id}')">수정</button>
+            <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deleteArtwork('${artwork.id}')">삭제</button>
+        </div>
+    ` : '';
 
     element.innerHTML = `
         <div class="artwork-image" onclick="showArtworkDetail('${artwork.id}')">
             <img src="${artwork.imageUrls[0]}" alt="${artwork.title}" loading="lazy" 
                  style="width: 100%; height: 100%; object-fit: cover;">
             ${imageCount}
-            <div class="admin-controls">
-                <button class="btn btn-warning btn-small" onclick="event.stopPropagation(); editArtwork('${artwork.id}')">수정</button>
-                <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deleteArtwork('${artwork.id}')">삭제</button>
-            </div>
+            ${adminControls}
         </div>
         <div class="artwork-info">
             <div class="artwork-header" onclick="showArtworkDetail('${artwork.id}')">
@@ -1238,6 +1263,12 @@ function switchAdminTab(tabName) {
 function editArtwork(artworkId) {
     console.log('✏️ 작품 수정 모드 시작:', artworkId);
     
+    // 관리자 상태 확인
+    if (!checkAdminStatus()) {
+        alert('❌ 관리자 권한이 필요합니다. 관리자 모드로 로그인해주세요.');
+        return;
+    }
+    
     const artwork = allArtworks.find(a => a.id === artworkId);
     if (!artwork) {
         alert('수정할 작품을 찾을 수 없습니다.');
@@ -1249,12 +1280,18 @@ function editArtwork(artworkId) {
     editingArtworkId = artworkId;
     
     // 폼에 기존 데이터 채우기
-    document.getElementById('artworkTitle').value = artwork.title;
-    document.getElementById('studentGrade').value = artwork.grade.replace('학년', '');
-    document.getElementById('artworkCategory').value = artwork.category;
-    document.getElementById('artworkDescription').value = artwork.description;
-    if (artwork.link) {
-        document.getElementById('artworkLink').value = artwork.link;
+    const titleInput = document.getElementById('artworkTitle');
+    const gradeInput = document.getElementById('studentGrade');
+    const categoryInput = document.getElementById('artworkCategory');
+    const descriptionInput = document.getElementById('artworkDescription');
+    const linkInput = document.getElementById('artworkLink');
+    
+    if (titleInput) titleInput.value = artwork.title;
+    if (gradeInput) gradeInput.value = artwork.grade.replace('학년', '');
+    if (categoryInput) categoryInput.value = artwork.category;
+    if (descriptionInput) descriptionInput.value = artwork.description;
+    if (linkInput && artwork.link) {
+        linkInput.value = artwork.link;
     }
     
     // 이미지 미리보기 설정
@@ -1289,6 +1326,12 @@ function cancelEdit() {
 // 작품 삭제
 async function deleteArtwork(artworkId) {
     console.log('🗑️ 작품 삭제 시도:', artworkId);
+    
+    // 관리자 상태 확인
+    if (!checkAdminStatus()) {
+        alert('❌ 관리자 권한이 필요합니다. 관리자 모드로 로그인해주세요.');
+        return;
+    }
     
     if (!confirm('정말로 이 작품을 삭제하시겠습니까?')) {
         return;
@@ -1436,6 +1479,12 @@ async function exportData() {
 async function saveArtworkOrder() {
     console.log('💾 작품 순서 저장 시도');
     
+    // 관리자 상태 확인
+    if (!checkAdminStatus()) {
+        alert('❌ 관리자 권한이 필요합니다. 관리자 모드로 로그인해주세요.');
+        return;
+    }
+    
     try {
         // 현재 UI 순서대로 작품 순서 업데이트
         const galleryGrid = document.getElementById('galleryGrid');
@@ -1522,6 +1571,12 @@ function updateCategoryGalleriesOrder(orderedArtworks) {
 // 대량 작품 삭제
 function bulkDeleteArtworks() {
     console.log('🗑️ 대량 작품 삭제 시도');
+    
+    // 관리자 상태 확인
+    if (!checkAdminStatus()) {
+        alert('❌ 관리자 권한이 필요합니다. 관리자 모드로 로그인해주세요.');
+        return;
+    }
     
     const checkboxes = document.querySelectorAll('#artworksTableBody input[type="checkbox"]:checked');
     if (checkboxes.length === 0) {
@@ -1760,12 +1815,12 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🎨 DOM 로드 완료 - 갤러리 초기화 시작');
     
     // 세션에서 관리자 상태 확인
-    if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
-        isAdmin = true;
-        document.body.classList.add('admin-mode');
-        
-        const adminButton = document.querySelectorAll('.header-btn')[1];
-        if (adminButton) adminButton.textContent = '🚪 관리자 나가기';
+    checkAdminStatus();
+    
+    // 관리자 버튼 텍스트 업데이트
+    const adminButton = document.querySelectorAll('.header-btn')[1];
+    if (adminButton) {
+        adminButton.textContent = isAdmin ? '🚪 관리자 나가기' : '⚙️ 관리자 모드';
     }
     
     // 폼 이벤트 리스너
