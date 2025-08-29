@@ -381,78 +381,6 @@ textarea {
     box-shadow: 0 8px 32px rgba(0,0,0,0.1);
 }
 
-/* 검색 컨테이너 */
-.search-container {
-    margin: 20px 0;
-    text-align: center;
-}
-
-.search-container input[type="text"] {
-    width: 80%;
-    max-width: 500px;
-    padding: 12px 20px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-radius: 25px;
-    background: rgba(255,255,255,0.1);
-    color: white;
-    font-size: 16px;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-}
-
-.search-container input[type="text"]::placeholder {
-    color: rgba(255,255,255,0.7);
-}
-
-.search-container input[type="text"]:focus {
-    outline: none;
-    border-color: #667eea;
-    background: rgba(255,255,255,0.2);
-    box-shadow: 0 0 20px rgba(102,126,234,0.3);
-}
-
-/* 작품 카드 개선 */
-.artwork-card {
-    position: relative;
-    overflow: hidden;
-}
-
-.artwork-header {
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.artwork-header:hover {
-    transform: translateY(-2px);
-}
-
-
-
-
-
-/* 검색 결과 없음 */
-.no-results {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-}
-
-.no-results h3 {
-    margin-bottom: 15px;
-    color: #999;
-}
-
-/* 반응형 개선 */
-@media (max-width: 768px) {
-    .search-container input[type="text"] {
-        width: 90%;
-        font-size: 14px;
-        padding: 10px 15px;
-    }
-    
-
-}
-
 .grade-info-section.active {
     display: block;
     animation: slideDown 0.4s ease;
@@ -636,19 +564,24 @@ textarea {
     font-size: 0.8rem;
 }
 
-/* 관리자 컨트롤 */
+/* 관리자 컨트롤 - 중요! */
 .admin-controls {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
     display: none;
     gap: 5px;
-    z-index: 5;
+    z-index: 100 !important;
     flex-direction: column;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 5px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-.admin-mode .admin-controls {
-    display: flex;
+/* 관리자 모드일 때 컨트롤 표시 */
+body.admin-mode .admin-controls {
+    display: flex !important;
 }
 
 /* 작품 카드에서 관리자 컨트롤 표시 */
@@ -656,19 +589,21 @@ textarea {
     display: none;
 }
 
-.admin-mode .artwork-card .admin-controls {
-    display: flex;
+body.admin-mode .artwork-card .admin-controls {
+    display: flex !important;
 }
 
 /* 관리자 컨트롤 버튼 스타일 */
 .admin-controls .btn-small {
-    padding: 4px 8px;
-    font-size: 0.7rem;
+    padding: 6px 10px;
+    font-size: 0.75rem;
     border-radius: 4px;
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+    font-weight: bold;
+    min-width: 50px;
 }
 
 .admin-controls .btn-warning {
@@ -679,6 +614,7 @@ textarea {
 .admin-controls .btn-warning:hover {
     background: #e0a800;
     transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .admin-controls .btn-danger {
@@ -689,6 +625,7 @@ textarea {
 .admin-controls .btn-danger:hover {
     background: #c82333;
     transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 /* 상태 표시 */
@@ -927,7 +864,7 @@ hr {
     border-color: #667eea;
 }
 
-/* 작품 상세 정보 - 새로운 디자인 */
+/* 작품 상세 정보 */
 .artwork-detail {
     padding: 0;
 }
@@ -937,6 +874,7 @@ hr {
     margin-bottom: 30px;
     padding-bottom: 20px;
     border-bottom: 2px solid #f0f0f0;
+    position: relative;
 }
 
 .artwork-main-title {
@@ -1074,98 +1012,6 @@ body.admin-mode .admin-only {
     display: inline-block !important;
 }
 
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-    h1 { 
-        font-size: 2rem; 
-        flex-wrap: wrap; 
-    }
-    
-    .header-logo { 
-        max-height: 2rem; 
-    }
-    
-    .container { 
-        padding: 15px; 
-    }
-    
-    .type-gallery { 
-        grid-template-columns: 1fr; 
-    }
-    
-    .header-buttons { 
-        position: static; 
-        justify-content: center; 
-        margin-top: 20px;
-    }
-    
-    .search-container input { 
-        width: 100%; 
-        max-width: 300px; 
-    }
-    
-    .admin-tabs { 
-        justify-content: center; 
-    }
-    
-    .stats-grid { 
-        grid-template-columns: 1fr; 
-    }
-    
-    .settings-options-grid { 
-        grid-template-columns: 1fr; 
-    }
-    
-    .filters-container { 
-        padding: 0 15px; 
-    }
-    
-    .filters { 
-        gap: 8px; 
-        flex-wrap: wrap; 
-        justify-content: center; 
-    }
-    
-    .filter-btn { 
-        padding: 6px 12px; 
-        font-size: 0.8rem; 
-        min-width: 55px; 
-    }
-    
-    .type-tabs { 
-        gap: 8px; 
-    }
-    
-    .type-tab { 
-        padding: 10px 15px; 
-        font-size: 0.9rem; 
-    }
-
-    .modal-content {
-        margin: 10px;
-        top: 10px;
-        transform: none;
-        max-height: calc(100vh - 20px);
-    }
-
-    .artwork-actions {
-        flex-direction: column;
-    }
-
-    .artwork-main-title {
-        font-size: 1.5rem;
-    }
-
-    .artwork-meta {
-        gap: 10px;
-    }
-
-    .meta-item {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-    }
-}
-
 /* 드래그 앤 드롭 관련 스타일 */
 .sortable-ghost {
     opacity: 0.4;
@@ -1272,7 +1118,113 @@ body:not(.admin-mode) .drag-handle {
     display: none;
 }
 
-/* 작품 카드 헤더에 상대 위치 설정 */
-.artwork-header {
-    position: relative;
+/* 검색 결과 없음 */
+.no-results {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.no-results h3 {
+    margin-bottom: 15px;
+    color: #999;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    h1 { 
+        font-size: 2rem; 
+        flex-wrap: wrap; 
+    }
+    
+    .header-logo { 
+        max-height: 2rem; 
+    }
+    
+    .container { 
+        padding: 15px; 
+    }
+    
+    .type-gallery { 
+        grid-template-columns: 1fr; 
+    }
+    
+    .header-buttons { 
+        position: static; 
+        justify-content: center; 
+        margin-top: 20px;
+    }
+    
+    .search-container input { 
+        width: 100%; 
+        max-width: 300px; 
+    }
+    
+    .admin-tabs { 
+        justify-content: center; 
+    }
+    
+    .stats-grid { 
+        grid-template-columns: 1fr; 
+    }
+    
+    .settings-options-grid { 
+        grid-template-columns: 1fr; 
+    }
+    
+    .filters-container { 
+        padding: 0 15px; 
+    }
+    
+    .filters { 
+        gap: 8px; 
+        flex-wrap: wrap; 
+        justify-content: center; 
+    }
+    
+    .filter-btn { 
+        padding: 6px 12px; 
+        font-size: 0.8rem; 
+        min-width: 55px; 
+    }
+    
+    .type-tabs { 
+        gap: 8px; 
+    }
+    
+    .type-tab { 
+        padding: 10px 15px; 
+        font-size: 0.9rem; 
+    }
+
+    .modal-content {
+        margin: 10px;
+        top: 10px;
+        transform: none;
+        max-height: calc(100vh - 20px);
+    }
+
+    .artwork-actions {
+        flex-direction: column;
+    }
+
+    .artwork-main-title {
+        font-size: 1.5rem;
+    }
+
+    .artwork-meta {
+        gap: 10px;
+    }
+
+    .meta-item {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    /* 모바일에서 관리자 컨트롤 버튼 크기 조정 */
+    .admin-controls .btn-small {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        min-width: 60px;
+    }
 }
