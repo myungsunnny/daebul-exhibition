@@ -1020,6 +1020,11 @@ body.admin-mode .admin-only {
     display: inline-block !important;
 }
 
+/* 모달의 관리자 버튼들 */
+body.admin-mode .modal .admin-only {
+    display: inline-block !important;
+}
+
 /* 드래그 앤 드롭 관련 스타일 */
 .sortable-ghost {
     opacity: 0.4;
