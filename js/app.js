@@ -1024,8 +1024,8 @@ function createArtworkElement(artwork) {
     const dragHandle = isAdminMode ? '<div class="drag-handle" style="position: absolute; top: 10px; left: 10px; background: rgba(255, 255, 255, 0.9); color: #666; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: grab; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">🔄</div>' : '';
     const adminControls = isAdminMode ? `
         <div class="admin-controls" style="position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; flex-direction: column; gap: 5px; background: rgba(255, 255, 255, 0.98); padding: 8px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 2px solid rgba(255, 255, 255, 0.8);">
-            <button class="btn btn-warning btn-small" onclick="event.stopPropagation(); editArtwork('${artwork.id}')" style="margin-bottom: 5px; background: #ffc107; color: #212529; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">수정</button>
-            <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deleteArtwork('${artwork.id}')" style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">삭제</button>
+            <button class="btn btn-warning btn-small admin-edit-btn" data-artwork-id="${artwork.id}" style="margin-bottom: 5px; background: #ffc107; color: #212529; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">수정</button>
+            <button class="btn btn-danger btn-small admin-delete-btn" data-artwork-id="${artwork.id}" style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">삭제</button>
         </div>
     ` : '';
     
@@ -1907,11 +1907,17 @@ function applySettingsToForm(settings) {
 
 
 
+// 현재 모달에서 보고 있는 작품 ID 저장
+let currentModalArtworkId = null;
+
 function showArtworkDetail(artworkId) {
     console.log('🖱️ 작품 상세보기:', artworkId);
     
     const artwork = allArtworks.find(a => a.id === artworkId);
     if (!artwork) return;
+    
+    // 현재 모달에서 보고 있는 작품 ID 저장
+    currentModalArtworkId = artworkId;
     
     const categoryMap = { 
         'activity': '활동 모습', 'worksheet': '활동지', 'result': '결과물' 
@@ -1973,6 +1979,43 @@ function showArtworkDetail(artworkId) {
     if (modal) {
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
+        
+        // 관리자 모드일 때 관리자 버튼들 표시
+        if (checkAdminStatus()) {
+            const editBtn = document.getElementById('detailEditBtn');
+            const deleteBtn = document.getElementById('detailDeleteBtn');
+            
+            if (editBtn) {
+                editBtn.style.display = 'inline-block';
+                editBtn.style.visibility = 'visible';
+                editBtn.style.opacity = '1';
+            }
+            
+            if (deleteBtn) {
+                deleteBtn.style.display = 'inline-block';
+                deleteBtn.style.visibility = 'visible';
+                deleteBtn.style.opacity = '1';
+            }
+            
+            console.log('✅ 모달에서 관리자 버튼들 표시됨');
+        } else {
+            const editBtn = document.getElementById('detailEditBtn');
+            const deleteBtn = document.getElementById('detailDeleteBtn');
+            
+            if (editBtn) {
+                editBtn.style.display = 'none';
+                editBtn.style.visibility = 'hidden';
+                editBtn.style.opacity = '0';
+            }
+            
+            if (deleteBtn) {
+                deleteBtn.style.display = 'none';
+                deleteBtn.style.visibility = 'hidden';
+                deleteBtn.style.opacity = '0';
+            }
+            
+            console.log('❌ 모달에서 관리자 버튼들 숨김');
+        }
     }
 }
 
@@ -1983,6 +2026,40 @@ function closeModal() {
         modal.style.display = 'none';
         document.body.style.overflow = 'auto';
     }
+    // 모달 닫을 때 현재 작품 ID 초기화
+    currentModalArtworkId = null;
+}
+
+// 모달에서 작품 수정
+function editArtworkFromModal() {
+    console.log('✏️ 모달에서 작품 수정 시도:', currentModalArtworkId);
+    
+    if (!currentModalArtworkId) {
+        alert('수정할 작품을 찾을 수 없습니다.');
+        return;
+    }
+    
+    // 모달 닫기
+    closeModal();
+    
+    // 작품 수정 모드 시작
+    editArtwork(currentModalArtworkId);
+}
+
+// 모달에서 작품 삭제
+function deleteArtworkFromModal() {
+    console.log('🗑️ 모달에서 작품 삭제 시도:', currentModalArtworkId);
+    
+    if (!currentModalArtworkId) {
+        alert('삭제할 작품을 찾을 수 없습니다.');
+        return;
+    }
+    
+    // 모달 닫기
+    closeModal();
+    
+    // 작품 삭제 실행
+    deleteArtwork(currentModalArtworkId);
 }
 
 function showFullscreenImage(imageSrc) {
@@ -2130,6 +2207,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // 관리자 컨트롤 버튼 이벤트 리스너 (이벤트 위임 사용)
+    document.addEventListener('click', function(e) {
+        // 수정 버튼 클릭
+        if (e.target.classList.contains('admin-edit-btn')) {
+            e.stopPropagation();
+            const artworkId = e.target.getAttribute('data-artwork-id');
+            if (artworkId) {
+                console.log('🖱️ 관리자 수정 버튼 클릭:', artworkId);
+                editArtwork(artworkId);
+            }
+        }
+        
+        // 삭제 버튼 클릭
+        if (e.target.classList.contains('admin-delete-btn')) {
+            e.stopPropagation();
+            const artworkId = e.target.getAttribute('data-artwork-id');
+            if (artworkId) {
+                console.log('🖱️ 관리자 삭제 버튼 클릭:', artworkId);
+                deleteArtwork(artworkId);
+            }
+        }
+    });
+    
     console.log('🎉 모든 이벤트 리스너 등록 완료');
     
     // Firebase 초기화 상태 확인
@@ -2213,6 +2313,8 @@ window.removeImage = removeImage;
 window.showArtworkDetail = showArtworkDetail;
 window.closeFullscreenImage = closeFullscreenImage;
 window.updateStorageStatus = updateStorageStatus;
+window.editArtworkFromModal = editArtworkFromModal;
+window.deleteArtworkFromModal = deleteArtworkFromModal;
 
 // 필터 및 탭 전환 함수들
 window.switchTypeTab = switchTypeTab;
