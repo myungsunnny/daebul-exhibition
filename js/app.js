@@ -1015,9 +1015,15 @@ function createArtworkElement(artwork) {
     element.dataset.artworkId = artwork.id;
     element.dataset.category = artwork.category;
     
+    // 전역 저장소에 작품 ID 저장 (작품 ID 전달 문제 해결용)
+    const cardId = `card_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    globalArtworkIds.set(cardId, artwork.id);
+    element.dataset.cardId = cardId;
+    
     console.log('🎨 작품 카드 dataset 설정:', {
         artworkId: element.dataset.artworkId,
-        category: element.dataset.category
+        category: element.dataset.category,
+        cardId: cardId
     });
     
     const uploadDate = new Date(artwork.uploadDate).toLocaleDateString('ko-KR');
@@ -1032,8 +1038,8 @@ function createArtworkElement(artwork) {
     const dragHandle = isAdminMode ? '<div class="drag-handle" style="position: absolute; top: 10px; left: 10px; background: rgba(255, 255, 255, 0.9); color: #666; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: grab; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 10;">🔄</div>' : '';
     const adminControls = isAdminMode ? `
         <div class="admin-controls" style="position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; flex-direction: column; gap: 5px; background: rgba(255, 255, 255, 0.98); padding: 8px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 2px solid rgba(255, 255, 255, 0.8);">
-            <button class="btn btn-warning btn-small admin-edit-btn" data-artwork-id="${artwork.id}" onclick="event.stopPropagation(); editArtwork('${artwork.id}')" style="margin-bottom: 5px; background: #ffc107; color: #212529; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">수정</button>
-            <button class="btn btn-danger btn-small admin-delete-btn" data-artwork-id="${artwork.id}" onclick="event.stopPropagation(); deleteArtwork('${artwork.id}')" style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">삭제</button>
+            <button class="btn btn-warning btn-small admin-edit-btn" data-artwork-id="${artwork.id}" data-card-id="${cardId}" onclick="event.stopPropagation(); editArtworkFromCard('${cardId}')" style="margin-bottom: 5px; background: #ffc107; color: #212529; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">수정</button>
+            <button class="btn btn-danger btn-small admin-delete-btn" data-artwork-id="${artwork.id}" data-card-id="${cardId}" onclick="event.stopPropagation(); deleteArtworkFromCard('${cardId}')" style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">삭제</button>
         </div>
     ` : '';
     
@@ -2011,6 +2017,9 @@ function applySettingsToForm(settings) {
 // 현재 모달에서 보고 있는 작품 ID 저장
 let currentModalArtworkId = null;
 
+// 전역 작품 ID 저장소 (작품 ID 전달 문제 해결용)
+let globalArtworkIds = new Map();
+
 function showArtworkDetail(artworkId) {
     console.log('🖱️ 작품 상세보기:', artworkId);
     
@@ -2163,6 +2172,36 @@ function deleteArtworkFromModal() {
     deleteArtwork(currentModalArtworkId);
 }
 
+// 카드 ID로 작품 수정 (새로운 안전한 방법)
+function editArtworkFromCard(cardId) {
+    console.log('✏️ 카드 ID로 작품 수정 시도:', cardId);
+    
+    const artworkId = globalArtworkIds.get(cardId);
+    if (!artworkId) {
+        console.error('❌ 카드 ID로 작품 ID를 찾을 수 없음:', cardId);
+        alert('작품을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+        return;
+    }
+    
+    console.log('✅ 카드 ID로 작품 ID 찾음:', artworkId);
+    editArtwork(artworkId);
+}
+
+// 카드 ID로 작품 삭제 (새로운 안전한 방법)
+function deleteArtworkFromCard(cardId) {
+    console.log('🗑️ 카드 ID로 작품 삭제 시도:', cardId);
+    
+    const artworkId = globalArtworkIds.get(cardId);
+    if (!artworkId) {
+        console.error('❌ 카드 ID로 작품 ID를 찾을 수 없음:', cardId);
+        alert('작품을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+        return;
+    }
+    
+    console.log('✅ 카드 ID로 작품 ID 찾음:', artworkId);
+    deleteArtwork(artworkId);
+}
+
 function showFullscreenImage(imageSrc) {
     console.log('🖼️ 전체화면 이미지 표시:', imageSrc);
     const overlay = document.getElementById('fullscreenOverlay');
@@ -2308,14 +2347,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 관리자 컨트롤 버튼 이벤트 리스너 (단순화)
+    // 관리자 컨트롤 버튼 이벤트 리스너 (새로운 안전한 방법)
     document.addEventListener('click', function(e) {
         // 수정 버튼 클릭 (onclick 속성으로 처리되므로 백업용)
         if (e.target.classList.contains('admin-edit-btn')) {
             e.stopPropagation();
+            const cardId = e.target.getAttribute('data-card-id');
             const artworkId = e.target.getAttribute('data-artwork-id');
-            if (artworkId) {
-                console.log('🖱️ 백업 이벤트 리스너 - 수정:', artworkId);
+            
+            if (cardId) {
+                console.log('🖱️ 백업 이벤트 리스너 - 카드 ID로 수정:', cardId);
+                editArtworkFromCard(cardId);
+            } else if (artworkId) {
+                console.log('🖱️ 백업 이벤트 리스너 - 작품 ID로 수정:', artworkId);
                 editArtwork(artworkId);
             }
         }
@@ -2323,9 +2367,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // 삭제 버튼 클릭 (onclick 속성으로 처리되므로 백업용)
         if (e.target.classList.contains('admin-delete-btn')) {
             e.stopPropagation();
+            const cardId = e.target.getAttribute('data-card-id');
             const artworkId = e.target.getAttribute('data-artwork-id');
-            if (artworkId) {
-                console.log('🖱️ 백업 이벤트 리스너 - 삭제:', artworkId);
+            
+            if (cardId) {
+                console.log('🖱️ 백업 이벤트 리스너 - 카드 ID로 삭제:', cardId);
+                deleteArtworkFromCard(cardId);
+            } else if (artworkId) {
+                console.log('🖱️ 백업 이벤트 리스너 - 작품 ID로 삭제:', artworkId);
                 deleteArtwork(artworkId);
             }
         }
@@ -2416,6 +2465,8 @@ window.closeFullscreenImage = closeFullscreenImage;
 window.updateStorageStatus = updateStorageStatus;
 window.editArtworkFromModal = editArtworkFromModal;
 window.deleteArtworkFromModal = deleteArtworkFromModal;
+window.editArtworkFromCard = editArtworkFromCard;
+window.deleteArtworkFromCard = deleteArtworkFromCard;
 
 // 필터 및 탭 전환 함수들
 window.switchTypeTab = switchTypeTab;
