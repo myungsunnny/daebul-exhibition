@@ -1007,10 +1007,17 @@ function showOrderChangeNotification() {
 function createArtworkElement(artwork) {
     if (!artwork.imageUrls || artwork.imageUrls.length === 0) return null;
 
+    console.log('🎨 작품 카드 생성 중:', artwork.id, artwork.title);
+    
     const element = document.createElement('div');
     element.className = 'artwork-card';
     element.dataset.artworkId = artwork.id;
     element.dataset.category = artwork.category;
+    
+    console.log('🎨 작품 카드 dataset 설정:', {
+        artworkId: element.dataset.artworkId,
+        category: element.dataset.category
+    });
     
     const uploadDate = new Date(artwork.uploadDate).toLocaleDateString('ko-KR');
     const imageCount = artwork.imageUrls.length > 1 ? 
@@ -1028,6 +1035,12 @@ function createArtworkElement(artwork) {
             <button class="btn btn-danger btn-small admin-delete-btn" data-artwork-id="${artwork.id}" style="background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; min-width: 50px; font-size: 0.75rem;">삭제</button>
         </div>
     ` : '';
+    
+    console.log('🔧 관리자 컨트롤 HTML 생성:', {
+        isAdminMode: isAdminMode,
+        artworkId: artwork.id,
+        hasControls: !!adminControls
+    });
     
     console.log('🔧 관리자 컨트롤 HTML:', adminControls ? '생성됨' : '생성되지 않음');
 
@@ -1407,6 +1420,8 @@ function switchAdminTab(tabName) {
 // 작품 수정 모드
 function editArtwork(artworkId) {
     console.log('✏️ 작품 수정 모드 시작:', artworkId);
+    console.log('📊 allArtworks 배열:', allArtworks);
+    console.log('📊 allArtworks 길이:', allArtworks.length);
     
     // 관리자 상태 확인
     if (!checkAdminStatus()) {
@@ -1414,9 +1429,39 @@ function editArtwork(artworkId) {
         return;
     }
     
-    const artwork = allArtworks.find(a => a.id === artworkId);
+    // 작품 ID 유효성 검사
+    if (!artworkId) {
+        console.error('❌ 작품 ID가 없습니다:', artworkId);
+        alert('작품 ID가 유효하지 않습니다.');
+        return;
+    }
+    
+    // allArtworks 배열 상태 확인
+    if (!allArtworks || allArtworks.length === 0) {
+        console.error('❌ allArtworks 배열이 비어있습니다');
+        alert('작품 데이터가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
+        return;
+    }
+    
+    console.log('🔍 작품 검색 중... ID:', artworkId, '타입:', typeof artworkId);
+    
+    // allArtworks 배열의 각 작품 ID 확인
+    allArtworks.forEach((artwork, index) => {
+        console.log(`작품 ${index}: ID="${artwork.id}" (타입: ${typeof artwork.id})`);
+    });
+    
+    // 작품 찾기 (타입 변환 포함)
+    let artwork = allArtworks.find(a => a.id === artworkId);
+    
+    // 타입이 다른 경우를 대비해 문자열로도 검색
     if (!artwork) {
-        alert('수정할 작품을 찾을 수 없습니다.');
+        artwork = allArtworks.find(a => String(a.id) === String(artworkId));
+    }
+    
+    if (!artwork) {
+        console.error('❌ 작품을 찾을 수 없음. 검색한 ID:', artworkId);
+        console.error('❌ 사용 가능한 ID들:', allArtworks.map(a => a.id));
+        alert(`수정할 작품을 찾을 수 없습니다.\n\n검색한 ID: ${artworkId}\n사용 가능한 ID: ${allArtworks.map(a => a.id).join(', ')}`);
         return;
     }
     
@@ -1504,6 +1549,8 @@ function cancelEdit() {
 // 작품 삭제
 async function deleteArtwork(artworkId) {
     console.log('🗑️ 작품 삭제 시도:', artworkId);
+    console.log('📊 allArtworks 배열:', allArtworks);
+    console.log('📊 allArtworks 길이:', allArtworks.length);
     
     // 관리자 상태 확인
     if (!checkAdminStatus()) {
@@ -1511,10 +1558,39 @@ async function deleteArtwork(artworkId) {
         return;
     }
     
-    // 삭제할 작품 찾기
-    const artwork = allArtworks.find(a => a.id === artworkId);
+    // 작품 ID 유효성 검사
+    if (!artworkId) {
+        console.error('❌ 작품 ID가 없습니다:', artworkId);
+        alert('작품 ID가 유효하지 않습니다.');
+        return;
+    }
+    
+    // allArtworks 배열 상태 확인
+    if (!allArtworks || allArtworks.length === 0) {
+        console.error('❌ allArtworks 배열이 비어있습니다');
+        alert('작품 데이터가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
+        return;
+    }
+    
+    console.log('🔍 작품 검색 중... ID:', artworkId, '타입:', typeof artworkId);
+    
+    // allArtworks 배열의 각 작품 ID 확인
+    allArtworks.forEach((artwork, index) => {
+        console.log(`작품 ${index}: ID="${artwork.id}" (타입: ${typeof artwork.id})`);
+    });
+    
+    // 삭제할 작품 찾기 (타입 변환 포함)
+    let artwork = allArtworks.find(a => a.id === artworkId);
+    
+    // 타입이 다른 경우를 대비해 문자열로도 검색
     if (!artwork) {
-        alert('삭제할 작품을 찾을 수 없습니다.');
+        artwork = allArtworks.find(a => String(a.id) === String(artworkId));
+    }
+    
+    if (!artwork) {
+        console.error('❌ 작품을 찾을 수 없음. 검색한 ID:', artworkId);
+        console.error('❌ 사용 가능한 ID들:', allArtworks.map(a => a.id));
+        alert(`삭제할 작품을 찾을 수 없습니다.\n\n검색한 ID: ${artworkId}\n사용 가능한 ID: ${allArtworks.map(a => a.id).join(', ')}`);
         return;
     }
     
@@ -2213,9 +2289,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.classList.contains('admin-edit-btn')) {
             e.stopPropagation();
             const artworkId = e.target.getAttribute('data-artwork-id');
+            console.log('🖱️ 관리자 수정 버튼 클릭 - 요소:', e.target);
+            console.log('🖱️ 관리자 수정 버튼 클릭 - data-artwork-id:', artworkId);
+            console.log('🖱️ 관리자 수정 버튼 클릭 - 모든 속성:', e.target.attributes);
+            
             if (artworkId) {
-                console.log('🖱️ 관리자 수정 버튼 클릭:', artworkId);
+                console.log('✅ 작품 ID 확인됨, 수정 함수 호출:', artworkId);
                 editArtwork(artworkId);
+            } else {
+                console.error('❌ 작품 ID가 없음');
+                alert('작품 ID를 찾을 수 없습니다.');
             }
         }
         
@@ -2223,9 +2306,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.classList.contains('admin-delete-btn')) {
             e.stopPropagation();
             const artworkId = e.target.getAttribute('data-artwork-id');
+            console.log('🖱️ 관리자 삭제 버튼 클릭 - 요소:', e.target);
+            console.log('🖱️ 관리자 삭제 버튼 클릭 - data-artwork-id:', artworkId);
+            console.log('🖱️ 관리자 삭제 버튼 클릭 - 모든 속성:', e.target.attributes);
+            
             if (artworkId) {
-                console.log('🖱️ 관리자 삭제 버튼 클릭:', artworkId);
+                console.log('✅ 작품 ID 확인됨, 삭제 함수 호출:', artworkId);
                 deleteArtwork(artworkId);
+            } else {
+                console.error('❌ 작품 ID가 없음');
+                alert('작품 ID를 찾을 수 없습니다.');
             }
         }
     });
